@@ -1,0 +1,189 @@
+import { useEffect, useState } from "react"
+import { Warehouse, AlertTriangle, TrendingUp, TrendingDown } from "lucide-react"
+import { supabase } from "@/integrations/supabase/client"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+
+interface InventoryItem {
+  variant_id: number
+  quantity: number
+  product_name: string
+  variant_name: string
+  category_name: string
+}
+
+export default function Inventory() {
+  const [inventory, setInventory] = useState<InventoryItem[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchInventory()
+  }, [])
+
+  const fetchInventory = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('v_current_inventory')
+        .select('*')
+        .order('quantity', { ascending: true })
+
+      if (error) throw error
+      setInventory(data || [])
+    } catch (error) {
+      console.error('Error fetching inventory:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const lowStockItems = inventory.filter(item => (item.quantity || 0) < 10)
+  const outOfStockItems = inventory.filter(item => (item.quantity || 0) === 0)
+
+  if (loading) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="h-8 bg-muted rounded mb-4"></div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="h-32 bg-muted rounded"></div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  const getStockStatus = (quantity: number) => {
+    if (quantity === 0) return { label: 'Out of Stock', variant: 'destructive' as const, icon: AlertTriangle }
+    if (quantity < 10) return { label: 'Low Stock', variant: 'secondary' as const, icon: TrendingDown }
+    return { label: 'In Stock', variant: 'default' as const, icon: TrendingUp }
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Inventory</h1>
+          <p className="text-muted-foreground">Monitor and manage your stock levels</p>
+        </div>
+        <Button className="bg-gradient-primary hover:bg-primary/90">
+          <Warehouse className="w-4 h-4 mr-2" />
+          Stock Adjustment
+        </Button>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card className="bg-gradient-card border-border/50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total Items</p>
+                <p className="text-2xl font-bold text-foreground">{inventory.length}</p>
+              </div>
+              <Warehouse className="w-8 h-8 text-primary" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-card border-border/50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">In Stock</p>
+                <p className="text-2xl font-bold text-success">
+                  {inventory.filter(item => (item.quantity || 0) > 10).length}
+                </p>
+              </div>
+              <TrendingUp className="w-8 h-8 text-success" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-card border-border/50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Low Stock</p>
+                <p className="text-2xl font-bold text-warning">{lowStockItems.length}</p>
+              </div>
+              <TrendingDown className="w-8 h-8 text-warning" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-card border-border/50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Out of Stock</p>
+                <p className="text-2xl font-bold text-destructive">{outOfStockItems.length}</p>
+              </div>
+              <AlertTriangle className="w-8 h-8 text-destructive" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Inventory List */}
+      <Card className="bg-gradient-card border-border/50">
+        <CardHeader>
+          <CardTitle className="text-foreground">Current Inventory</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {inventory.length > 0 ? (
+            <div className="space-y-4">
+              {inventory.map((item) => {
+                const status = getStockStatus(item.quantity || 0)
+                const StatusIcon = status.icon
+                
+                return (
+                  <div 
+                    key={`${item.variant_id}-${item.product_name}-${item.variant_name}`} 
+                    className="flex items-center justify-between p-4 bg-muted/20 rounded-lg hover:bg-muted/30 transition-colors"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3">
+                        <div>
+                          <h4 className="font-medium text-foreground">
+                            {item.product_name} - {item.variant_name}
+                          </h4>
+                          <p className="text-sm text-muted-foreground">{item.category_name}</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <p className="text-lg font-semibold text-foreground">
+                          {item.quantity || 0} units
+                        </p>
+                      </div>
+                      
+                      <Badge variant={status.variant} className="flex items-center gap-1">
+                        <StatusIcon className="w-3 h-3" />
+                        {status.label}
+                      </Badge>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <Warehouse className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-xl font-semibold text-foreground mb-2">No Inventory Data</h3>
+              <p className="text-muted-foreground mb-6">
+                Start tracking your inventory by adding products and stock levels.
+              </p>
+              <Button className="bg-gradient-primary hover:bg-primary/90">
+                Add Inventory
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
