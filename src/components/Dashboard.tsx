@@ -5,6 +5,7 @@ import { StatCard } from "@/components/StatCard"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { useNavigate } from "react-router-dom"
 
 interface DashboardStats {
   totalSales: number
@@ -27,6 +28,7 @@ export function Dashboard() {
     inventoryValue: 0
   })
   const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
 
   useEffect(() => {
     fetchDashboardData()
@@ -107,7 +109,10 @@ export function Dashboard() {
           <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
           <p className="text-muted-foreground">Welcome back! Here's what's happening in your store.</p>
         </div>
-        <Button className="bg-gradient-primary hover:bg-primary/90">
+        <Button 
+          className="bg-gradient-primary hover:bg-primary/90"
+          onClick={() => navigate('/sales')}
+        >
           New Sale
         </Button>
       </div>
@@ -166,15 +171,27 @@ export function Dashboard() {
           <CardContent className="p-6">
             <h3 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h3>
             <div className="space-y-3">
-              <Button variant="outline" className="w-full justify-start">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => navigate('/products')}
+              >
                 <Package className="w-4 h-4 mr-2" />
                 Add Product
               </Button>
-              <Button variant="outline" className="w-full justify-start">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => navigate('/sales')}
+              >
                 <ShoppingCart className="w-4 h-4 mr-2" />
                 Process Sale
               </Button>
-              <Button variant="outline" className="w-full justify-start">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => navigate('/inventory')}
+              >
                 <Warehouse className="w-4 h-4 mr-2" />
                 Update Inventory
               </Button>

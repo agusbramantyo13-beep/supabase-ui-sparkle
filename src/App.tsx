@@ -8,6 +8,8 @@ import { AppSidebar } from "@/components/AppSidebar";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
 import Inventory from "./pages/Inventory";
+import Sales from "./pages/Sales";
+import Users from "./pages/Users";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +35,8 @@ const App = () => (
                   <Route path="/" element={<Index />} />
                   <Route path="/products" element={<Products />} />
                   <Route path="/inventory" element={<Inventory />} />
+                  <Route path="/sales" element={<Sales />} />
+                  <Route path="/users" element={<Users />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
