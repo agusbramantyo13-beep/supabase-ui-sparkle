@@ -16,6 +16,8 @@ interface InventoryItem {
 export default function Inventory() {
   const [inventory, setInventory] = useState<InventoryItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [inventoryFormOpen, setInventoryFormOpen] = useState(false)
+  const [formType, setFormType] = useState<'add' | 'remove' | 'adjust'>('add')
 
   useEffect(() => {
     fetchInventory()

@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react"
-import { Package, Plus, Search, Filter } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Package, Plus, Edit, Trash2, Search, Filter } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { ProductForm } from "@/components/ProductForm"
+import { useToast } from "@/hooks/use-toast"
 
 interface Product {
   id: number
@@ -20,6 +22,9 @@ export default function Products() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+  const [productFormOpen, setProductFormOpen] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<any>(null)
+  const { toast } = useToast()
 
   useEffect(() => {
     fetchProducts()
@@ -71,7 +76,10 @@ export default function Products() {
           <h1 className="text-3xl font-bold text-foreground">Products</h1>
           <p className="text-muted-foreground">Manage your product catalog</p>
         </div>
-        <Button className="bg-gradient-primary hover:bg-primary/90">
+        <Button 
+          className="bg-gradient-primary hover:bg-primary/90"
+          onClick={() => setProductFormOpen(true)}
+        >
           <Plus className="w-4 h-4 mr-2" />
           Add Product
         </Button>
@@ -124,7 +132,15 @@ export default function Products() {
                   </div>
                   
                   <div className="flex gap-2 mt-4">
-                    <Button variant="outline" size="sm" className="flex-1">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1"
+                      onClick={() => {
+                        setSelectedProduct(product);
+                        setProductFormOpen(true);
+                      }}
+                    >
                       Edit
                     </Button>
                     <Button variant="outline" size="sm" className="flex-1">
@@ -144,13 +160,26 @@ export default function Products() {
             <p className="text-muted-foreground mb-6">
               {searchTerm ? 'No products match your search.' : 'Get started by adding your first product.'}
             </p>
-            <Button className="bg-gradient-primary hover:bg-primary/90">
+            <Button 
+              className="bg-gradient-primary hover:bg-primary/90"
+              onClick={() => setProductFormOpen(true)}
+            >
               <Plus className="w-4 h-4 mr-2" />
               Add Product
             </Button>
           </CardContent>
         </Card>
       )}
+
+      <ProductForm
+        open={productFormOpen}
+        onOpenChange={setProductFormOpen}
+        onSuccess={() => {
+          fetchProducts();
+          setSelectedProduct(null);
+        }}
+        product={selectedProduct}
+      />
     </div>
   )
 }
