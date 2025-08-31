@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppSidebar } from "@/components/AppSidebar";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
+import Categories from "./pages/Categories";
 import Inventory from "./pages/Inventory";
 import Sales from "./pages/Sales";
 import Users from "./pages/Users";
@@ -36,6 +37,7 @@ const App = () => (
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/products" element={<Products />} />
+                  <Route path="/categories" element={<Categories />} />
                   <Route path="/inventory" element={<Inventory />} />
                   <Route path="/sales" element={<Sales />} />
                   <Route path="/users" element={<Users />} />

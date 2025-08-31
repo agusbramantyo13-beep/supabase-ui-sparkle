@@ -16,6 +16,7 @@ import {
 const menuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Products", url: "/products", icon: Package },
+  { title: "Categories", url: "/categories", icon: Package },
   { title: "Sales", url: "/sales", icon: ShoppingCart },
   { title: "Inventory", url: "/inventory", icon: Warehouse },
   { title: "Reports", url: "/reports", icon: BarChart3 },

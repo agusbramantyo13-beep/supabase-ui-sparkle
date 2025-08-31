@@ -4,8 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { CategoryForm } from "@/components/CategoryForm";
 
 interface Category {
   id: number;
@@ -21,6 +23,7 @@ interface ProductFormProps {
 
 export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductFormProps) {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryFormOpen, setCategoryFormOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     category_id: "",
@@ -192,21 +195,32 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
 
           <div>
             <Label htmlFor="category">Category *</Label>
-            <Select 
-              value={formData.category_id} 
-              onValueChange={(value) => setFormData({ ...formData, category_id: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id.toString()}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2">
+              <Select 
+                value={formData.category_id} 
+                onValueChange={(value) => setFormData({ ...formData, category_id: value })}
+              >
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border-border/50 z-50">
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id.toString()}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="icon"
+                onClick={() => setCategoryFormOpen(true)}
+                title="Add new category"
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
 
           <div>
@@ -279,6 +293,15 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
           </div>
         </form>
       </DialogContent>
+
+      <CategoryForm
+        open={categoryFormOpen}
+        onOpenChange={setCategoryFormOpen}
+        onSuccess={() => {
+          fetchCategories();
+          setCategoryFormOpen(false);
+        }}
+      />
     </Dialog>
   );
 }
