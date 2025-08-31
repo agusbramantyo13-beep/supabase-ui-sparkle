@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { InventoryForm } from "@/components/InventoryForm"
 
 interface InventoryItem {
   variant_id: number
@@ -69,10 +70,38 @@ export default function Inventory() {
           <h1 className="text-3xl font-bold text-foreground">Inventory</h1>
           <p className="text-muted-foreground">Monitor and manage your stock levels</p>
         </div>
-        <Button className="bg-gradient-primary hover:bg-primary/90">
-          <Warehouse className="w-4 h-4 mr-2" />
-          Stock Adjustment
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            className="bg-gradient-primary hover:bg-primary/90"
+            onClick={() => {
+              setFormType('add');
+              setInventoryFormOpen(true);
+            }}
+          >
+            <TrendingUp className="w-4 h-4 mr-2" />
+            Add Stock
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => {
+              setFormType('remove');
+              setInventoryFormOpen(true);
+            }}
+          >
+            <TrendingDown className="w-4 h-4 mr-2" />
+            Remove Stock
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => {
+              setFormType('adjust');
+              setInventoryFormOpen(true);
+            }}
+          >
+            <Warehouse className="w-4 h-4 mr-2" />
+            Adjust Stock
+          </Button>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -179,13 +208,26 @@ export default function Inventory() {
               <p className="text-muted-foreground mb-6">
                 Start tracking your inventory by adding products and stock levels.
               </p>
-              <Button className="bg-gradient-primary hover:bg-primary/90">
+              <Button 
+                className="bg-gradient-primary hover:bg-primary/90"
+                onClick={() => {
+                  setFormType('add');
+                  setInventoryFormOpen(true);
+                }}
+              >
                 Add Inventory
               </Button>
             </div>
           )}
         </CardContent>
       </Card>
+
+      <InventoryForm
+        open={inventoryFormOpen}
+        onOpenChange={setInventoryFormOpen}
+        onSuccess={fetchInventory}
+        type={formType}
+      />
     </div>
   )
 }
