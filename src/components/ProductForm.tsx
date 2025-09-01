@@ -31,7 +31,8 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
     variant_price: "",
     variant_cost_price: "",
     variant_sku: "",
-    variant_barcode: ""
+    variant_barcode: "",
+    initial_quantity: ""
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -49,7 +50,8 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
         variant_price: product.variant_price?.toString() || "",
         variant_cost_price: product.variant_cost_price?.toString() || "",
         variant_sku: product.variant_sku || "",
-        variant_barcode: product.variant_barcode || ""
+        variant_barcode: product.variant_barcode || "",
+        initial_quantity: product.quantity?.toString() || ""
       });
     } else {
       setFormData({
@@ -59,7 +61,8 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
         variant_price: "",
         variant_cost_price: "",
         variant_sku: "",
-        variant_barcode: ""
+        variant_barcode: "",
+        initial_quantity: ""
       });
     }
   }, [product, open]);
@@ -143,18 +146,30 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
         if (productError) throw productError;
 
         // Create variant
-        const { error: variantError } = await supabase
-          .from('product_variants')
+        const { data: variantData, error: variantError } = await supabase
+          .from('variants')
           .insert({
-            product_id: productData.id.toString(),
+            product_id: productData.id,
             name: formData.variant_name,
             price: parseFloat(formData.variant_price),
-            cost_price: formData.variant_cost_price ? parseFloat(formData.variant_cost_price) : null,
-            sku: formData.variant_sku || null,
-            barcode: formData.variant_barcode || null
-          });
+            sku: formData.variant_sku || null
+          })
+          .select()
+          .single();
 
         if (variantError) throw variantError;
+
+        // Create initial inventory record if quantity is provided
+        if (formData.initial_quantity && parseInt(formData.initial_quantity) > 0) {
+          const { error: inventoryError } = await supabase
+            .from('inventory')
+            .insert({
+              variant_id: variantData.id,
+              quantity: parseInt(formData.initial_quantity)
+            });
+
+          if (inventoryError) throw inventoryError;
+        }
 
         toast({
           title: "Success",
@@ -281,6 +296,18 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
                 placeholder="Barcode"
               />
             </div>
+          </div>
+
+          <div>
+            <Label htmlFor="initial_quantity">Initial Stock Quantity</Label>
+            <Input
+              id="initial_quantity"
+              type="number"
+              min="0"
+              value={formData.initial_quantity}
+              onChange={(e) => setFormData({ ...formData, initial_quantity: e.target.value })}
+              placeholder="Enter initial stock quantity"
+            />
           </div>
 
           <div className="flex gap-2 pt-4">
