@@ -281,7 +281,7 @@ export type Database = {
           sale_id: string
           total: number
           unit_price: number
-          variant_id: string | null
+          variant_id: number | null
         }
         Insert: {
           cost_price: number
@@ -292,7 +292,7 @@ export type Database = {
           sale_id: string
           total: number
           unit_price: number
-          variant_id?: string | null
+          variant_id?: number | null
         }
         Update: {
           cost_price?: number
@@ -303,7 +303,7 @@ export type Database = {
           sale_id?: string
           total?: number
           unit_price?: number
-          variant_id?: string | null
+          variant_id?: number | null
         }
         Relationships: [
           {
@@ -311,6 +311,20 @@ export type Database = {
             columns: ["sale_id"]
             isOneToOne: false
             referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "v_current_inventory"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "sale_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "variants"
             referencedColumns: ["id"]
           },
         ]
