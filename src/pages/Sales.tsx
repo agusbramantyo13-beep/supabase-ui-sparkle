@@ -36,7 +36,7 @@ export default function Sales() {
 
   const fetchProducts = async () => {
     const { data, error } = await supabase
-      .from('variants')
+      .from('product_variants')
       .select(`
         id,
         name,
