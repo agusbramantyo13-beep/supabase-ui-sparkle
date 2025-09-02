@@ -221,42 +221,6 @@ export type Database = {
           },
         ]
       }
-      product_variants: {
-        Row: {
-          barcode: string | null
-          cost_price: number | null
-          created_at: string | null
-          id: string
-          name: string
-          price: number | null
-          product_id: string
-          sku: string | null
-          track_inventory: boolean | null
-        }
-        Insert: {
-          barcode?: string | null
-          cost_price?: number | null
-          created_at?: string | null
-          id?: string
-          name: string
-          price?: number | null
-          product_id: string
-          sku?: string | null
-          track_inventory?: boolean | null
-        }
-        Update: {
-          barcode?: string | null
-          cost_price?: number | null
-          created_at?: string | null
-          id?: string
-          name?: string
-          price?: number | null
-          product_id?: string
-          sku?: string | null
-          track_inventory?: boolean | null
-        }
-        Relationships: []
-      }
       products: {
         Row: {
           category_id: number | null
@@ -349,13 +313,6 @@ export type Database = {
             referencedRelation: "sales"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "sale_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "product_variants"
-            referencedColumns: ["id"]
-          },
         ]
       }
       sales: {
@@ -404,6 +361,13 @@ export type Database = {
             columns: ["shift_id"]
             isOneToOne: false
             referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -511,13 +475,6 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "stock_opname_sessions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stock_opname_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "product_variants"
             referencedColumns: ["id"]
           },
         ]
