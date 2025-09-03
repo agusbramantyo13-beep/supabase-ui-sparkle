@@ -1,5 +1,7 @@
 import { LayoutDashboard, Package, ShoppingCart, Warehouse, Users, BarChart3, Settings, LogOut } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
+import { useAuth } from "@/contexts/AuthContext"
+import { useToast } from "@/hooks/use-toast"
 
 import {
   Sidebar,
@@ -26,9 +28,27 @@ const menuItems = [
 
 export function AppSidebar() {
   const { state } = useSidebar()
+  const { signOut, user } = useAuth()
+  const { toast } = useToast()
   const location = useLocation()
   const currentPath = location.pathname
   const collapsed = state === "collapsed"
+
+  const handleLogout = async () => {
+    try {
+      await signOut()
+      toast({
+        title: "Success",
+        description: "Successfully logged out!",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to logout",
+        variant: "destructive",
+      })
+    }
+  }
 
   const isActive = (path: string) => {
     if (path === "/" && currentPath === "/") return true
@@ -82,12 +102,23 @@ export function AppSidebar() {
 
         {/* Footer */}
         <div className="mt-auto p-4 border-t border-border/50">
-          <SidebarMenuItem>
-            <SidebarMenuButton>
-              <LogOut className="w-5 h-5 flex-shrink-0" />
-              {!collapsed && <span className="ml-3">Logout</span>}
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          <div className={collapsed ? "space-y-2" : "space-y-3"}>
+            {!collapsed && user && (
+              <div className="px-2">
+                <p className="text-xs text-muted-foreground">Logged in as:</p>
+                <p className="text-sm font-medium text-foreground truncate">{user.email}</p>
+              </div>
+            )}
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={handleLogout}
+                className="hover:bg-destructive/20 hover:text-destructive transition-colors"
+              >
+                <LogOut className="w-5 h-5 flex-shrink-0" />
+                {!collapsed && <span className="ml-3">Logout</span>}
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </div>
         </div>
       </SidebarContent>
     </Sidebar>

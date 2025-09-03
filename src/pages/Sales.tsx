@@ -141,7 +141,7 @@ export default function Sales() {
       // Create sale items
       const saleItems = cart.map(item => ({
         sale_id: saleData.id,
-        variant_id: item.product.id,
+        variant_id: Number(item.product.id),
         quantity: item.quantity,
         unit_price: item.product.price,
         cost_price: item.product.price * 0.6, // Estimated cost

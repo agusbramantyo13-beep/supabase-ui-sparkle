@@ -115,7 +115,7 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
         // Update variant if it exists
         if (product.variant_id) {
           const { error: variantError } = await supabase
-            .from('product_variants')
+            .from('variants')
             .update({
               name: formData.variant_name,
               price: parseFloat(formData.variant_price),
