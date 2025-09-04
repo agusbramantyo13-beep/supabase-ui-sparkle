@@ -204,7 +204,7 @@ export default function Sales() {
               <CardContent className="p-4">
                 <h3 className="font-semibold text-foreground truncate">{product.name}</h3>
                 <p className="text-sm text-muted-foreground">{product.category_name}</p>
-                <p className="text-lg font-bold text-primary mt-2">${product.price.toFixed(2)}</p>
+                <p className="text-lg font-bold text-primary mt-2">Rp {product.price.toLocaleString()}</p>
               </CardContent>
             </Card>
           ))}
@@ -240,7 +240,7 @@ export default function Sales() {
                     <div key={item.product.id} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
                       <div className="flex-1">
                         <h4 className="font-medium text-foreground">{item.product.name}</h4>
-                        <p className="text-sm text-muted-foreground">${item.product.price.toFixed(2)} each</p>
+                        <p className="text-sm text-muted-foreground">Rp {item.product.price.toLocaleString()} each</p>
                       </div>
                       
                       <div className="flex items-center gap-2">
@@ -272,7 +272,7 @@ export default function Sales() {
                       </div>
                       
                       <div className="text-right ml-4">
-                        <p className="font-semibold text-foreground">${item.subtotal.toFixed(2)}</p>
+                        <p className="font-semibold text-foreground">Rp {item.subtotal.toLocaleString()}</p>
                       </div>
                     </div>
                   ))}
@@ -283,7 +283,7 @@ export default function Sales() {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-semibold text-foreground">Total:</span>
-                    <span className="text-2xl font-bold text-primary">${getTotalAmount().toFixed(2)}</span>
+                    <span className="text-2xl font-bold text-primary">Rp {getTotalAmount().toLocaleString()}</span>
                   </div>
 
                   <Select value={paymentMethod} onValueChange={setPaymentMethod}>

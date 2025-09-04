@@ -19,7 +19,7 @@ export default function Settings() {
     storePhone: "+1 (555) 123-4567",
     storeEmail: "store@kenzho.com",
     taxRate: "8.25",
-    currency: "USD",
+    currency: "IDR",
     receiptFooter: "Thank you for your business!",
     
     // Notifications

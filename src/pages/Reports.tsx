@@ -132,7 +132,7 @@ export default function Reports() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Sales</p>
                 <p className="text-2xl font-bold text-foreground">
-                  ${reportData.totalSales.toLocaleString()}
+                  Rp {reportData.totalSales.toLocaleString()}
                 </p>
                 <p className="text-xs text-success">+12% from previous period</p>
               </div>
@@ -147,7 +147,7 @@ export default function Reports() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Profit</p>
                 <p className="text-2xl font-bold text-foreground">
-                  ${reportData.totalProfit.toLocaleString()}
+                  Rp {reportData.totalProfit.toLocaleString()}
                 </p>
                 <p className="text-xs text-success">+8% from previous period</p>
               </div>
@@ -177,7 +177,7 @@ export default function Reports() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Avg. Order Value</p>
                 <p className="text-2xl font-bold text-foreground">
-                  ${reportData.averageOrderValue.toFixed(2)}
+                  Rp {reportData.averageOrderValue.toFixed(2)}
                 </p>
                 <p className="text-xs text-success">+5% from previous period</p>
               </div>
@@ -223,10 +223,10 @@ export default function Reports() {
                   </div>
                   <div className="text-right">
                     <p className="font-semibold text-foreground">
-                      ${Number(day.total_sales || 0).toLocaleString()}
+                      Rp {Number(day.total_sales || 0).toLocaleString()}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Discounts: ${Number(day.total_discounts || 0).toFixed(2)}
+                      Discounts: Rp {Number(day.total_discounts || 0).toFixed(2)}
                     </p>
                   </div>
                 </div>
