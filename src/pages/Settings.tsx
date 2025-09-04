@@ -14,10 +14,10 @@ export default function Settings() {
   const { toast } = useToast();
   
   const [settings, setSettings] = useState({
-    storeName: "RetailPro Store",
+    storeName: "KENZHO Apps Store",
     storeAddress: "123 Main Street, City, State 12345",
     storePhone: "+1 (555) 123-4567",
-    storeEmail: "store@retailpro.com",
+    storeEmail: "store@kenzho.com",
     taxRate: "8.25",
     currency: "USD",
     receiptFooter: "Thank you for your business!",

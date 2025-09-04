@@ -40,7 +40,7 @@ const App = () => (
                         <header className="flex h-16 shrink-0 items-center gap-2 border-b border-border/50 px-4">
                           <SidebarTrigger className="mr-2" />
                           <div className="flex items-center gap-2">
-                            <h1 className="text-lg font-semibold">RetailPro</h1>
+                            <h1 className="text-lg font-semibold">KENZHO Apps</h1>
                           </div>
                         </header>
                         <main className="flex-1 p-6">
