@@ -588,7 +588,7 @@ export type Database = {
       applies_to: "global" | "product" | "variant" | "category"
       discount_type: "percentage" | "fixed"
       movement_type: "in" | "out"
-      user_role: "owner" | "warehouse_admin" | "cashier"
+      user_role: "owner" | "warehouse_admin" | "cashier" | "store_keeper"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -719,7 +719,7 @@ export const Constants = {
       applies_to: ["global", "product", "variant", "category"],
       discount_type: ["percentage", "fixed"],
       movement_type: ["in", "out"],
-      user_role: ["owner", "warehouse_admin", "cashier"],
+      user_role: ["owner", "warehouse_admin", "cashier", "store_keeper"],
     },
   },
 } as const

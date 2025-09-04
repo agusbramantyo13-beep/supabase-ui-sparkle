@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { User, UserPlus, Edit, Trash2, Shield, Mail } from "lucide-react";
+import { User, UserPlus, Edit, Trash2, Shield, ShoppingCart, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 interface UserProfile {
   id: string;
   email: string;
-  role: 'owner' | 'cashier' | 'warehouse_admin';
+  role: 'owner' | 'store_keeper' | 'cashier' | 'warehouse_admin';
   created_at: string;
 }
 
@@ -23,6 +23,11 @@ export default function Users() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserPassword, setNewUserPassword] = useState("");
+  const [newUserRole, setNewUserRole] = useState<'owner' | 'store_keeper'>('store_keeper');
+  const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -48,7 +53,7 @@ export default function Users() {
     setLoading(false);
   };
 
-  const updateUserRole = async (userId: string, newRole: 'owner' | 'cashier' | 'warehouse_admin') => {
+  const updateUserRole = async (userId: string, newRole: 'owner' | 'store_keeper') => {
     const { error } = await supabase
       .from('profiles')
       .update({ role: newRole })
@@ -72,14 +77,88 @@ export default function Users() {
     setDialogOpen(false);
   };
 
+  const createUser = async () => {
+    if (!newUserEmail || !newUserPassword || !newUserRole) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsCreating(true);
+
+    try {
+      // Create the user in Supabase Auth
+      const { data, error: authError } = await supabase.auth.signUp({
+        email: newUserEmail,
+        password: newUserPassword,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+        }
+      });
+
+      if (authError) {
+        toast({
+          title: "Error",
+          description: authError.message,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      if (data.user) {
+        // Create profile entry
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([{
+            id: data.user.id,
+            email: newUserEmail,
+            role: newUserRole
+          }]);
+
+        if (profileError) {
+          toast({
+            title: "Error",
+            description: "Failed to create user profile",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        toast({
+          title: "Success",
+          description: "User created successfully",
+        });
+
+        // Reset form and close dialog
+        setNewUserEmail("");
+        setNewUserPassword("");
+        setNewUserRole('store_keeper');
+        setAddDialogOpen(false);
+        fetchUsers();
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'owner':
         return 'bg-gradient-primary text-primary-foreground';
-      case 'warehouse_admin':
-        return 'bg-gradient-success text-success-foreground';
+      case 'store_keeper':
       case 'cashier':
         return 'bg-secondary text-secondary-foreground';
+      case 'warehouse_admin':
+        return 'bg-muted text-muted-foreground';
       default:
         return 'bg-muted text-muted-foreground';
     }
@@ -89,12 +168,27 @@ export default function Users() {
     switch (role) {
       case 'owner':
         return <Shield className="w-4 h-4" />;
+      case 'store_keeper':
+      case 'cashier':
+        return <ShoppingCart className="w-4 h-4" />;
       case 'warehouse_admin':
         return <User className="w-4 h-4" />;
-      case 'cashier':
-        return <Mail className="w-4 h-4" />;
       default:
         return <User className="w-4 h-4" />;
+    }
+  };
+
+  const getRoleDisplayName = (role: string) => {
+    switch (role) {
+      case 'owner':
+        return 'Pemilik';
+      case 'store_keeper':
+      case 'cashier':
+        return 'Penjaga Toko';
+      case 'warehouse_admin':
+        return 'Admin Gudang';
+      default:
+        return role;
     }
   };
 
@@ -128,10 +222,78 @@ export default function Users() {
           <h1 className="text-3xl font-bold text-foreground">Users</h1>
           <p className="text-muted-foreground">Manage user accounts and roles</p>
         </div>
-        <Button className="bg-gradient-primary hover:bg-primary/90">
-          <UserPlus className="w-4 h-4 mr-2" />
-          Add User
-        </Button>
+        <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-gradient-primary hover:bg-primary/90">
+              <UserPlus className="w-4 h-4 mr-2" />
+              Add User
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New User</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="user@example.com"
+                  value={newUserEmail}
+                  onChange={(e) => setNewUserEmail(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Enter password"
+                  value={newUserPassword}
+                  onChange={(e) => setNewUserPassword(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Role</Label>
+                <Select value={newUserRole} onValueChange={(value: 'owner' | 'store_keeper') => setNewUserRole(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="store_keeper">
+                      <div className="flex items-center gap-2">
+                        <ShoppingCart className="w-4 h-4" />
+                        Penjaga Toko (Store Keeper)
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="owner">
+                      <div className="flex items-center gap-2">
+                        <Shield className="w-4 h-4" />
+                        Pemilik (Owner)
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setAddDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={createUser}
+                  disabled={isCreating}
+                  className="bg-gradient-primary hover:bg-primary/90"
+                >
+                  {isCreating ? "Creating..." : "Create User"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="flex items-center gap-4">
@@ -151,10 +313,14 @@ export default function Users() {
             <p className="text-muted-foreground mb-4">
               {searchTerm ? "No users match your search criteria" : "No users have been added yet"}
             </p>
-            <Button className="bg-gradient-primary hover:bg-primary/90">
-              <UserPlus className="w-4 h-4 mr-2" />
-              Add First User
-            </Button>
+            <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-gradient-primary hover:bg-primary/90">
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Add First User
+                </Button>
+              </DialogTrigger>
+            </Dialog>
           </CardContent>
         </Card>
       ) : (
@@ -181,12 +347,12 @@ export default function Users() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Role</span>
-                    <Badge className={getRoleBadgeColor(user.role)}>
-                      <div className="flex items-center gap-1">
-                        {getRoleIcon(user.role)}
-                        <span className="capitalize">{user.role.replace('_', ' ')}</span>
-                      </div>
-                    </Badge>
+                     <Badge className={getRoleBadgeColor(user.role)}>
+                       <div className="flex items-center gap-1">
+                         {getRoleIcon(user.role)}
+                         <span>{getRoleDisplayName(user.role)}</span>
+                       </div>
+                     </Badge>
                   </div>
 
                   <div className="flex gap-2">
@@ -216,7 +382,7 @@ export default function Users() {
                               <Label>Role</Label>
                               <Select
                                 defaultValue={selectedUser.role}
-                                onValueChange={(value: 'owner' | 'cashier' | 'warehouse_admin') => 
+                                onValueChange={(value: 'owner' | 'store_keeper') => 
                                   updateUserRole(selectedUser.id, value)
                                 }
                               >
@@ -224,22 +390,16 @@ export default function Users() {
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="cashier">
+                                  <SelectItem value="store_keeper">
                                     <div className="flex items-center gap-2">
-                                      <Mail className="w-4 h-4" />
-                                      Cashier
-                                    </div>
-                                  </SelectItem>
-                                  <SelectItem value="warehouse_admin">
-                                    <div className="flex items-center gap-2">
-                                      <User className="w-4 h-4" />
-                                      Warehouse Admin
+                                      <ShoppingCart className="w-4 h-4" />
+                                      Penjaga Toko (Store Keeper)
                                     </div>
                                   </SelectItem>
                                   <SelectItem value="owner">
                                     <div className="flex items-center gap-2">
                                       <Shield className="w-4 h-4" />
-                                      Owner
+                                      Pemilik (Owner)
                                     </div>
                                   </SelectItem>
                                 </SelectContent>
