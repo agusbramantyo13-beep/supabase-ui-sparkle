@@ -109,22 +109,22 @@ export default function Users() {
       }
 
       if (data.user) {
-        // Create profile entry
-        const { error: profileError } = await supabase
+        // Wait a bit for the trigger to create the profile
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Update the role since the trigger sets it to 'cashier' by default
+        const { error: roleError } = await supabase
           .from('profiles')
-          .insert([{
-            id: data.user.id,
-            email: newUserEmail,
-            role: newUserRole
-          }]);
+          .update({ role: newUserRole })
+          .eq('id', data.user.id);
 
-        if (profileError) {
+        if (roleError) {
+          console.error("Role update error:", roleError);
           toast({
-            title: "Error",
-            description: "Failed to create user profile",
+            title: "Warning",
+            description: "User created but role update failed. You can edit the role manually.",
             variant: "destructive"
           });
-          return;
         }
 
         toast({
@@ -140,6 +140,7 @@ export default function Users() {
         fetchUsers();
       }
     } catch (error) {
+      console.error("Create user error:", error);
       toast({
         title: "Error",
         description: "An unexpected error occurred",
