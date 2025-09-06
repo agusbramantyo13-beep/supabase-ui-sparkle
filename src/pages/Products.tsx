@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { ProductForm } from "@/components/ProductForm"
 import { useToast } from "@/hooks/use-toast"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 
 interface Product {
   id: number
@@ -24,6 +25,9 @@ export default function Products() {
   const [searchTerm, setSearchTerm] = useState("")
   const [productFormOpen, setProductFormOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<any>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -47,6 +51,43 @@ export default function Products() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleDeleteProduct = async () => {
+    if (!productToDelete) return
+
+    setIsDeleting(true)
+    try {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', productToDelete.id)
+
+      if (error) throw error
+
+      toast({
+        title: "Success",
+        description: "Product deleted successfully",
+      })
+
+      fetchProducts()
+      setDeleteDialogOpen(false)
+      setProductToDelete(null)
+    } catch (error) {
+      console.error('Error deleting product:', error)
+      toast({
+        title: "Error",
+        description: "Failed to delete product",
+        variant: "destructive"
+      })
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const openDeleteDialog = (product: Product) => {
+    setProductToDelete(product)
+    setDeleteDialogOpen(true)
   }
 
   const filteredProducts = products.filter(product =>
@@ -141,10 +182,17 @@ export default function Products() {
                         setProductFormOpen(true);
                       }}
                     >
+                      <Edit className="w-3 h-3 mr-1" />
                       Edit
                     </Button>
-                    <Button variant="outline" size="sm" className="flex-1">
-                      View
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1 text-destructive hover:text-destructive"
+                      onClick={() => openDeleteDialog(product)}
+                    >
+                      <Trash2 className="w-3 h-3 mr-1" />
+                      Delete
                     </Button>
                   </div>
                 </div>
@@ -180,6 +228,28 @@ export default function Products() {
         }}
         product={selectedProduct}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Product</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{productToDelete?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteProduct}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
