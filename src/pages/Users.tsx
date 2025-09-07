@@ -113,26 +113,50 @@ export default function Users() {
       }
 
       if (data.user) {
-        // Wait longer for the trigger to create the profile
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Wait for the trigger to create the profile and then update role
+        let retryCount = 0;
+        let profileExists = false;
         
-        // Update the role since the trigger sets it to 'cashier' by default
-        const { error: roleError } = await supabase
-          .from('profiles')
-          .update({ role: newUserRole })
-          .eq('id', data.user.id);
+        // Check if profile was created by trigger (retry up to 5 times)
+        while (retryCount < 5 && !profileExists) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('id', data.user.id)
+            .single();
+            
+          if (profileData) {
+            profileExists = true;
+          } else {
+            retryCount++;
+          }
+        }
+        
+        if (profileExists) {
+          // Update the role since the trigger sets it to 'cashier' by default
+          const { error: roleError } = await supabase
+            .from('profiles')
+            .update({ role: newUserRole })
+            .eq('id', data.user.id);
 
-        if (roleError) {
-          console.error("Role update error:", roleError);
-          // Still show success since user was created, just role needs manual update
-          toast({
-            title: "Warning",
-            description: "User created but role update failed. You can edit the role manually.",
-          });
+          if (roleError) {
+            console.error("Role update error:", roleError);
+            toast({
+              title: "Warning", 
+              description: "User created but role update failed. You can edit the role manually.",
+            });
+          } else {
+            toast({
+              title: "Success",
+              description: "User created successfully",
+            });
+          }
         } else {
           toast({
-            title: "Success",
-            description: "User created successfully",
+            title: "Warning",
+            description: "User account created but profile setup is pending. Please refresh the page.",
           });
         }
 
@@ -142,8 +166,7 @@ export default function Users() {
         setNewUserRole('store_keeper');
         setAddDialogOpen(false);
         
-        // Wait a bit more then refresh the user list
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Force refresh the user list
         await fetchUsers();
       }
     } catch (error) {
