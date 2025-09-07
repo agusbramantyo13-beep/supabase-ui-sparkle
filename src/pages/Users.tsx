@@ -113,8 +113,8 @@ export default function Users() {
       }
 
       if (data.user) {
-        // Wait a bit for the trigger to create the profile
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Wait longer for the trigger to create the profile
+        await new Promise(resolve => setTimeout(resolve, 2000));
         
         // Update the role since the trigger sets it to 'cashier' by default
         const { error: roleError } = await supabase
@@ -124,24 +124,27 @@ export default function Users() {
 
         if (roleError) {
           console.error("Role update error:", roleError);
+          // Still show success since user was created, just role needs manual update
           toast({
             title: "Warning",
             description: "User created but role update failed. You can edit the role manually.",
-            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Success",
+            description: "User created successfully",
           });
         }
-
-        toast({
-          title: "Success",
-          description: "User created successfully",
-        });
 
         // Reset form and close dialog
         setNewUserEmail("");
         setNewUserPassword("");
         setNewUserRole('store_keeper');
         setAddDialogOpen(false);
-        fetchUsers();
+        
+        // Wait a bit more then refresh the user list
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await fetchUsers();
       }
     } catch (error) {
       console.error("Create user error:", error);
