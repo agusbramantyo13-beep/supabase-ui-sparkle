@@ -113,51 +113,68 @@ export default function Users() {
       }
 
       if (data.user) {
-        // Wait for the trigger to create the profile and then update role
+        // Wait for the trigger to create the profile
         let retryCount = 0;
         let profileExists = false;
         
-        // Check if profile was created by trigger (retry up to 5 times)
-        while (retryCount < 5 && !profileExists) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
+        // Check if profile was created by trigger (retry up to 10 times with increasing delays)
+        while (retryCount < 10 && !profileExists) {
+          const delay = Math.min(1000 * Math.pow(1.5, retryCount), 5000); // Exponential backoff, max 5s
+          await new Promise(resolve => setTimeout(resolve, delay));
           
-          const { data: profileData } = await supabase
+          const { data: profileData, error: profileError } = await supabase
             .from('profiles')
-            .select('id')
+            .select('id, role')
             .eq('id', data.user.id)
-            .single();
+            .maybeSingle();
             
-          if (profileData) {
+          if (profileData && !profileError) {
             profileExists = true;
+            
+            // Only update role if it's different from what we want
+            if (profileData.role !== newUserRole) {
+              const { error: roleError } = await supabase
+                .from('profiles')
+                .update({ role: newUserRole })
+                .eq('id', data.user.id);
+
+              if (roleError) {
+                console.error("Role update error:", roleError);
+              }
+            }
           } else {
             retryCount++;
           }
         }
         
         if (profileExists) {
-          // Update the role since the trigger sets it to 'cashier' by default
-          const { error: roleError } = await supabase
+          toast({
+            title: "Success",
+            description: "User created successfully",
+          });
+        } else {
+          // If profile still doesn't exist, try to create it manually as fallback
+          const { error: manualProfileError } = await supabase
             .from('profiles')
-            .update({ role: newUserRole })
-            .eq('id', data.user.id);
+            .insert({
+              id: data.user.id,
+              email: newUserEmail,
+              role: newUserRole
+            });
 
-          if (roleError) {
-            console.error("Role update error:", roleError);
+          if (manualProfileError) {
+            console.error("Manual profile creation error:", manualProfileError);
             toast({
-              title: "Warning", 
-              description: "User created but role update failed. You can edit the role manually.",
+              title: "Warning",
+              description: "User account created but profile setup failed. Contact administrator.",
+              variant: "destructive"
             });
           } else {
             toast({
-              title: "Success",
-              description: "User created successfully",
+              title: "Success", 
+              description: "User created successfully (with manual profile setup)",
             });
           }
-        } else {
-          toast({
-            title: "Warning",
-            description: "User account created but profile setup is pending. Please refresh the page.",
-          });
         }
 
         // Reset form and close dialog
