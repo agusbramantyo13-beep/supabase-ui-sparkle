@@ -143,6 +143,62 @@ export type Database = {
           },
         ]
       }
+      members: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          created_by: string | null
+          date_of_birth: string | null
+          email: string | null
+          id: string
+          member_code: string | null
+          name: string
+          phone: string | null
+          points: number | null
+          status: string | null
+          total_purchases: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          date_of_birth?: string | null
+          email?: string | null
+          id?: string
+          member_code?: string | null
+          name: string
+          phone?: string | null
+          points?: number | null
+          status?: string | null
+          total_purchases?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          date_of_birth?: string | null
+          email?: string | null
+          id?: string
+          member_code?: string | null
+          name?: string
+          phone?: string | null
+          points?: number | null
+          status?: string | null
+          total_purchases?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "members_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           created_at: string | null
@@ -582,7 +638,10 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      generate_member_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       applies_to: "global" | "product" | "variant" | "category"
