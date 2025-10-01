@@ -45,10 +45,8 @@ export default function Settings() {
     switch (role) {
       case 'owner':
         return 'default';
-      case 'admin':
+      case 'store_keeper':
         return 'secondary';
-      case 'warehouse_admin':
-        return 'outline';
       default:
         return 'secondary';
     }
@@ -57,13 +55,9 @@ export default function Settings() {
   const getRoleLabel = (role: string) => {
     switch (role) {
       case 'owner':
-        return 'Owner';
-      case 'admin':
-        return 'Admin';
-      case 'warehouse_admin':
-        return 'Warehouse Admin';
-      case 'cashier':
-        return 'Kasir';
+        return 'Pemilik (Owner)';
+      case 'store_keeper':
+        return 'Penjaga Toko (Store Keeper)';
       default:
         return role;
     }
@@ -154,8 +148,8 @@ export default function Settings() {
               <div className="space-y-4">
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-1">Role / Hak Akses</h4>
-                  <Badge variant={getRoleBadgeVariant(userProfile?.role || 'cashier')} className="text-sm">
-                    {getRoleLabel(userProfile?.role || 'cashier')}
+                  <Badge variant={getRoleBadgeVariant(userProfile?.role || 'store_keeper')} className="text-sm">
+                    {getRoleLabel(userProfile?.role || 'store_keeper')}
                   </Badge>
                 </div>
                 <div>

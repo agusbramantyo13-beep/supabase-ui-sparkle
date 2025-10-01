@@ -573,6 +573,27 @@ export type Database = {
         }
         Relationships: []
       }
+      users: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       variants: {
         Row: {
           created_at: string | null
@@ -647,7 +668,7 @@ export type Database = {
       applies_to: "global" | "product" | "variant" | "category"
       discount_type: "percentage" | "fixed"
       movement_type: "in" | "out"
-      user_role: "owner" | "warehouse_admin" | "cashier" | "store_keeper"
+      user_role: "owner" | "store_keeper"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -778,7 +799,7 @@ export const Constants = {
       applies_to: ["global", "product", "variant", "category"],
       discount_type: ["percentage", "fixed"],
       movement_type: ["in", "out"],
-      user_role: ["owner", "warehouse_admin", "cashier", "store_keeper"],
+      user_role: ["owner", "store_keeper"],
     },
   },
 } as const

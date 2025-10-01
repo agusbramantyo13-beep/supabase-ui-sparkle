@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 interface UserProfile {
   id: string;
   email: string;
-  role: 'owner' | 'store_keeper' | 'cashier' | 'warehouse_admin';
+  role: 'owner' | 'store_keeper';
   created_at: string;
 }
 
@@ -240,10 +240,7 @@ export default function Users() {
       case 'owner':
         return 'bg-gradient-primary text-primary-foreground';
       case 'store_keeper':
-      case 'cashier':
         return 'bg-secondary text-secondary-foreground';
-      case 'warehouse_admin':
-        return 'bg-muted text-muted-foreground';
       default:
         return 'bg-muted text-muted-foreground';
     }
@@ -254,10 +251,7 @@ export default function Users() {
       case 'owner':
         return <Shield className="w-4 h-4" />;
       case 'store_keeper':
-      case 'cashier':
-        return <ShoppingCart className="w-4 h-4" />;
-      case 'warehouse_admin':
-        return <User className="w-4 h-4" />;
+        return <Store className="w-4 h-4" />;
       default:
         return <User className="w-4 h-4" />;
     }
@@ -268,10 +262,7 @@ export default function Users() {
       case 'owner':
         return 'Pemilik';
       case 'store_keeper':
-      case 'cashier':
         return 'Penjaga Toko';
-      case 'warehouse_admin':
-        return 'Admin Gudang';
       default:
         return role;
     }
