@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Settings as SettingsIcon, Store, Users, CreditCard, Bell, Shield, Database } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Settings as SettingsIcon, Store, Users, CreditCard, Bell, Shield, Database, User as UserIcon } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,11 +8,67 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
 
 export default function Settings() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
   
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) return;
+      
+      setLoadingProfile(true);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching profile:', error);
+      } else {
+        setUserProfile(data);
+      }
+      setLoadingProfile(false);
+    };
+    
+    fetchUserProfile();
+  }, [user]);
+
+  const getRoleBadgeVariant = (role: string) => {
+    switch (role) {
+      case 'owner':
+        return 'default';
+      case 'admin':
+        return 'secondary';
+      case 'warehouse_admin':
+        return 'outline';
+      default:
+        return 'secondary';
+    }
+  };
+
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case 'owner':
+        return 'Owner';
+      case 'admin':
+        return 'Admin';
+      case 'warehouse_admin':
+        return 'Warehouse Admin';
+      case 'cashier':
+        return 'Kasir';
+      default:
+        return role;
+    }
+  };
+
   const [settings, setSettings] = useState({
     storeName: "KENZHO Apps Store",
     storeAddress: "123 Main Street, City, State 12345",
@@ -69,6 +125,59 @@ export default function Settings() {
           {loading ? "Saving..." : "Save Changes"}
         </Button>
       </div>
+
+      {/* User Info Card */}
+      <Card className="bg-gradient-card border-border/50">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <UserIcon className="w-5 h-5 text-primary" />
+            <CardTitle>Informasi Pengguna Login</CardTitle>
+          </div>
+          <CardDescription>Detail akun dan hak akses yang sedang aktif</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loadingProfile ? (
+            <p className="text-muted-foreground">Memuat data pengguna...</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Email</h4>
+                  <p className="text-base text-foreground">{user?.email || '-'}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">User ID</h4>
+                  <p className="text-xs text-muted-foreground font-mono">{user?.id || '-'}</p>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Role / Hak Akses</h4>
+                  <Badge variant={getRoleBadgeVariant(userProfile?.role || 'cashier')} className="text-sm">
+                    {getRoleLabel(userProfile?.role || 'cashier')}
+                  </Badge>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Tanggal Dibuat</h4>
+                  <p className="text-base text-foreground">
+                    {userProfile?.created_at 
+                      ? new Date(userProfile.created_at).toLocaleDateString('id-ID', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })
+                      : '-'
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Tabs defaultValue="store" className="space-y-6">
         <TabsList className="grid grid-cols-4 w-full max-w-md">
