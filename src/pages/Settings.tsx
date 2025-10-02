@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Settings as SettingsIcon, Store, Users, CreditCard, Bell, Shield, Database, User as UserIcon } from "lucide-react";
+import { Settings as SettingsIcon, Store, Users, CreditCard, Bell, Shield, Database, User as UserIcon, Printer, Upload, Bluetooth } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,7 +81,17 @@ export default function Settings() {
     requireLoginForSales: true,
     sessionTimeout: "60",
     enableAuditLog: true,
+
+    // Printer & Receipt
+    printerConnected: false,
+    receiptLogo: "",
+    receiptPhone: "",
+    receiptInstagram: "",
+    receiptWhatsapp: "",
+    receiptCustomText: "",
   });
+
+  const [bluetoothDevice, setBluetoothDevice] = useState<any>(null);
 
   const handleSave = async () => {
     setLoading(true);
@@ -102,6 +112,69 @@ export default function Settings() {
       ...prev,
       [key]: value
     }));
+  };
+
+  const handleConnectPrinter = async () => {
+    try {
+      // @ts-ignore - Web Bluetooth API
+      if (!navigator.bluetooth) {
+        toast({
+          title: "Tidak Didukung",
+          description: "Browser Anda tidak mendukung Bluetooth API. Gunakan Chrome atau Edge.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // @ts-ignore
+      const device = await navigator.bluetooth.requestDevice({
+        filters: [{ services: ['000018f0-0000-1000-8000-00805f9b34fb'] }],
+        optionalServices: ['battery_service']
+      });
+
+      setBluetoothDevice(device);
+      handleSettingChange('printerConnected', true);
+      
+      toast({
+        title: "Berhasil",
+        description: `Printer ${device.name} terhubung`,
+      });
+    } catch (error) {
+      console.error('Bluetooth error:', error);
+      toast({
+        title: "Gagal",
+        description: "Gagal menghubungkan printer",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDisconnectPrinter = () => {
+    if (bluetoothDevice?.gatt?.connected) {
+      bluetoothDevice.gatt.disconnect();
+    }
+    setBluetoothDevice(null);
+    handleSettingChange('printerConnected', false);
+    
+    toast({
+      title: "Terputus",
+      description: "Printer telah diputus",
+    });
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        handleSettingChange('receiptLogo', reader.result as string);
+        toast({
+          title: "Berhasil",
+          description: "Logo berhasil diunggah",
+        });
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
@@ -174,8 +247,9 @@ export default function Settings() {
       </Card>
 
       <Tabs defaultValue="store" className="space-y-6">
-        <TabsList className="grid grid-cols-4 w-full max-w-md">
+        <TabsList className="grid grid-cols-5 w-full max-w-2xl">
           <TabsTrigger value="store">Store</TabsTrigger>
+          <TabsTrigger value="printer">Printer</TabsTrigger>
           <TabsTrigger value="notifications">Alerts</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="system">System</TabsTrigger>
@@ -262,6 +336,199 @@ export default function Settings() {
                     onChange={(e) => handleSettingChange('receiptFooter', e.target.value)}
                     placeholder="Message to show on receipt footer"
                   />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="printer" className="space-y-6">
+          <Card className="bg-gradient-card border-border/50">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Printer className="w-5 h-5 text-primary" />
+                <CardTitle>Koneksi Printer Bluetooth</CardTitle>
+              </div>
+              <CardDescription>Hubungkan printer thermal untuk mencetak struk</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Bluetooth className="w-8 h-8 text-primary" />
+                  <div>
+                    <h4 className="font-medium">
+                      {settings.printerConnected 
+                        ? (bluetoothDevice?.name || "Printer Terhubung") 
+                        : "Tidak Ada Printer"}
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      {settings.printerConnected ? "Status: Terhubung" : "Status: Tidak Terhubung"}
+                    </p>
+                  </div>
+                </div>
+                {settings.printerConnected ? (
+                  <Button variant="destructive" onClick={handleDisconnectPrinter}>
+                    Putuskan
+                  </Button>
+                ) : (
+                  <Button onClick={handleConnectPrinter}>
+                    <Bluetooth className="w-4 h-4 mr-2" />
+                    Hubungkan
+                  </Button>
+                )}
+              </div>
+              
+              <p className="text-sm text-muted-foreground">
+                Catatan: Fitur Bluetooth hanya bekerja di browser Chrome atau Edge dengan HTTPS
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-card border-border/50">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-primary" />
+                <CardTitle>Desain Struk Nota</CardTitle>
+              </div>
+              <CardDescription>Kustomisasi tampilan struk belanja Anda</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <Label htmlFor="logo">Logo Toko</Label>
+                <div className="mt-2 flex items-center gap-4">
+                  {settings.receiptLogo && (
+                    <img 
+                      src={settings.receiptLogo} 
+                      alt="Logo" 
+                      className="w-20 h-20 object-contain border rounded"
+                    />
+                  )}
+                  <div>
+                    <input
+                      type="file"
+                      id="logo"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                    />
+                    <Button 
+                      variant="outline" 
+                      onClick={() => document.getElementById('logo')?.click()}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      {settings.receiptLogo ? "Ganti Logo" : "Upload Logo"}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Informasi Kontak</h3>
+                
+                <div>
+                  <Label htmlFor="receiptPhone">Nomor Telepon</Label>
+                  <Input
+                    id="receiptPhone"
+                    placeholder="Contoh: 0812-3456-7890"
+                    value={settings.receiptPhone}
+                    onChange={(e) => handleSettingChange('receiptPhone', e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="receiptWhatsapp">Nomor WhatsApp</Label>
+                  <Input
+                    id="receiptWhatsapp"
+                    placeholder="Contoh: 0812-3456-7890"
+                    value={settings.receiptWhatsapp}
+                    onChange={(e) => handleSettingChange('receiptWhatsapp', e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="receiptInstagram">Akun Instagram</Label>
+                  <Input
+                    id="receiptInstagram"
+                    placeholder="Contoh: @namatoko"
+                    value={settings.receiptInstagram}
+                    onChange={(e) => handleSettingChange('receiptInstagram', e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="receiptCustomText">Teks Tambahan</Label>
+                  <Input
+                    id="receiptCustomText"
+                    placeholder="Contoh: Terima kasih atas kunjungan Anda!"
+                    value={settings.receiptCustomText}
+                    onChange={(e) => handleSettingChange('receiptCustomText', e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold">Preview Struk</h3>
+                <div className="border rounded-lg p-6 bg-white text-black max-w-sm mx-auto font-mono text-sm">
+                  {settings.receiptLogo && (
+                    <div className="flex justify-center mb-4">
+                      <img 
+                        src={settings.receiptLogo} 
+                        alt="Logo" 
+                        className="w-16 h-16 object-contain"
+                      />
+                    </div>
+                  )}
+                  <div className="text-center space-y-1">
+                    <p className="font-bold text-base">{settings.storeName}</p>
+                    <p className="text-xs">{settings.storeAddress}</p>
+                    {settings.receiptPhone && (
+                      <p className="text-xs">Telp: {settings.receiptPhone}</p>
+                    )}
+                    {settings.receiptWhatsapp && (
+                      <p className="text-xs">WA: {settings.receiptWhatsapp}</p>
+                    )}
+                    {settings.receiptInstagram && (
+                      <p className="text-xs">IG: {settings.receiptInstagram}</p>
+                    )}
+                  </div>
+                  <div className="border-t border-dashed border-black my-3"></div>
+                  <div className="text-xs">
+                    <p>Tanggal: {new Date().toLocaleDateString('id-ID')}</p>
+                    <p>Waktu: {new Date().toLocaleTimeString('id-ID')}</p>
+                  </div>
+                  <div className="border-t border-dashed border-black my-3"></div>
+                  <div className="text-xs space-y-1">
+                    <div className="flex justify-between">
+                      <span>Produk A x1</span>
+                      <span>Rp 10.000</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Produk B x2</span>
+                      <span>Rp 20.000</span>
+                    </div>
+                  </div>
+                  <div className="border-t border-dashed border-black my-3"></div>
+                  <div className="text-xs space-y-1">
+                    <div className="flex justify-between">
+                      <span>Subtotal:</span>
+                      <span>Rp 30.000</span>
+                    </div>
+                    <div className="flex justify-between font-bold">
+                      <span>TOTAL:</span>
+                      <span>Rp 30.000</span>
+                    </div>
+                  </div>
+                  <div className="border-t border-dashed border-black my-3"></div>
+                  <div className="text-center text-xs space-y-1">
+                    <p>{settings.receiptFooter}</p>
+                    {settings.receiptCustomText && (
+                      <p>{settings.receiptCustomText}</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </CardContent>
