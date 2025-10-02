@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ReportData {
   totalSales: number;
@@ -15,6 +16,8 @@ interface ReportData {
 }
 
 export default function Reports() {
+  const { user } = useAuth();
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [reportData, setReportData] = useState<ReportData>({
     totalSales: 0,
     totalProfit: 0,
@@ -25,6 +28,22 @@ export default function Reports() {
   });
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState("30");
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      if (user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .maybeSingle();
+        
+        setUserRole(data?.role || null);
+      }
+    };
+    
+    fetchUserRole();
+  }, [user]);
 
   useEffect(() => {
     fetchReportData();
@@ -52,15 +71,19 @@ export default function Reports() {
         .gte('day', startDate.toISOString().split('T')[0])
         .lte('day', endDate.toISOString().split('T')[0]);
 
-      // Fetch profit data
-      const { data: profitData } = await supabase
-        .from('v_profit_by_date')
-        .select('*')
-        .gte('day', startDate.toISOString().split('T')[0])
-        .lte('day', endDate.toISOString().split('T')[0]);
+      // Fetch profit data (only if not store keeper)
+      let totalProfit = 0;
+      if (userRole !== 'store_keeper') {
+        const { data: profitData } = await supabase
+          .from('v_profit_by_date')
+          .select('*')
+          .gte('day', startDate.toISOString().split('T')[0])
+          .lte('day', endDate.toISOString().split('T')[0]);
+        
+        totalProfit = profitData?.reduce((sum, profit) => sum + Number(profit.profit || 0), 0) || 0;
+      }
 
       const totalSales = salesData?.reduce((sum, sale) => sum + Number(sale.total || 0), 0) || 0;
-      const totalProfit = profitData?.reduce((sum, profit) => sum + Number(profit.profit || 0), 0) || 0;
       const totalTransactions = salesData?.length || 0;
       const averageOrderValue = totalTransactions > 0 ? totalSales / totalTransactions : 0;
 
@@ -141,20 +164,22 @@ export default function Reports() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-card border-border/50">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Profit</p>
-                <p className="text-2xl font-bold text-foreground">
-                  Rp {reportData.totalProfit.toLocaleString()}
-                </p>
-                <p className="text-xs text-success">+8% from previous period</p>
+        {userRole !== 'store_keeper' && (
+          <Card className="bg-gradient-card border-border/50">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Total Profit</p>
+                  <p className="text-2xl font-bold text-foreground">
+                    Rp {reportData.totalProfit.toLocaleString()}
+                  </p>
+                  <p className="text-xs text-success">+8% from previous period</p>
+                </div>
+                <TrendingUp className="w-8 h-8 text-success" />
               </div>
-              <TrendingUp className="w-8 h-8 text-success" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="bg-gradient-card border-border/50">
           <CardContent className="p-6">
