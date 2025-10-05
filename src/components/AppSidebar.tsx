@@ -23,6 +23,7 @@ const menuItems = [
   { title: "Inventory", url: "/inventory", icon: Warehouse },
   { title: "Members", url: "/members", icon: UserCheck },
   { title: "Transaction History", url: "/transaction-history", icon: Receipt },
+  { title: "Attendance", url: "/attendance", icon: UserCheck },
   { title: "Reports", url: "/reports", icon: BarChart3 },
   { title: "Users", url: "/users", icon: Users },
   { title: "Settings", url: "/settings", icon: Settings },
