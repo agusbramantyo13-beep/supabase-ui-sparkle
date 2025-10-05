@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { RoleBasedRoute } from "@/components/RoleBasedRoute";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
 import Categories from "./pages/Categories";
@@ -48,17 +49,61 @@ const App = () => (
                         </header>
                         <main className="flex-1 p-6">
                           <Routes>
-                            <Route path="/" element={<Index />} />
-                            <Route path="/products" element={<Products />} />
-                            <Route path="/categories" element={<Categories />} />
-                            <Route path="/inventory" element={<Inventory />} />
-                            <Route path="/sales" element={<Sales />} />
-                            <Route path="/users" element={<Users />} />
-                            <Route path="/reports" element={<Reports />} />
-                            <Route path="/transaction-history" element={<TransactionHistory />} />
-                            <Route path="/attendance" element={<Attendance />} />
-                            <Route path="/members" element={<Members />} />
-                            <Route path="/settings" element={<Settings />} />
+                            <Route path="/" element={
+                              <RoleBasedRoute allowedRoles={["owner"]}>
+                                <Index />
+                              </RoleBasedRoute>
+                            } />
+                            <Route path="/products" element={
+                              <RoleBasedRoute allowedRoles={["owner"]}>
+                                <Products />
+                              </RoleBasedRoute>
+                            } />
+                            <Route path="/categories" element={
+                              <RoleBasedRoute allowedRoles={["owner"]}>
+                                <Categories />
+                              </RoleBasedRoute>
+                            } />
+                            <Route path="/inventory" element={
+                              <RoleBasedRoute allowedRoles={["owner"]}>
+                                <Inventory />
+                              </RoleBasedRoute>
+                            } />
+                            <Route path="/sales" element={
+                              <RoleBasedRoute allowedRoles={["owner", "store_keeper"]}>
+                                <Sales />
+                              </RoleBasedRoute>
+                            } />
+                            <Route path="/users" element={
+                              <RoleBasedRoute allowedRoles={["owner"]}>
+                                <Users />
+                              </RoleBasedRoute>
+                            } />
+                            <Route path="/reports" element={
+                              <RoleBasedRoute allowedRoles={["owner"]}>
+                                <Reports />
+                              </RoleBasedRoute>
+                            } />
+                            <Route path="/transaction-history" element={
+                              <RoleBasedRoute allowedRoles={["owner"]}>
+                                <TransactionHistory />
+                              </RoleBasedRoute>
+                            } />
+                            <Route path="/attendance" element={
+                              <RoleBasedRoute allowedRoles={["owner", "store_keeper"]}>
+                                <Attendance />
+                              </RoleBasedRoute>
+                            } />
+                            <Route path="/members" element={
+                              <RoleBasedRoute allowedRoles={["owner", "store_keeper"]}>
+                                <Members />
+                              </RoleBasedRoute>
+                            } />
+                            <Route path="/settings" element={
+                              <RoleBasedRoute allowedRoles={["owner", "store_keeper"]}>
+                                <Settings />
+                              </RoleBasedRoute>
+                            } />
                             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                             <Route path="*" element={<NotFound />} />
                           </Routes>

@@ -1,7 +1,9 @@
+import { useState, useEffect } from "react"
 import { LayoutDashboard, Package, ShoppingCart, Warehouse, Users, BarChart3, Settings, LogOut, UserCheck, Receipt } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/use-toast"
+import { supabase } from "@/integrations/supabase/client"
 
 import {
   Sidebar,
@@ -15,18 +17,18 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 
-const menuItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Products", url: "/products", icon: Package },
-  { title: "Categories", url: "/categories", icon: Package },
-  { title: "Sales", url: "/sales", icon: ShoppingCart },
-  { title: "Inventory", url: "/inventory", icon: Warehouse },
-  { title: "Members", url: "/members", icon: UserCheck },
-  { title: "Transaction History", url: "/transaction-history", icon: Receipt },
-  { title: "Attendance", url: "/attendance", icon: UserCheck },
-  { title: "Reports", url: "/reports", icon: BarChart3 },
-  { title: "Users", url: "/users", icon: Users },
-  { title: "Settings", url: "/settings", icon: Settings },
+const allMenuItems = [
+  { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: ["owner"] },
+  { title: "Products", url: "/products", icon: Package, roles: ["owner"] },
+  { title: "Categories", url: "/categories", icon: Package, roles: ["owner"] },
+  { title: "Sales", url: "/sales", icon: ShoppingCart, roles: ["owner", "store_keeper"] },
+  { title: "Inventory", url: "/inventory", icon: Warehouse, roles: ["owner"] },
+  { title: "Members", url: "/members", icon: UserCheck, roles: ["owner", "store_keeper"] },
+  { title: "Transaction History", url: "/transaction-history", icon: Receipt, roles: ["owner"] },
+  { title: "Attendance", url: "/attendance", icon: UserCheck, roles: ["owner", "store_keeper"] },
+  { title: "Reports", url: "/reports", icon: BarChart3, roles: ["owner"] },
+  { title: "Users", url: "/users", icon: Users, roles: ["owner"] },
+  { title: "Settings", url: "/settings", icon: Settings, roles: ["owner", "store_keeper"] },
 ]
 
 export function AppSidebar() {
@@ -36,6 +38,33 @@ export function AppSidebar() {
   const location = useLocation()
   const currentPath = location.pathname
   const collapsed = state === "collapsed"
+  const [userRole, setUserRole] = useState<string | null>(null)
+  const [menuItems, setMenuItems] = useState(allMenuItems)
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      if (user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .maybeSingle();
+        
+        const role = data?.role || null;
+        setUserRole(role);
+        
+        // Filter menu items based on role
+        if (role) {
+          const filteredItems = allMenuItems.filter(item => 
+            item.roles.includes(role)
+          );
+          setMenuItems(filteredItems);
+        }
+      }
+    };
+    
+    fetchUserRole();
+  }, [user]);
 
   const handleLogout = async () => {
     try {
