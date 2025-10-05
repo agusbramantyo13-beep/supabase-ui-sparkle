@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, ShoppingCart, Warehouse, Users, BarChart3, Settings, LogOut, UserCheck } from "lucide-react"
+import { LayoutDashboard, Package, ShoppingCart, Warehouse, Users, BarChart3, Settings, LogOut, UserCheck, Receipt } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/use-toast"
@@ -22,6 +22,7 @@ const menuItems = [
   { title: "Sales", url: "/sales", icon: ShoppingCart },
   { title: "Inventory", url: "/inventory", icon: Warehouse },
   { title: "Members", url: "/members", icon: UserCheck },
+  { title: "Transaction History", url: "/transaction-history", icon: Receipt },
   { title: "Reports", url: "/reports", icon: BarChart3 },
   { title: "Users", url: "/users", icon: Users },
   { title: "Settings", url: "/settings", icon: Settings },

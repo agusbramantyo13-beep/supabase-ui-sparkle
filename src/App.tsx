@@ -14,6 +14,7 @@ import Inventory from "./pages/Inventory";
 import Sales from "./pages/Sales";
 import Users from "./pages/Users";
 import Reports from "./pages/Reports";
+import TransactionHistory from "./pages/TransactionHistory";
 import Settings from "./pages/Settings";
 import Members from "./pages/Members";
 import Auth from "./pages/Auth";
@@ -53,6 +54,7 @@ const App = () => (
                             <Route path="/sales" element={<Sales />} />
                             <Route path="/users" element={<Users />} />
                             <Route path="/reports" element={<Reports />} />
+                            <Route path="/transaction-history" element={<TransactionHistory />} />
                             <Route path="/members" element={<Members />} />
                             <Route path="/settings" element={<Settings />} />
                             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
