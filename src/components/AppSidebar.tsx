@@ -125,7 +125,14 @@ export function AppSidebar() {
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink to={item.url} className={getNavCls(item.url)}>
+                    <NavLink 
+                      to={item.url} 
+                      className={({ isActive }) => 
+                        isActive 
+                          ? "bg-gradient-primary text-primary-foreground font-medium shadow-elegant flex items-center" 
+                          : "hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-all duration-200 flex items-center"
+                      }
+                    >
                       <item.icon className="w-5 h-5 flex-shrink-0" />
                       {!collapsed && <span className="ml-3">{item.title}</span>}
                     </NavLink>
