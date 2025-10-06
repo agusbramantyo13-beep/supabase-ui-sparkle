@@ -85,7 +85,7 @@ const App = () => (
                               </RoleBasedRoute>
                             } />
                             <Route path="/transaction-history" element={
-                              <RoleBasedRoute allowedRoles={["owner"]}>
+                              <RoleBasedRoute allowedRoles={["owner", "store_keeper"]}>
                                 <TransactionHistory />
                               </RoleBasedRoute>
                             } />

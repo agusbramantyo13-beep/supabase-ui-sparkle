@@ -24,7 +24,7 @@ const allMenuItems = [
   { title: "Sales", url: "/sales", icon: ShoppingCart, roles: ["owner", "store_keeper"] },
   { title: "Inventory", url: "/inventory", icon: Warehouse, roles: ["owner"] },
   { title: "Members", url: "/members", icon: UserCheck, roles: ["owner", "store_keeper"] },
-  { title: "Transaction History", url: "/transaction-history", icon: Receipt, roles: ["owner"] },
+  { title: "Transaction History", url: "/transaction-history", icon: Receipt, roles: ["owner", "store_keeper"] },
   { title: "Attendance", url: "/attendance", icon: UserCheck, roles: ["owner", "store_keeper"] },
   { title: "Reports", url: "/reports", icon: BarChart3, roles: ["owner"] },
   { title: "Users", url: "/users", icon: Users, roles: ["owner"] },
