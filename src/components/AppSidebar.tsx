@@ -39,7 +39,7 @@ export function AppSidebar() {
   const currentPath = location.pathname
   const collapsed = state === "collapsed"
   const [userRole, setUserRole] = useState<string | null>(null)
-  const [menuItems, setMenuItems] = useState(allMenuItems)
+  const [menuItems, setMenuItems] = useState<typeof allMenuItems>([])
 
   useEffect(() => {
     const fetchUserRole = async () => {
