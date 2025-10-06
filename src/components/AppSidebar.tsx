@@ -43,26 +43,30 @@ export function AppSidebar() {
 
   useEffect(() => {
     const fetchUserRole = async () => {
-      if (user) {
-        const { data } = await supabase
+      if (!user) return;
+      try {
+        const { data, error } = await supabase
           .from('profiles')
           .select('role')
           .eq('id', user.id)
           .maybeSingle();
-        
-        const role = data?.role || null;
-        setUserRole(role);
-        
-        // Filter menu items based on role
-        if (role) {
-          const filteredItems = allMenuItems.filter(item => 
-            item.roles.includes(role)
-          );
-          setMenuItems(filteredItems);
+
+        if (error) {
+          console.error('Error fetching user role:', error);
         }
+
+        const role = (data?.role as string) || 'store_keeper';
+        setUserRole(role);
+
+        const filteredItems = allMenuItems.filter(item => item.roles.includes(role));
+        setMenuItems(filteredItems);
+      } catch (err) {
+        console.error('Unexpected error fetching user role:', err);
+        setUserRole('store_keeper');
+        setMenuItems(allMenuItems.filter(item => item.roles.includes('store_keeper')));
       }
     };
-    
+
     fetchUserRole();
   }, [user]);
 
