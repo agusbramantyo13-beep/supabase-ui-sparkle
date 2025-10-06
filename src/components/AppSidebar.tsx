@@ -129,7 +129,7 @@ export function AppSidebar() {
                     className={({ isActive }) =>
                       `${isActive
                         ? "bg-gradient-primary text-primary-foreground font-medium shadow-elegant"
-                        : "text-primary-foreground/80 hover:text-primary-foreground hover:bg-muted/20"} flex items-center w-full px-3 py-2 rounded-md transition-all duration-200`
+                        : "text-primary-foreground hover:text-primary-foreground/90 hover:bg-muted/20"} flex items-center w-full px-3 py-2 rounded-md transition-all duration-200`
                     }
                   >
                     <item.icon className="w-5 h-5 flex-shrink-0" />

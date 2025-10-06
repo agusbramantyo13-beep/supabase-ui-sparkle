@@ -15,16 +15,26 @@ export function RoleBasedRoute({ children, allowedRoles }: RoleBasedRouteProps) 
 
   useEffect(() => {
     const fetchUserRole = async () => {
-      if (user) {
-        const { data } = await supabase
+      if (!user) { setLoading(false); return; }
+      try {
+        const { data, error } = await supabase
           .from('profiles')
           .select('role')
           .eq('id', user.id)
           .maybeSingle();
-        
-        setUserRole(data?.role || null);
+
+        if (error) {
+          console.error('Error fetching user role:', error);
+        }
+
+        const role = (data?.role as string) || 'store_keeper';
+        setUserRole(role);
+      } catch (err) {
+        console.error('Unexpected error fetching user role:', err);
+        setUserRole('store_keeper');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     
     fetchUserRole();
