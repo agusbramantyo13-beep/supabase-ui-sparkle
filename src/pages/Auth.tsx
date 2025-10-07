@@ -42,15 +42,15 @@ export default function Auth() {
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Successfully signed in!",
+        title: "Berhasil",
+        description: "Berhasil masuk!",
       });
 
       navigate("/");
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to sign in",
+        title: "Gagal",
+        description: error.message || "Gagal masuk",
         variant: "destructive",
       });
     } finally {
@@ -79,13 +79,13 @@ export default function Auth() {
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Check your email for the confirmation link!",
+        title: "Berhasil",
+        description: "Periksa email Anda untuk tautan konfirmasi!",
       });
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to sign up",
+        title: "Gagal",
+        description: error.message || "Gagal mendaftar",
         variant: "destructive",
       });
     } finally {
@@ -97,23 +97,23 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Welcome to POS System</h1>
-          <p className="text-muted-foreground">Sign in to your account or create a new one</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Selamat Datang di Sistem POS</h1>
+          <p className="text-muted-foreground">Masuk ke akun Anda atau buat akun baru</p>
         </div>
 
         <Card className="bg-gradient-card">
           <CardContent className="p-6">
             <Tabs defaultValue="signin" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="signin">Sign In</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                <TabsTrigger value="signin">Masuk</TabsTrigger>
+                <TabsTrigger value="signup">Daftar</TabsTrigger>
               </TabsList>
               
               <TabsContent value="signin" className="space-y-4">
                 <CardHeader className="px-0">
                   <CardTitle className="text-xl text-center text-foreground flex items-center justify-center gap-2">
                     <LogIn className="w-5 h-5" />
-                    Sign In
+                    Masuk
                   </CardTitle>
                 </CardHeader>
                 
@@ -125,7 +125,7 @@ export default function Auth() {
                       <Input
                         id="signin-email"
                         type="email"
-                        placeholder="Enter your email"
+                        placeholder="Masukkan email Anda"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="pl-10"
@@ -135,13 +135,13 @@ export default function Auth() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="signin-password">Password</Label>
+                    <Label htmlFor="signin-password">Kata Sandi</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                       <Input
                         id="signin-password"
                         type={showPassword ? "text" : "password"}
-                        placeholder="Enter your password"
+                        placeholder="Masukkan kata sandi Anda"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="pl-10 pr-10"
@@ -162,7 +162,7 @@ export default function Auth() {
                     className="w-full bg-gradient-primary hover:bg-primary/90"
                     disabled={loading}
                   >
-                    {loading ? "Signing In..." : "Sign In"}
+                    {loading ? "Memproses..." : "Masuk"}
                   </Button>
                 </form>
               </TabsContent>
@@ -171,17 +171,17 @@ export default function Auth() {
                 <CardHeader className="px-0">
                   <CardTitle className="text-xl text-center text-foreground flex items-center justify-center gap-2">
                     <UserPlus className="w-5 h-5" />
-                    Create Account
+                    Buat Akun
                   </CardTitle>
                 </CardHeader>
                 
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signup-name">Full Name</Label>
+                    <Label htmlFor="signup-name">Nama Lengkap</Label>
                     <Input
                       id="signup-name"
                       type="text"
-                      placeholder="Enter your full name"
+                      placeholder="Masukkan nama lengkap Anda"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       required
@@ -195,7 +195,7 @@ export default function Auth() {
                       <Input
                         id="signup-email"
                         type="email"
-                        placeholder="Enter your email"
+                        placeholder="Masukkan email Anda"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="pl-10"
@@ -205,13 +205,13 @@ export default function Auth() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
+                    <Label htmlFor="signup-password">Kata Sandi</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                       <Input
                         id="signup-password"
                         type={showPassword ? "text" : "password"}
-                        placeholder="Create a password"
+                        placeholder="Buat kata sandi"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="pl-10 pr-10"
@@ -226,7 +226,7 @@ export default function Auth() {
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
-                    <p className="text-sm text-muted-foreground">Password must be at least 6 characters long</p>
+                    <p className="text-sm text-muted-foreground">Kata sandi minimal 6 karakter</p>
                   </div>
                   
                   <Button
@@ -234,7 +234,7 @@ export default function Auth() {
                     className="w-full bg-gradient-primary hover:bg-primary/90"
                     disabled={loading}
                   >
-                    {loading ? "Creating Account..." : "Create Account"}
+                    {loading ? "Membuat Akun..." : "Buat Akun"}
                   </Button>
                 </form>
               </TabsContent>
@@ -244,7 +244,7 @@ export default function Auth() {
         
         <div className="text-center">
           <p className="text-sm text-muted-foreground">
-            By signing in, you agree to our Terms of Service and Privacy Policy
+            Dengan masuk, Anda menyetujui Syarat Layanan dan Kebijakan Privasi kami
           </p>
         </div>
       </div>

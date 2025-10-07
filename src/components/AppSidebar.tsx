@@ -18,17 +18,17 @@ import {
 } from "@/components/ui/sidebar"
 
 const allMenuItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: ["owner"] },
-  { title: "Products", url: "/products", icon: Package, roles: ["owner"] },
-  { title: "Categories", url: "/categories", icon: Package, roles: ["owner"] },
-  { title: "Sales", url: "/sales", icon: ShoppingCart, roles: ["owner", "store_keeper"] },
-  { title: "Inventory", url: "/inventory", icon: Warehouse, roles: ["owner"] },
-  { title: "Members", url: "/members", icon: UserCheck, roles: ["owner", "store_keeper"] },
-  { title: "Transaction History", url: "/transaction-history", icon: Receipt, roles: ["owner", "store_keeper"] },
-  { title: "Attendance", url: "/attendance", icon: UserCheck, roles: ["owner", "store_keeper"] },
-  { title: "Reports", url: "/reports", icon: BarChart3, roles: ["owner"] },
-  { title: "Users", url: "/users", icon: Users, roles: ["owner"] },
-  { title: "Settings", url: "/settings", icon: Settings, roles: ["owner", "store_keeper"] },
+  { title: "Dasbor", url: "/", icon: LayoutDashboard, roles: ["owner"] },
+  { title: "Produk", url: "/products", icon: Package, roles: ["owner"] },
+  { title: "Kategori", url: "/categories", icon: Package, roles: ["owner"] },
+  { title: "Penjualan", url: "/sales", icon: ShoppingCart, roles: ["owner", "store_keeper"] },
+  { title: "Inventori", url: "/inventory", icon: Warehouse, roles: ["owner"] },
+  { title: "Member", url: "/members", icon: UserCheck, roles: ["owner", "store_keeper"] },
+  { title: "Riwayat Transaksi", url: "/transaction-history", icon: Receipt, roles: ["owner", "store_keeper"] },
+  { title: "Kehadiran", url: "/attendance", icon: UserCheck, roles: ["owner", "store_keeper"] },
+  { title: "Laporan", url: "/reports", icon: BarChart3, roles: ["owner"] },
+  { title: "Pengguna", url: "/users", icon: Users, roles: ["owner"] },
+  { title: "Pengaturan", url: "/settings", icon: Settings, roles: ["owner", "store_keeper"] },
 ]
 
 export function AppSidebar() {
@@ -74,13 +74,13 @@ export function AppSidebar() {
     try {
       await signOut()
       toast({
-        title: "Success",
-        description: "Successfully logged out!",
+        title: "Berhasil",
+        description: "Berhasil keluar!",
       })
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to logout",
+        title: "Gagal",
+        description: "Gagal keluar",
         variant: "destructive",
       })
     }
@@ -118,7 +118,7 @@ export function AppSidebar() {
         {/* Navigation */}
         <SidebarGroup>
           <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>
-            Main Navigation
+            Navigasi Utama
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
@@ -146,7 +146,7 @@ export function AppSidebar() {
           <div className={collapsed ? "space-y-2" : "space-y-3"}>
             {!collapsed && user && (
               <div className="px-2">
-                <p className="text-xs text-muted-foreground">Logged in as:</p>
+                <p className="text-xs text-muted-foreground">Masuk sebagai:</p>
                 <p className="text-sm font-medium text-foreground truncate">{user.email}</p>
               </div>
             )}
@@ -156,7 +156,7 @@ export function AppSidebar() {
                 className="hover:bg-destructive/20 hover:text-destructive transition-colors"
               >
                 <LogOut className="w-5 h-5 flex-shrink-0" />
-                {!collapsed && <span className="ml-3">Logout</span>}
+                {!collapsed && <span className="ml-3">Keluar</span>}
               </SidebarMenuButton>
             </SidebarMenuItem>
           </div>
