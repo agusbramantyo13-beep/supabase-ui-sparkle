@@ -320,7 +320,7 @@ export default function Sales() {
                     <SelectContent>
                       <SelectItem value="cash">
                         <div className="flex items-center gap-2">
-                          <DollarSign className="w-4 h-4" />
+                          <span className="font-semibold">Rp</span>
                           Cash
                         </div>
                       </SelectItem>
