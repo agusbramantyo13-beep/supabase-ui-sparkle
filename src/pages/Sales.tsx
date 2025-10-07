@@ -27,6 +27,7 @@ export default function Sales() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<string>("cash");
+  const [amountPaid, setAmountPaid] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -105,6 +106,12 @@ export default function Sales() {
     return cart.reduce((total, item) => total + item.subtotal, 0);
   };
 
+  const getChange = () => {
+    const paid = Number(amountPaid) || 0;
+    const total = getTotalAmount();
+    return paid - total;
+  };
+
   const processSale = async () => {
     if (cart.length === 0) {
       toast({
@@ -119,6 +126,19 @@ export default function Sales() {
 
     try {
       const total = getTotalAmount();
+      const paid = Number(amountPaid) || 0;
+      const change = getChange();
+
+      if (paymentMethod === 'cash' && paid < total) {
+        toast({
+          title: "Error",
+          description: "Amount paid is less than total",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
       const receiptNumber = `RCP-${Date.now()}`;
 
       // Create sale record
@@ -131,6 +151,10 @@ export default function Sales() {
           tax_total: 0,
           payment_method: paymentMethod,
           receipt_number: receiptNumber,
+          payment_details: {
+            amount_paid: paid,
+            change: change
+          },
           user_id: null // Would be current user in real app
         })
         .select()
@@ -161,10 +185,13 @@ export default function Sales() {
 
       toast({
         title: "Success",
-        description: `Sale completed! Receipt: ${receiptNumber}`,
+        description: paymentMethod === 'cash' 
+          ? `Sale completed! Receipt: ${receiptNumber}\nChange: Rp ${change.toLocaleString()}`
+          : `Sale completed! Receipt: ${receiptNumber}`,
       });
 
       clearCart();
+      setAmountPaid("");
     } catch (error: any) {
       toast({
         title: "Error",
@@ -305,6 +332,28 @@ export default function Sales() {
                       </SelectItem>
                     </SelectContent>
                   </Select>
+
+                  {paymentMethod === 'cash' && (
+                    <>
+                      <div>
+                        <label className="text-sm font-medium text-foreground mb-2 block">Amount Paid</label>
+                        <Input
+                          type="number"
+                          placeholder="Enter amount paid"
+                          value={amountPaid}
+                          onChange={(e) => setAmountPaid(e.target.value)}
+                          className="text-lg"
+                        />
+                      </div>
+
+                      {amountPaid && Number(amountPaid) >= getTotalAmount() && (
+                        <div className="flex justify-between items-center p-3 bg-success/10 rounded-lg">
+                          <span className="text-sm font-semibold text-success">Change:</span>
+                          <span className="text-xl font-bold text-success">Rp {getChange().toLocaleString()}</span>
+                        </div>
+                      )}
+                    </>
+                  )}
 
                   <Button 
                     className="w-full bg-gradient-primary hover:bg-primary/90 text-primary-foreground font-semibold py-6 text-lg"
