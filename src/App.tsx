@@ -19,6 +19,7 @@ import TransactionHistory from "./pages/TransactionHistory";
 import Attendance from "./pages/Attendance";
 import Settings from "./pages/Settings";
 import Members from "./pages/Members";
+import Discounts from "./pages/Discounts";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -97,6 +98,11 @@ const App = () => (
                             <Route path="/members" element={
                               <RoleBasedRoute allowedRoles={["owner", "store_keeper"]}>
                                 <Members />
+                              </RoleBasedRoute>
+                            } />
+                            <Route path="/discounts" element={
+                              <RoleBasedRoute allowedRoles={["owner"]}>
+                                <Discounts />
                               </RoleBasedRoute>
                             } />
                             <Route path="/settings" element={

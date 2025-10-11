@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { LayoutDashboard, Package, ShoppingCart, Warehouse, Users, BarChart3, Settings, LogOut, UserCheck, Receipt } from "lucide-react"
+import { LayoutDashboard, Package, ShoppingCart, Warehouse, Users, BarChart3, Settings, LogOut, UserCheck, Receipt, Tag } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/use-toast"
@@ -24,6 +24,7 @@ const allMenuItems = [
   { title: "Penjualan", url: "/sales", icon: ShoppingCart, roles: ["owner", "store_keeper"] },
   { title: "Inventori", url: "/inventory", icon: Warehouse, roles: ["owner"] },
   { title: "Member", url: "/members", icon: UserCheck, roles: ["owner", "store_keeper"] },
+  { title: "Diskon", url: "/discounts", icon: Tag, roles: ["owner"] },
   { title: "Riwayat Transaksi", url: "/transaction-history", icon: Receipt, roles: ["owner", "store_keeper"] },
   { title: "Kehadiran", url: "/attendance", icon: UserCheck, roles: ["owner", "store_keeper"] },
   { title: "Laporan", url: "/reports", icon: BarChart3, roles: ["owner"] },
