@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Product {
   id: string;
@@ -42,6 +43,7 @@ export default function Sales() {
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [selectedDiscountId, setSelectedDiscountId] = useState<string>("");
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchProducts();
@@ -204,7 +206,7 @@ export default function Sales() {
             amount_paid: paid,
             change: change
           },
-          user_id: null // Would be current user in real app
+          user_id: user?.id || null
         })
         .select()
         .single();

@@ -12,6 +12,7 @@ interface Transaction {
   total: number;
   created_at: string;
   payment_method: string | null;
+  user_email: string | null;
 }
 
 export default function TransactionHistory() {
@@ -32,13 +33,30 @@ export default function TransactionHistory() {
 
       const { data, error } = await supabase
         .from('sales')
-        .select('id, receipt_number, total, created_at, payment_method')
+        .select(`
+          id, 
+          receipt_number, 
+          total, 
+          created_at, 
+          payment_method,
+          user_id,
+          profiles:user_id(email)
+        `)
         .gte('created_at', startDate.toISOString())
         .lte('created_at', endDate.toISOString())
         .order('created_at', { ascending: false });
 
+      const formattedData = data?.map(sale => ({
+        id: sale.id,
+        receipt_number: sale.receipt_number,
+        total: sale.total,
+        created_at: sale.created_at,
+        payment_method: sale.payment_method,
+        user_email: sale.profiles?.email || 'Unknown'
+      })) || [];
+
       if (error) throw error;
-      setTransactions(data || []);
+      setTransactions(formattedData);
     } catch (error) {
       console.error('Error fetching transactions:', error);
     } finally {
@@ -122,6 +140,7 @@ export default function TransactionHistory() {
                   <TableRow className="hover:bg-transparent border-border/50">
                     <TableHead className="text-muted-foreground">Date & Time</TableHead>
                     <TableHead className="text-muted-foreground">Receipt Number</TableHead>
+                    <TableHead className="text-muted-foreground">Kasir</TableHead>
                     <TableHead className="text-muted-foreground">Payment Method</TableHead>
                     <TableHead className="text-right text-muted-foreground">Total</TableHead>
                   </TableRow>
@@ -134,6 +153,9 @@ export default function TransactionHistory() {
                       </TableCell>
                       <TableCell className="text-foreground">
                         {transaction.receipt_number || '-'}
+                      </TableCell>
+                      <TableCell className="text-foreground">
+                        {transaction.user_email || '-'}
                       </TableCell>
                       <TableCell className="text-foreground capitalize">
                         {transaction.payment_method || '-'}
