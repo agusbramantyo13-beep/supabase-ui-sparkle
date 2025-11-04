@@ -689,10 +689,7 @@ export type Database = {
       }
     }
     Functions: {
-      generate_member_code: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      generate_member_code: { Args: never; Returns: string }
     }
     Enums: {
       applies_to: "global" | "product" | "variant" | "category"
