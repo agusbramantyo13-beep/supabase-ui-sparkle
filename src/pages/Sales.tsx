@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Minus, Trash2, CreditCard, DollarSign, Receipt } from "lucide-react";
+import { Plus, Minus, Trash2, CreditCard, DollarSign, Receipt, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,16 @@ interface CartItem {
   subtotal: number;
 }
 
+interface Discount {
+  id: string;
+  name: string;
+  discount_type: string;
+  value: number;
+  applies_to: string;
+  target_id: string | null;
+  active: boolean;
+}
+
 export default function Sales() {
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -29,10 +39,15 @@ export default function Sales() {
   const [paymentMethod, setPaymentMethod] = useState<string>("cash");
   const [amountPaid, setAmountPaid] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [discounts, setDiscounts] = useState<Discount[]>([]);
+  const [selectedDiscountId, setSelectedDiscountId] = useState<string>("");
+  const [manualDiscountType, setManualDiscountType] = useState<"percentage" | "fixed">("percentage");
+  const [manualDiscountValue, setManualDiscountValue] = useState<string>("");
   const { toast } = useToast();
 
   useEffect(() => {
     fetchProducts();
+    fetchDiscounts();
   }, []);
 
   const fetchProducts = async () => {
@@ -65,6 +80,20 @@ export default function Sales() {
     })) || [];
 
     setProducts(formattedProducts);
+  };
+
+  const fetchDiscounts = async () => {
+    const { data, error } = await supabase
+      .from('discounts')
+      .select('*')
+      .eq('active', true);
+
+    if (error) {
+      console.error("Error fetching discounts:", error);
+      return;
+    }
+
+    setDiscounts(data || []);
   };
 
   const addToCart = (product: Product) => {
@@ -102,8 +131,38 @@ export default function Sales() {
     setCart([]);
   };
 
-  const getTotalAmount = () => {
+  const getSubtotal = () => {
     return cart.reduce((total, item) => total + item.subtotal, 0);
+  };
+
+  const getDiscountAmount = () => {
+    const subtotal = getSubtotal();
+    
+    // Manual discount
+    if (!selectedDiscountId && manualDiscountValue) {
+      const value = Number(manualDiscountValue) || 0;
+      if (manualDiscountType === "percentage") {
+        return (subtotal * value) / 100;
+      }
+      return value;
+    }
+
+    // Selected discount
+    if (selectedDiscountId) {
+      const discount = discounts.find(d => d.id === selectedDiscountId);
+      if (!discount) return 0;
+
+      if (discount.discount_type === "percentage") {
+        return (subtotal * discount.value) / 100;
+      }
+      return discount.value;
+    }
+
+    return 0;
+  };
+
+  const getTotalAmount = () => {
+    return getSubtotal() - getDiscountAmount();
   };
 
   const getChange = () => {
@@ -125,6 +184,8 @@ export default function Sales() {
     setLoading(true);
 
     try {
+      const subtotal = getSubtotal();
+      const discountAmount = getDiscountAmount();
       const total = getTotalAmount();
       const paid = Number(amountPaid) || 0;
       const change = getChange();
@@ -145,9 +206,9 @@ export default function Sales() {
       const { data: saleData, error: saleError } = await supabase
         .from('sales')
         .insert({
-          subtotal: total,
+          subtotal: subtotal,
           total: total,
-          discount_total: 0,
+          discount_total: discountAmount,
           tax_total: 0,
           payment_method: paymentMethod,
           receipt_number: receiptNumber,
@@ -192,6 +253,8 @@ export default function Sales() {
 
       clearCart();
       setAmountPaid("");
+      setSelectedDiscountId("");
+      setManualDiscountValue("");
     } catch (error: any) {
       toast({
         title: "Error",
@@ -308,8 +371,80 @@ export default function Sales() {
                 <Separator className="my-4" />
 
                 <div className="space-y-4">
+                  {/* Subtotal */}
                   <div className="flex justify-between items-center">
-                    <span className="text-lg font-semibold text-foreground">Total:</span>
+                    <span className="text-sm text-muted-foreground">Subtotal:</span>
+                    <span className="text-lg font-semibold text-foreground">Rp {getSubtotal().toLocaleString()}</span>
+                  </div>
+
+                  {/* Discount Section */}
+                  <div className="space-y-2 p-3 bg-muted/20 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Tag className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-semibold text-foreground">Diskon</span>
+                    </div>
+
+                    <Select value={selectedDiscountId} onValueChange={(value) => {
+                      setSelectedDiscountId(value);
+                      if (value) setManualDiscountValue("");
+                    }}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih diskon tersimpan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Tidak ada diskon</SelectItem>
+                        {discounts.map((discount) => (
+                          <SelectItem key={discount.id} value={discount.id}>
+                            {discount.name} - {discount.discount_type === "percentage" 
+                              ? `${discount.value}%` 
+                              : `Rp ${discount.value.toLocaleString()}`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>atau masukkan manual:</span>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Select 
+                        value={manualDiscountType} 
+                        onValueChange={(value: "percentage" | "fixed") => setManualDiscountType(value)}
+                        disabled={!!selectedDiscountId && selectedDiscountId !== "none"}
+                      >
+                        <SelectTrigger className="w-24">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="percentage">%</SelectItem>
+                          <SelectItem value="fixed">Rp</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        value={manualDiscountValue}
+                        onChange={(e) => {
+                          setManualDiscountValue(e.target.value);
+                          if (e.target.value) setSelectedDiscountId("");
+                        }}
+                        disabled={!!selectedDiscountId && selectedDiscountId !== "none"}
+                      />
+                    </div>
+
+                    {getDiscountAmount() > 0 && (
+                      <div className="flex justify-between items-center pt-2 text-success">
+                        <span className="text-sm">Potongan:</span>
+                        <span className="font-semibold">- Rp {getDiscountAmount().toLocaleString()}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Total */}
+                  <div className="flex justify-between items-center pt-2">
+                    <span className="text-lg font-bold text-foreground">Total:</span>
                     <span className="text-2xl font-bold text-primary">Rp {getTotalAmount().toLocaleString()}</span>
                   </div>
 
