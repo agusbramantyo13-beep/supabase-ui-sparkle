@@ -41,8 +41,6 @@ export default function Sales() {
   const [loading, setLoading] = useState(false);
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [selectedDiscountId, setSelectedDiscountId] = useState<string>("");
-  const [manualDiscountType, setManualDiscountType] = useState<"percentage" | "fixed">("percentage");
-  const [manualDiscountValue, setManualDiscountValue] = useState<string>("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -138,16 +136,6 @@ export default function Sales() {
   const getDiscountAmount = () => {
     const subtotal = getSubtotal();
     
-    // Manual discount
-    if (!selectedDiscountId && manualDiscountValue) {
-      const value = Number(manualDiscountValue) || 0;
-      if (manualDiscountType === "percentage") {
-        return (subtotal * value) / 100;
-      }
-      return value;
-    }
-
-    // Selected discount
     if (selectedDiscountId) {
       const discount = discounts.find(d => d.id === selectedDiscountId);
       if (!discount) return 0;
@@ -254,7 +242,6 @@ export default function Sales() {
       clearCart();
       setAmountPaid("");
       setSelectedDiscountId("");
-      setManualDiscountValue("");
     } catch (error: any) {
       toast({
         title: "Error",
@@ -384,12 +371,9 @@ export default function Sales() {
                       <span className="text-sm font-semibold text-foreground">Diskon</span>
                     </div>
 
-                    <Select value={selectedDiscountId} onValueChange={(value) => {
-                      setSelectedDiscountId(value);
-                      if (value) setManualDiscountValue("");
-                    }}>
+                    <Select value={selectedDiscountId} onValueChange={setSelectedDiscountId}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Pilih diskon tersimpan" />
+                        <SelectValue placeholder="Pilih diskon" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">Tidak ada diskon</SelectItem>
@@ -402,37 +386,6 @@ export default function Sales() {
                         ))}
                       </SelectContent>
                     </Select>
-
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>atau masukkan manual:</span>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Select 
-                        value={manualDiscountType} 
-                        onValueChange={(value: "percentage" | "fixed") => setManualDiscountType(value)}
-                        disabled={!!selectedDiscountId && selectedDiscountId !== "none"}
-                      >
-                        <SelectTrigger className="w-24">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="percentage">%</SelectItem>
-                          <SelectItem value="fixed">Rp</SelectItem>
-                        </SelectContent>
-                      </Select>
-
-                      <Input
-                        type="number"
-                        placeholder="0"
-                        value={manualDiscountValue}
-                        onChange={(e) => {
-                          setManualDiscountValue(e.target.value);
-                          if (e.target.value) setSelectedDiscountId("");
-                        }}
-                        disabled={!!selectedDiscountId && selectedDiscountId !== "none"}
-                      />
-                    </div>
 
                     {getDiscountAmount() > 0 && (
                       <div className="flex justify-between items-center pt-2 text-success">
