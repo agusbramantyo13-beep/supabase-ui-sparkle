@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react"
-import { Warehouse, AlertTriangle, TrendingUp, TrendingDown } from "lucide-react"
+import { Warehouse, AlertTriangle, TrendingUp, TrendingDown, Download } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { InventoryForm } from "@/components/InventoryForm"
+import * as XLSX from 'xlsx'
+import { useToast } from "@/hooks/use-toast"
 
 interface InventoryItem {
   variant_id: number
@@ -19,6 +21,7 @@ export default function Inventory() {
   const [loading, setLoading] = useState(true)
   const [inventoryFormOpen, setInventoryFormOpen] = useState(false)
   const [formType, setFormType] = useState<'add' | 'remove' | 'adjust'>('add')
+  const { toast } = useToast()
 
   useEffect(() => {
     fetchInventory()
@@ -62,6 +65,45 @@ export default function Inventory() {
     return { label: 'In Stock', variant: 'default' as const, icon: TrendingUp }
   }
 
+  const handleDownloadExcel = () => {
+    try {
+      // Prepare data for Excel
+      const excelData = inventory.map(item => ({
+        'Nama Produk': item.product_name,
+        'Varian': item.variant_name,
+        'Kategori': item.category_name,
+        'Jumlah Stok': item.quantity || 0,
+        'Status': getStockStatus(item.quantity || 0).label
+      }))
+
+      // Create worksheet
+      const ws = XLSX.utils.json_to_sheet(excelData)
+      
+      // Create workbook
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, ws, 'Inventory')
+      
+      // Generate filename with current date
+      const date = new Date().toISOString().split('T')[0]
+      const filename = `inventory_${date}.xlsx`
+      
+      // Download file
+      XLSX.writeFile(wb, filename)
+      
+      toast({
+        title: "Berhasil",
+        description: "Data inventory berhasil diunduh",
+      })
+    } catch (error) {
+      console.error('Error downloading Excel:', error)
+      toast({
+        title: "Error",
+        description: "Gagal mengunduh data inventory",
+        variant: "destructive",
+      })
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -71,6 +113,14 @@ export default function Inventory() {
           <p className="text-muted-foreground">Monitor and manage your stock levels</p>
         </div>
         <div className="flex gap-2">
+          <Button 
+            variant="outline"
+            onClick={handleDownloadExcel}
+            disabled={inventory.length === 0}
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Download Excel
+          </Button>
           <Button 
             className="bg-gradient-primary hover:bg-primary/90"
             onClick={() => {
