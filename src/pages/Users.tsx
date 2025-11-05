@@ -25,6 +25,8 @@ export default function Users() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editNameDialogOpen, setEditNameDialogOpen] = useState(false);
+  const [editedName, setEditedName] = useState("");
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
@@ -81,6 +83,36 @@ export default function Users() {
 
     fetchUsers();
     setDialogOpen(false);
+  };
+
+  const updateUserName = async (userId: string, newName: string) => {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ name: newName })
+      .eq('id', userId);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update user name",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: "User name updated successfully",
+    });
+
+    fetchUsers();
+    setEditNameDialogOpen(false);
+  };
+
+  const openEditNameDialog = (user: UserProfile) => {
+    setSelectedUser(user);
+    setEditedName(user.name || "");
+    setEditNameDialogOpen(true);
   };
 
   const createUser = async () => {
@@ -438,6 +470,16 @@ export default function Users() {
               <CardContent className="pt-0">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Nama</span>
+                    <span className="text-sm font-medium text-foreground">{user.name || '-'}</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Email</span>
+                    <span className="text-sm font-medium text-foreground">{user.email}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Role</span>
                      <Badge className={getRoleBadgeColor(user.role)}>
                        <div className="flex items-center gap-1">
@@ -448,6 +490,15 @@ export default function Users() {
                   </div>
 
                   <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => openEditNameDialog(user)}
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit Name
+                    </Button>
                     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                       <DialogTrigger asChild>
                         <Button
@@ -517,6 +568,47 @@ export default function Users() {
           ))}
         </div>
       )}
+
+      {/* Edit Name Dialog */}
+      <Dialog open={editNameDialogOpen} onOpenChange={setEditNameDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit User Name</DialogTitle>
+          </DialogHeader>
+          {selectedUser && (
+            <div className="space-y-4">
+              <div>
+                <Label>Email</Label>
+                <Input value={selectedUser.email} disabled />
+              </div>
+              <div>
+                <Label htmlFor="edit-name">Nama</Label>
+                <Input
+                  id="edit-name"
+                  type="text"
+                  placeholder="Masukkan nama lengkap"
+                  value={editedName}
+                  onChange={(e) => setEditedName(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setEditNameDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => updateUserName(selectedUser.id, editedName)}
+                  className="bg-gradient-primary hover:bg-primary/90"
+                >
+                  Update Name
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
       
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
