@@ -12,7 +12,7 @@ interface Transaction {
   total: number;
   created_at: string;
   payment_method: string | null;
-  user_email: string | null;
+  user_name: string | null;
 }
 
 export default function TransactionHistory() {
@@ -40,7 +40,7 @@ export default function TransactionHistory() {
           created_at, 
           payment_method,
           user_id,
-          profiles:user_id(email)
+          profiles:user_id(name, email)
         `)
         .gte('created_at', startDate.toISOString())
         .lte('created_at', endDate.toISOString())
@@ -52,7 +52,7 @@ export default function TransactionHistory() {
         total: sale.total,
         created_at: sale.created_at,
         payment_method: sale.payment_method,
-        user_email: sale.profiles?.email || 'Unknown'
+        user_name: sale.profiles?.name || sale.profiles?.email || 'Unknown'
       })) || [];
 
       if (error) throw error;
@@ -155,7 +155,7 @@ export default function TransactionHistory() {
                         {transaction.receipt_number || '-'}
                       </TableCell>
                       <TableCell className="text-foreground">
-                        {transaction.user_email || '-'}
+                        {transaction.user_name || '-'}
                       </TableCell>
                       <TableCell className="text-foreground capitalize">
                         {transaction.payment_method || '-'}

@@ -6,6 +6,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  userName: string | null;
   signOut: () => Promise<void>;
 }
 
@@ -23,6 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userName, setUserName] = useState<string | null>(null);
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -31,6 +33,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Fetch user name after state update
+        if (session?.user) {
+          setTimeout(() => {
+            supabase
+              .from('profiles')
+              .select('name')
+              .eq('id', session.user.id)
+              .maybeSingle()
+              .then(({ data }) => {
+                setUserName(data?.name || null);
+              });
+          }, 0);
+        } else {
+          setUserName(null);
+        }
       }
     );
 
@@ -55,6 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     session,
     loading,
+    userName,
     signOut,
   };
 

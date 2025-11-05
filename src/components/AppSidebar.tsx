@@ -34,7 +34,7 @@ const allMenuItems = [
 
 export function AppSidebar() {
   const { state } = useSidebar()
-  const { signOut, user } = useAuth()
+  const { signOut, user, userName } = useAuth()
   const { toast } = useToast()
   const location = useLocation()
   const currentPath = location.pathname
@@ -148,7 +148,12 @@ export function AppSidebar() {
             {!collapsed && user && (
               <div className="px-2">
                 <p className="text-xs text-muted-foreground">Masuk sebagai:</p>
-                <p className="text-sm font-medium text-foreground truncate">{user.email}</p>
+                <p className="text-sm font-medium text-foreground truncate">
+                  {userName || user.email}
+                </p>
+                {userName && (
+                  <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                )}
               </div>
             )}
             <SidebarMenuItem>
