@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 interface UserProfile {
   id: string;
   email: string;
+  name: string | null;
   role: 'owner' | 'store_keeper';
   created_at: string;
 }
@@ -29,6 +30,7 @@ export default function Users() {
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserName, setNewUserName] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("");
   const [newUserRole, setNewUserRole] = useState<'owner' | 'store_keeper'>('store_keeper');
   const [isCreating, setIsCreating] = useState(false);
@@ -82,7 +84,7 @@ export default function Users() {
   };
 
   const createUser = async () => {
-    if (!newUserEmail || !newUserPassword || !newUserRole) {
+    if (!newUserEmail || !newUserName || !newUserPassword || !newUserRole) {
       toast({
         title: "Error",
         description: "Please fill in all fields",
@@ -131,16 +133,17 @@ export default function Users() {
           if (profileData && !profileError) {
             profileExists = true;
             
-            // Only update role if it's different from what we want
-            if (profileData.role !== newUserRole) {
-              const { error: roleError } = await supabase
-                .from('profiles')
-                .update({ role: newUserRole })
-                .eq('id', data.user.id);
+            // Update role and name
+            const { error: updateError } = await supabase
+              .from('profiles')
+              .update({ 
+                role: newUserRole,
+                name: newUserName
+              })
+              .eq('id', data.user.id);
 
-              if (roleError) {
-                console.error("Role update error:", roleError);
-              }
+            if (updateError) {
+              console.error("Profile update error:", updateError);
             }
           } else {
             retryCount++;
@@ -159,6 +162,7 @@ export default function Users() {
             .insert({
               id: data.user.id,
               email: newUserEmail,
+              name: newUserName,
               role: newUserRole
             });
 
@@ -179,6 +183,7 @@ export default function Users() {
 
         // Reset form and close dialog
         setNewUserEmail("");
+        setNewUserName("");
         setNewUserPassword("");
         setNewUserRole('store_keeper');
         setAddDialogOpen(false);
@@ -269,7 +274,8 @@ export default function Users() {
   };
 
   const filteredUsers = users.filter(user =>
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -310,6 +316,16 @@ export default function Users() {
               <DialogTitle>Add New User</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
+              <div>
+                <Label htmlFor="name">Nama</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Masukkan nama lengkap"
+                  value={newUserName}
+                  onChange={(e) => setNewUserName(e.target.value)}
+                />
+              </div>
               <div>
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -374,7 +390,7 @@ export default function Users() {
 
       <div className="flex items-center gap-4">
         <Input
-          placeholder="Search users by email..."
+          placeholder="Search users by name or email..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-sm"
@@ -410,9 +426,9 @@ export default function Users() {
                       <User className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg text-foreground">{user.email}</CardTitle>
+                      <CardTitle className="text-lg text-foreground">{user.name || user.email}</CardTitle>
                       <p className="text-sm text-muted-foreground">
-                        Joined {new Date(user.created_at).toLocaleDateString()}
+                        {user.name ? user.email : `Joined ${new Date(user.created_at).toLocaleDateString()}`}
                       </p>
                     </div>
                   </div>
