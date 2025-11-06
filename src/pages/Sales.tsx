@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Minus, Trash2, CreditCard, DollarSign, Receipt, Tag } from "lucide-react";
+import { Plus, Minus, Trash2, CreditCard, DollarSign, Receipt, Tag, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -33,6 +33,24 @@ interface Discount {
   active: boolean;
 }
 
+interface Member {
+  id: string;
+  name: string;
+  member_code: string;
+  points: number;
+  total_purchases?: number;
+}
+
+interface LoyaltyPointRule {
+  id: string;
+  name: string;
+  min_purchase: number;
+  points_earned: number;
+  applies_to: string;
+  target_id: string | null;
+  active: boolean;
+}
+
 export default function Sales() {
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -42,13 +60,23 @@ export default function Sales() {
   const [loading, setLoading] = useState(false);
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [selectedDiscountId, setSelectedDiscountId] = useState<string>("");
+  const [members, setMembers] = useState<Member[]>([]);
+  const [selectedMemberId, setSelectedMemberId] = useState<string>("");
+  const [loyaltyRules, setLoyaltyRules] = useState<LoyaltyPointRule[]>([]);
+  const [earnedPoints, setEarnedPoints] = useState<number>(0);
   const { toast } = useToast();
   const { user } = useAuth();
 
   useEffect(() => {
     fetchProducts();
     fetchDiscounts();
+    fetchMembers();
+    fetchLoyaltyRules();
   }, []);
+
+  useEffect(() => {
+    calculateEarnedPoints();
+  }, [selectedMemberId, cart]);
 
   const fetchProducts = async () => {
     const { data, error } = await supabase
@@ -94,6 +122,69 @@ export default function Sales() {
     }
 
     setDiscounts(data || []);
+  };
+
+  const fetchMembers = async () => {
+    const { data, error } = await supabase
+      .from('members')
+      .select('id, name, member_code, points')
+      .eq('status', 'active')
+      .order('name');
+
+    if (error) {
+      console.error("Error fetching members:", error);
+      return;
+    }
+
+    setMembers(data || []);
+  };
+
+  const fetchLoyaltyRules = async () => {
+    const { data, error } = await supabase
+      .from('loyalty_point_rules')
+      .select('*')
+      .eq('active', true);
+
+    if (error) {
+      console.error("Error fetching loyalty rules:", error);
+      return;
+    }
+
+    setLoyaltyRules(data || []);
+  };
+
+  const calculateEarnedPoints = () => {
+    if (!selectedMemberId || cart.length === 0) {
+      setEarnedPoints(0);
+      return;
+    }
+
+    const total = getTotalAmount();
+    let totalPoints = 0;
+
+    // Check global rules
+    const globalRules = loyaltyRules.filter(rule => 
+      rule.applies_to === 'global' && total >= rule.min_purchase
+    );
+    
+    globalRules.forEach(rule => {
+      totalPoints += rule.points_earned;
+    });
+
+    // Check product-specific rules
+    cart.forEach(item => {
+      const productRules = loyaltyRules.filter(rule => 
+        rule.applies_to === 'product' && 
+        rule.target_id === item.product.id &&
+        item.subtotal >= rule.min_purchase
+      );
+      
+      productRules.forEach(rule => {
+        totalPoints += rule.points_earned;
+      });
+    });
+
+    setEarnedPoints(totalPoints);
   };
 
   const addToCart = (product: Product) => {
@@ -234,16 +325,42 @@ export default function Sales() {
 
       if (itemsError) throw itemsError;
 
+      // Update member points if member is selected and earned points
+      if (selectedMemberId && earnedPoints > 0) {
+        const selectedMember = members.find(m => m.id === selectedMemberId);
+        if (selectedMember) {
+          const { error: memberError } = await supabase
+            .from('members')
+            .update({ 
+              points: (selectedMember.points || 0) + earnedPoints,
+              total_purchases: (selectedMember.total_purchases || 0) + total
+            })
+            .eq('id', selectedMemberId);
+
+          if (memberError) {
+            console.error("Error updating member points:", memberError);
+          }
+        }
+      }
+
+      const successMessage = paymentMethod === 'cash' 
+        ? `Sale completed! Receipt: ${receiptNumber}\nChange: Rp ${change.toLocaleString()}`
+        : `Sale completed! Receipt: ${receiptNumber}`;
+      
+      const pointsMessage = selectedMemberId && earnedPoints > 0 
+        ? `\n\nMember mendapat ${earnedPoints} poin!`
+        : '';
+
       toast({
         title: "Success",
-        description: paymentMethod === 'cash' 
-          ? `Sale completed! Receipt: ${receiptNumber}\nChange: Rp ${change.toLocaleString()}`
-          : `Sale completed! Receipt: ${receiptNumber}`,
+        description: successMessage + pointsMessage,
       });
 
       clearCart();
       setAmountPaid("");
       setSelectedDiscountId("");
+      setSelectedMemberId("");
+      setEarnedPoints(0);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -364,6 +481,35 @@ export default function Sales() {
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Subtotal:</span>
                     <span className="text-lg font-semibold text-foreground">Rp {getSubtotal().toLocaleString()}</span>
+                  </div>
+
+                  {/* Member Section */}
+                  <div className="space-y-2 p-3 bg-muted/20 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <UserCheck className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-semibold text-foreground">Member</span>
+                    </div>
+
+                    <Select value={selectedMemberId} onValueChange={setSelectedMemberId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih member (opsional)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Bukan member</SelectItem>
+                        {members.map((member) => (
+                          <SelectItem key={member.id} value={member.id}>
+                            {member.name} ({member.member_code}) - {member.points} poin
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {selectedMemberId && selectedMemberId !== "none" && earnedPoints > 0 && (
+                      <div className="flex justify-between items-center pt-2 text-success">
+                        <span className="text-sm">Poin yang didapat:</span>
+                        <span className="font-semibold">+ {earnedPoints} poin</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Discount Section */}
