@@ -173,6 +173,45 @@ export type Database = {
           },
         ]
       }
+      loyalty_point_rules: {
+        Row: {
+          active: boolean | null
+          applies_to: Database["public"]["Enums"]["applies_to"]
+          created_at: string | null
+          created_by: string | null
+          id: string
+          min_purchase: number
+          name: string
+          points_earned: number
+          target_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          applies_to?: Database["public"]["Enums"]["applies_to"]
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          min_purchase?: number
+          name: string
+          points_earned?: number
+          target_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          applies_to?: Database["public"]["Enums"]["applies_to"]
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          min_purchase?: number
+          name?: string
+          points_earned?: number
+          target_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       members: {
         Row: {
           address: string | null
