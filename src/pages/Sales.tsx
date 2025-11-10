@@ -15,6 +15,7 @@ interface Product {
   name: string;
   price: number;
   category_name?: string;
+  available_stock?: number;
 }
 
 interface CartItem {
@@ -100,11 +101,21 @@ export default function Sales() {
       return;
     }
 
+    // Fetch inventory data
+    const { data: inventoryData } = await supabase
+      .from('inventory')
+      .select('variant_id, quantity');
+
+    const inventoryMap = new Map(
+      inventoryData?.map(inv => [inv.variant_id, inv.quantity]) || []
+    );
+
     const formattedProducts = data?.map(variant => ({
       id: variant.id.toString(),
       name: `${variant.products.name} - ${variant.name}`,
       price: Number(variant.price) || 0,
-      category_name: variant.products.categories?.name
+      category_name: variant.products.categories?.name,
+      available_stock: inventoryMap.get(variant.id) || 0
     })) || [];
 
     setProducts(formattedProducts);
@@ -189,6 +200,18 @@ export default function Sales() {
 
   const addToCart = (product: Product) => {
     const existingItem = cart.find(item => item.product.id === product.id);
+    const currentQuantity = existingItem ? existingItem.quantity : 0;
+    const availableStock = product.available_stock || 0;
+    
+    // Check stock availability
+    if (currentQuantity >= availableStock) {
+      toast({
+        title: "Stok Tidak Cukup",
+        description: `Stok tersedia: ${availableStock}`,
+        variant: "destructive"
+      });
+      return;
+    }
     
     if (existingItem) {
       updateQuantity(product.id, existingItem.quantity + 1);
@@ -204,6 +227,19 @@ export default function Sales() {
   const updateQuantity = (productId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
       removeFromCart(productId);
+      return;
+    }
+
+    const item = cart.find(i => i.product.id === productId);
+    const availableStock = item?.product.available_stock || 0;
+
+    // Check stock availability
+    if (newQuantity > availableStock) {
+      toast({
+        title: "Stok Tidak Cukup",
+        description: `Stok tersedia: ${availableStock}`,
+        variant: "destructive"
+      });
       return;
     }
 
@@ -325,6 +361,32 @@ export default function Sales() {
 
       if (itemsError) throw itemsError;
 
+      // Reduce inventory stock
+      for (const item of cart) {
+        const variantId = Number(item.product.id);
+        
+        // Get current inventory
+        const { data: currentInventory } = await supabase
+          .from('inventory')
+          .select('quantity')
+          .eq('variant_id', variantId)
+          .maybeSingle();
+
+        if (currentInventory) {
+          const newQuantity = currentInventory.quantity - item.quantity;
+          
+          // Update inventory
+          const { error: invError } = await supabase
+            .from('inventory')
+            .update({ quantity: newQuantity })
+            .eq('variant_id', variantId);
+
+          if (invError) {
+            console.error("Error updating inventory:", invError);
+          }
+        }
+      }
+
       // Update member points if member is selected and earned points
       if (selectedMemberId && earnedPoints > 0) {
         const selectedMember = members.find(m => m.id === selectedMemberId);
@@ -361,6 +423,9 @@ export default function Sales() {
       setSelectedDiscountId("");
       setSelectedMemberId("");
       setEarnedPoints(0);
+      
+      // Refresh product list to update stock
+      fetchProducts();
     } catch (error: any) {
       toast({
         title: "Error",

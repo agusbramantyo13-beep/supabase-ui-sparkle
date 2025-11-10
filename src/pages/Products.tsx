@@ -40,7 +40,14 @@ export default function Products() {
         .from('products')
         .select(`
           *,
-          categories(name)
+          categories(name),
+          variants(
+            id,
+            name,
+            price,
+            cost_price,
+            sku
+          )
         `)
         .order('created_at', { ascending: false })
 
@@ -177,8 +184,56 @@ export default function Products() {
                       variant="outline" 
                       size="sm" 
                       className="flex-1"
-                      onClick={() => {
-                        setSelectedProduct(product);
+                      onClick={async () => {
+                        // Fetch complete product data with variant details
+                        const { data: productData, error } = await supabase
+                          .from('products')
+                          .select(`
+                            *,
+                            variants(
+                              id,
+                              name,
+                              price,
+                              cost_price,
+                              sku
+                            )
+                          `)
+                          .eq('id', product.id)
+                          .single();
+
+                        if (error) {
+                          toast({
+                            title: "Error",
+                            description: "Failed to load product details",
+                            variant: "destructive"
+                          });
+                          return;
+                        }
+
+                        // Get first variant data
+                        const variant = productData.variants?.[0];
+                        
+                        // Fetch inventory separately
+                        let inventoryQuantity = 0;
+                        if (variant?.id) {
+                          const { data: inventoryData } = await supabase
+                            .from('inventory')
+                            .select('quantity')
+                            .eq('variant_id', variant.id)
+                            .maybeSingle();
+                          
+                          inventoryQuantity = inventoryData?.quantity || 0;
+                        }
+
+                        setSelectedProduct({
+                          ...productData,
+                          variant_id: variant?.id,
+                          variant_name: variant?.name,
+                          variant_price: variant?.price,
+                          variant_cost_price: variant?.cost_price,
+                          variant_sku: variant?.sku,
+                          quantity: inventoryQuantity
+                        });
                         setProductFormOpen(true);
                       }}
                     >
