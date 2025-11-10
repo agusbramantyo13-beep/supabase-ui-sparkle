@@ -668,6 +668,7 @@ export type Database = {
       }
       variants: {
         Row: {
+          cost_price: number
           created_at: string | null
           id: number
           name: string
@@ -676,6 +677,7 @@ export type Database = {
           sku: string | null
         }
         Insert: {
+          cost_price?: number
           created_at?: string | null
           id?: number
           name: string
@@ -684,6 +686,7 @@ export type Database = {
           sku?: string | null
         }
         Update: {
+          cost_price?: number
           created_at?: string | null
           id?: number
           name?: string

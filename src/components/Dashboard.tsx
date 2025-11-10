@@ -66,17 +66,34 @@ export function Dashboard() {
         .order('created_at', { ascending: false })
         .limit(5)
 
+      // Calculate total capital value (modal) from inventory
+      const { data: inventoryData } = await supabase
+        .from('inventory')
+        .select(`
+          quantity,
+          variants!inner(cost_price)
+        `)
+      
+      const totalCapital = inventoryData?.reduce((sum, item) => {
+        const costPrice = Number(item.variants?.cost_price || 0)
+        const quantity = Number(item.quantity || 0)
+        return sum + (costPrice * quantity)
+      }, 0) || 0
+
       // Calculate totals
       const totalSales = salesData?.reduce((sum, sale) => sum + Number(sale.total || 0), 0) || 0
+
+      // Calculate low stock items
+      const lowStockCount = inventoryData?.filter(item => item.quantity < 10).length || 0
 
       setStats({
         totalSales,
         totalProducts: productsCount || 0,
         totalOrders: ordersCount || 0,
         totalUsers: usersCount || 0,
-        lowStockItems: 5, // This would need a proper query for low stock
+        lowStockItems: lowStockCount,
         recentSales: recentSales || [],
-        inventoryValue: totalSales * 0.6 // Estimated inventory value
+        inventoryValue: totalCapital
       })
     } catch (error) {
       console.error('Error fetching dashboard data:', error)

@@ -152,6 +152,7 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
             product_id: productData.id,
             name: formData.variant_name,
             price: parseFloat(formData.variant_price),
+            cost_price: formData.variant_cost_price ? parseFloat(formData.variant_cost_price) : 0,
             sku: formData.variant_sku || null
           })
           .select()
