@@ -31,7 +31,6 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
     variant_price: "",
     variant_cost_price: "",
     variant_sku: "",
-    variant_barcode: "",
     initial_quantity: ""
   });
   const [loading, setLoading] = useState(false);
@@ -50,7 +49,6 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
         variant_price: product.variant_price?.toString() || "",
         variant_cost_price: product.variant_cost_price?.toString() || "",
         variant_sku: product.variant_sku || "",
-        variant_barcode: product.variant_barcode || "",
         initial_quantity: product.quantity?.toString() || ""
       });
     } else {
@@ -61,7 +59,6 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
         variant_price: "",
         variant_cost_price: "",
         variant_sku: "",
-        variant_barcode: "",
         initial_quantity: ""
       });
     }
@@ -120,8 +117,7 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
               name: formData.variant_name,
               price: parseFloat(formData.variant_price),
               cost_price: formData.variant_cost_price ? parseFloat(formData.variant_cost_price) : null,
-              sku: formData.variant_sku || null,
-              barcode: formData.variant_barcode || null
+              sku: formData.variant_sku || null
             })
             .eq('id', product.variant_id);
 
@@ -277,26 +273,14 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="variant_sku">SKU</Label>
-              <Input
-                id="variant_sku"
-                value={formData.variant_sku}
-                onChange={(e) => setFormData({ ...formData, variant_sku: e.target.value })}
-                placeholder="SKU code"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="variant_barcode">Barcode</Label>
-              <Input
-                id="variant_barcode"
-                value={formData.variant_barcode}
-                onChange={(e) => setFormData({ ...formData, variant_barcode: e.target.value })}
-                placeholder="Barcode"
-              />
-            </div>
+          <div>
+            <Label htmlFor="variant_sku">SKU</Label>
+            <Input
+              id="variant_sku"
+              value={formData.variant_sku}
+              onChange={(e) => setFormData({ ...formData, variant_sku: e.target.value })}
+              placeholder="SKU code"
+            />
           </div>
 
           <div>
