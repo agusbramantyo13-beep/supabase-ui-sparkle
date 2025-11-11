@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react"
-import { Warehouse, AlertTriangle, TrendingUp, TrendingDown, Download } from "lucide-react"
+import { Warehouse, AlertTriangle, TrendingUp, TrendingDown, Download, ShoppingCart } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { InventoryForm } from "@/components/InventoryForm"
+import { StockPurchaseForm } from "@/components/StockPurchaseForm"
 import * as XLSX from 'xlsx'
 import { useToast } from "@/hooks/use-toast"
 
@@ -21,6 +22,7 @@ export default function Inventory() {
   const [loading, setLoading] = useState(true)
   const [inventoryFormOpen, setInventoryFormOpen] = useState(false)
   const [formType, setFormType] = useState<'add' | 'remove' | 'adjust'>('add')
+  const [purchaseFormOpen, setPurchaseFormOpen] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -123,6 +125,13 @@ export default function Inventory() {
           </Button>
           <Button 
             className="bg-gradient-primary hover:bg-primary/90"
+            onClick={() => setPurchaseFormOpen(true)}
+          >
+            <ShoppingCart className="w-4 h-4 mr-2" />
+            Input Pembelian
+          </Button>
+          <Button 
+            variant="outline"
             onClick={() => {
               setFormType('add');
               setInventoryFormOpen(true);
@@ -271,6 +280,12 @@ export default function Inventory() {
           )}
         </CardContent>
       </Card>
+
+      <StockPurchaseForm
+        open={purchaseFormOpen}
+        onOpenChange={setPurchaseFormOpen}
+        onSuccess={fetchInventory}
+      />
 
       <InventoryForm
         open={inventoryFormOpen}
