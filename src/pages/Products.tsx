@@ -17,6 +17,12 @@ interface Product {
   categories?: {
     name: string
   }
+  variants?: Array<{
+    id: number
+    inventory?: Array<{
+      quantity: number
+    }>
+  }>
 }
 
 export default function Products() {
@@ -46,7 +52,8 @@ export default function Products() {
             name,
             price,
             cost_price,
-            sku
+            sku,
+            inventory(quantity)
           )
         `)
         .order('created_at', { ascending: false })
@@ -167,12 +174,24 @@ export default function Products() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     {product.categories && (
                       <Badge variant="secondary" className="text-xs">
                         {product.categories.name}
                       </Badge>
                     )}
+                    <Badge 
+                      variant={
+                        (product.variants?.[0]?.inventory?.[0]?.quantity || 0) > 10 
+                          ? "default" 
+                          : (product.variants?.[0]?.inventory?.[0]?.quantity || 0) > 0 
+                          ? "outline" 
+                          : "destructive"
+                      } 
+                      className="text-xs"
+                    >
+                      Stok: {product.variants?.[0]?.inventory?.[0]?.quantity || 0}
+                    </Badge>
                   </div>
                   
                   <div className="text-xs text-muted-foreground">
