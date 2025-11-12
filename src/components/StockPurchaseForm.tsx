@@ -190,24 +190,30 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
         // Get current inventory
         const { data: currentInventory } = await supabase
           .from('inventory')
-          .select('quantity')
+          .select('id, quantity')
           .eq('variant_id', parseInt(item.variant_id))
-          .single();
+          .maybeSingle();
 
-        const currentQty = currentInventory?.quantity || 0;
-        const newQuantity = currentQty + item.quantity;
+        if (currentInventory) {
+          // Update existing inventory
+          const newQuantity = currentInventory.quantity + item.quantity;
+          const { error: inventoryError } = await supabase
+            .from('inventory')
+            .update({ quantity: newQuantity })
+            .eq('id', currentInventory.id);
 
-        // Update inventory
-        const { error: inventoryError } = await supabase
-          .from('inventory')
-          .upsert({
-            variant_id: parseInt(item.variant_id),
-            quantity: newQuantity
-          }, {
-            onConflict: 'variant_id'
-          });
+          if (inventoryError) throw inventoryError;
+        } else {
+          // Insert new inventory record
+          const { error: inventoryError } = await supabase
+            .from('inventory')
+            .insert({
+              variant_id: parseInt(item.variant_id),
+              quantity: item.quantity
+            });
 
-        if (inventoryError) throw inventoryError;
+          if (inventoryError) throw inventoryError;
+        }
 
         // Update variant prices if changed
         const { error: variantError } = await supabase
