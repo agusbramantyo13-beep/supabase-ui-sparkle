@@ -203,6 +203,8 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
           .upsert({
             variant_id: parseInt(item.variant_id),
             quantity: newQuantity
+          }, {
+            onConflict: 'variant_id'
           });
 
         if (inventoryError) throw inventoryError;
