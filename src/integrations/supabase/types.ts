@@ -541,6 +541,91 @@ export type Database = {
         }
         Relationships: []
       }
+      stock_adjustment_items: {
+        Row: {
+          created_at: string | null
+          id: string
+          new_quantity: number
+          old_quantity: number
+          quantity_difference: number
+          session_id: string
+          total_value_difference: number
+          unit_value: number
+          variant_id: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          new_quantity?: number
+          old_quantity?: number
+          quantity_difference?: number
+          session_id: string
+          total_value_difference?: number
+          unit_value?: number
+          variant_id?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          new_quantity?: number
+          old_quantity?: number
+          quantity_difference?: number
+          session_id?: string
+          total_value_difference?: number
+          unit_value?: number
+          variant_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_adjustment_items_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "stock_adjustment_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_adjustment_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "v_current_inventory"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "stock_adjustment_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_adjustment_sessions: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          note: string | null
+          status: string | null
+          total_value_difference: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          status?: string | null
+          total_value_difference?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          status?: string | null
+          total_value_difference?: number | null
+        }
+        Relationships: []
+      }
       stock_movements: {
         Row: {
           created_at: string | null

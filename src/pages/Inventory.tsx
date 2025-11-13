@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { InventoryForm } from "@/components/InventoryForm"
 import { StockPurchaseForm } from "@/components/StockPurchaseForm"
+import { StockAdjustmentForm } from "@/components/StockAdjustmentForm"
 import * as XLSX from 'xlsx'
 import { useToast } from "@/hooks/use-toast"
 
@@ -23,6 +24,7 @@ export default function Inventory() {
   const [inventoryFormOpen, setInventoryFormOpen] = useState(false)
   const [formType, setFormType] = useState<'add' | 'remove' | 'adjust'>('add')
   const [purchaseFormOpen, setPurchaseFormOpen] = useState(false)
+  const [adjustmentFormOpen, setAdjustmentFormOpen] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -152,13 +154,10 @@ export default function Inventory() {
           </Button>
           <Button 
             variant="outline"
-            onClick={() => {
-              setFormType('adjust');
-              setInventoryFormOpen(true);
-            }}
+            onClick={() => setAdjustmentFormOpen(true)}
           >
             <Warehouse className="w-4 h-4 mr-2" />
-            Adjust Stock
+            Adjust Stock Multi-Item
           </Button>
         </div>
       </div>
@@ -284,6 +283,12 @@ export default function Inventory() {
       <StockPurchaseForm
         open={purchaseFormOpen}
         onOpenChange={setPurchaseFormOpen}
+        onSuccess={fetchInventory}
+      />
+
+      <StockAdjustmentForm
+        open={adjustmentFormOpen}
+        onOpenChange={setAdjustmentFormOpen}
         onSuccess={fetchInventory}
       />
 
