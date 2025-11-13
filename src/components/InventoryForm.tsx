@@ -119,9 +119,9 @@ export function InventoryForm({ open, onOpenChange, onSuccess, type }: Inventory
       // Get current inventory
       const { data: currentInventory } = await supabase
         .from('inventory')
-        .select('quantity')
+        .select('id, quantity')
         .eq('variant_id', parseInt(formData.variant_id))
-        .single();
+        .maybeSingle();
 
       const currentQty = currentInventory?.quantity || 0;
       let newQuantity = currentQty;
@@ -140,14 +140,23 @@ export function InventoryForm({ open, onOpenChange, onSuccess, type }: Inventory
       }
 
       // Update or create inventory record
-      const { error: inventoryError } = await supabase
-        .from('inventory')
-        .upsert({
-          variant_id: parseInt(formData.variant_id),
-          quantity: newQuantity
-        });
-
-      if (inventoryError) throw inventoryError;
+      if (currentInventory) {
+        // Update existing inventory
+        const { error: inventoryError } = await supabase
+          .from('inventory')
+          .update({ quantity: newQuantity })
+          .eq('id', currentInventory.id);
+        if (inventoryError) throw inventoryError;
+      } else {
+        // Insert new inventory record
+        const { error: inventoryError } = await supabase
+          .from('inventory')
+          .insert({
+            variant_id: parseInt(formData.variant_id),
+            quantity: newQuantity
+          });
+        if (inventoryError) throw inventoryError;
+      }
 
       // Create stock movement record
       const actualQuantityChange = type === 'remove' ? -quantity : 
