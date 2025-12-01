@@ -15,10 +15,7 @@ interface AdjustmentSession {
   note: string | null;
   total_value_difference: number;
   status: string | null;
-  profiles?: {
-    name: string | null;
-    email: string | null;
-  };
+  creator_name?: string | null;
 }
 
 interface AdjustmentItem {
@@ -50,15 +47,12 @@ export default function StockAdjustmentReport() {
 
   const fetchSessions = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    const { data: sessionsData, error: sessionsError } = await supabase
       .from('stock_adjustment_sessions')
-      .select(`
-        *,
-        profiles(name, email)
-      `)
+      .select('*')
       .order('created_at', { ascending: false });
 
-    if (error) {
+    if (sessionsError) {
       toast({
         title: "Error",
         description: "Gagal memuat data sesi penyesuaian",
@@ -68,7 +62,21 @@ export default function StockAdjustmentReport() {
       return;
     }
 
-    setSessions(data || []);
+    // Fetch creator names
+    const creatorIds = [...new Set(sessionsData?.map(s => s.created_by).filter(Boolean))];
+    const { data: profilesData } = await supabase
+      .from('profiles')
+      .select('id, name')
+      .in('id', creatorIds);
+
+    const profileMap = new Map(profilesData?.map(p => [p.id, p.name]) || []);
+
+    const enrichedSessions = sessionsData?.map(session => ({
+      ...session,
+      creator_name: session.created_by ? profileMap.get(session.created_by) : null
+    })) || [];
+
+    setSessions(enrichedSessions);
     setLoading(false);
   };
 
@@ -141,7 +149,7 @@ export default function StockAdjustmentReport() {
                               {format(new Date(session.created_at), 'dd MMM yyyy HH:mm')}
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              Oleh: {session.profiles?.name || 'Unknown'}
+                              Oleh: {session.creator_name || 'Unknown'}
                             </p>
                             {session.note && (
                               <p className="text-sm text-muted-foreground mt-1">
