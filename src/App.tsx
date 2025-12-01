@@ -21,6 +21,7 @@ import Settings from "./pages/Settings";
 import Members from "./pages/Members";
 import Discounts from "./pages/Discounts";
 import StockAdjustmentReport from "./pages/StockAdjustmentReport";
+import PurchaseReport from "./pages/PurchaseReport";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -114,6 +115,11 @@ const App = () => (
                             <Route path="/stock-adjustment-report" element={
                               <RoleBasedRoute allowedRoles={["owner"]}>
                                 <StockAdjustmentReport />
+                              </RoleBasedRoute>
+                            } />
+                            <Route path="/purchase-report" element={
+                              <RoleBasedRoute allowedRoles={["owner"]}>
+                                <PurchaseReport />
                               </RoleBasedRoute>
                             } />
                             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

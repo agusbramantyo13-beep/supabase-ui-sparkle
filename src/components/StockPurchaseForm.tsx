@@ -185,8 +185,42 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
     setLoading(true);
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const totals = getTotals();
+
+      // Create purchase session
+      const { data: session, error: sessionError } = await supabase
+        .from('purchase_sessions')
+        .insert({
+          supplier,
+          purchase_date: purchaseDate,
+          notes,
+          total_items: totals.totalItems,
+          total_cost: totals.totalCost,
+          created_by: user?.id
+        })
+        .select()
+        .single();
+
+      if (sessionError) throw sessionError;
+
       // Update inventory and create stock movements for each item
       for (const item of validItems) {
+        // Create purchase item record
+        const { error: purchaseItemError } = await supabase
+          .from('purchase_items')
+          .insert({
+            session_id: session.id,
+            variant_id: parseInt(item.variant_id),
+            product_snapshot: { name: item.variant_name },
+            quantity: item.quantity,
+            cost_price: item.cost_price,
+            selling_price: item.selling_price,
+            total_cost: item.total_cost
+          });
+
+        if (purchaseItemError) throw purchaseItemError;
+
         // Get current inventory
         const { data: currentInventory } = await supabase
           .from('inventory')
@@ -233,17 +267,15 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
             variant_id: parseInt(item.variant_id),
             movement: 'in',
             quantity: item.quantity,
-            created_by: (await supabase.auth.getUser()).data.user?.id || null
+            created_by: user?.id
           });
 
         if (movementError) throw movementError;
       }
-
-      const totals = getTotals();
       
       toast({
         title: "Berhasil",
-        description: `Stok berhasil ditambahkan. Total: ${totals.totalItems} item, ${totals.totalProducts} produk, Rp ${totals.totalCost.toLocaleString('id-ID')}`,
+        description: `Pembelian berhasil disimpan. Total: ${totals.totalItems} item, ${totals.totalProducts} produk, Rp ${totals.totalCost.toLocaleString('id-ID')}`,
       });
 
       onSuccess();

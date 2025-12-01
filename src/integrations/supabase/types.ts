@@ -399,6 +399,105 @@ export type Database = {
         }
         Relationships: []
       }
+      purchase_items: {
+        Row: {
+          cost_price: number
+          created_at: string | null
+          id: string
+          product_snapshot: Json
+          quantity: number
+          selling_price: number
+          session_id: string
+          total_cost: number
+          variant_id: number | null
+        }
+        Insert: {
+          cost_price: number
+          created_at?: string | null
+          id?: string
+          product_snapshot: Json
+          quantity: number
+          selling_price: number
+          session_id: string
+          total_cost: number
+          variant_id?: number | null
+        }
+        Update: {
+          cost_price?: number
+          created_at?: string | null
+          id?: string
+          product_snapshot?: Json
+          quantity?: number
+          selling_price?: number
+          session_id?: string
+          total_cost?: number
+          variant_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_items_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "v_current_inventory"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "purchase_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_sessions: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          notes: string | null
+          purchase_date: string
+          supplier: string
+          total_cost: number
+          total_items: number
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          purchase_date: string
+          supplier: string
+          total_cost?: number
+          total_items?: number
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          purchase_date?: string
+          supplier?: string
+          total_cost?: number
+          total_items?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_sessions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sale_items: {
         Row: {
           cost_price: number
