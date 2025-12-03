@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { DollarSign, Package, ShoppingCart, TrendingUp, Users, Warehouse } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { StatCard } from "@/components/StatCard"
+import { SalesByCategoryReport } from "@/components/SalesByCategoryReport"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -217,10 +218,13 @@ export function Dashboard() {
         </Card>
       </div>
 
+      {/* Sales by Category Report */}
+      <SalesByCategoryReport />
+
       {/* Recent Activity */}
       <Card className="bg-gradient-card border-border/50">
         <CardHeader>
-          <CardTitle className="text-foreground">Recent Sales</CardTitle>
+          <CardTitle className="text-foreground">Penjualan Terbaru</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -248,9 +252,9 @@ export function Dashboard() {
             ) : (
               <div className="text-center py-8">
                 <ShoppingCart className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No recent sales found</p>
-                <Button variant="outline" className="mt-4">
-                  Create First Sale
+                <p className="text-muted-foreground">Belum ada penjualan</p>
+                <Button variant="outline" className="mt-4" onClick={() => navigate('/sales')}>
+                  Buat Penjualan Pertama
                 </Button>
               </div>
             )}
