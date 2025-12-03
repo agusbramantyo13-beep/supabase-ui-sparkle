@@ -42,7 +42,7 @@ export function SalesByCategoryReport() {
       const startISO = format(startDate, "yyyy-MM-dd") + "T00:00:00"
       const endISO = format(endDate, "yyyy-MM-dd") + "T23:59:59"
 
-      // Fetch sale items with product info
+      // Fetch sale items with variant, product, and category info
       const { data: saleItems, error } = await supabase
         .from('sale_items')
         .select(`
@@ -57,14 +57,46 @@ export function SalesByCategoryReport() {
 
       if (error) throw error
 
+      // Get all unique variant_ids
+      const variantIds = [...new Set((saleItems || []).map(item => item.variant_id).filter(Boolean))]
+
+      // Fetch variant details with product and category
+      let variantMap = new Map<number, { variant_name: string; product_name: string; category_name: string }>()
+      
+      if (variantIds.length > 0) {
+        const { data: variants } = await supabase
+          .from('variants')
+          .select(`
+            id,
+            name,
+            products!inner(
+              name,
+              categories(name)
+            )
+          `)
+          .in('id', variantIds)
+
+        for (const v of variants || []) {
+          const product = v.products as any
+          variantMap.set(v.id, {
+            variant_name: v.name,
+            product_name: product?.name || 'Unknown',
+            category_name: product?.categories?.name || 'Tanpa Kategori'
+          })
+        }
+      }
+
       // Group by category
       const categoryMap = new Map<string, CategorySales>()
 
       for (const item of saleItems || []) {
         const snapshot = item.product_snapshot as any
-        const categoryName = snapshot?.category_name || 'Tanpa Kategori'
-        const productName = snapshot?.product_name || 'Unknown'
-        const variantName = snapshot?.variant_name || 'Default'
+        const variantInfo = item.variant_id ? variantMap.get(item.variant_id) : null
+        
+        // Use variant info if available, fallback to snapshot
+        const categoryName = variantInfo?.category_name || 'Tanpa Kategori'
+        const productName = variantInfo?.product_name || snapshot?.name?.split(' - ')[0] || 'Unknown'
+        const variantName = variantInfo?.variant_name || snapshot?.name?.split(' - ')[1] || 'Default'
 
         if (!categoryMap.has(categoryName)) {
           categoryMap.set(categoryName, {
