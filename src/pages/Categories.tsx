@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { FolderOpen, Plus, Edit, Trash2, Search } from "lucide-react";
+import { FolderOpen, Plus, Edit, Trash2, Search, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { CategoryForm } from "@/components/CategoryForm";
+import { CategoryProductsDialog } from "@/components/CategoryProductsDialog";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -32,6 +33,8 @@ export default function Categories() {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFormOpen, setCategoryFormOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [productsDialogOpen, setProductsDialogOpen] = useState(false);
+  const [viewingCategory, setViewingCategory] = useState<Category | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -181,12 +184,22 @@ export default function Categories() {
                       size="sm" 
                       className="flex-1"
                       onClick={() => {
+                        setViewingCategory(category);
+                        setProductsDialogOpen(true);
+                      }}
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      Lihat
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => {
                         setSelectedCategory(category);
                         setCategoryFormOpen(true);
                       }}
                     >
-                      <Edit className="w-4 h-4 mr-2" />
-                      Edit
+                      <Edit className="w-4 h-4" />
                     </Button>
                     
                     <AlertDialog>
@@ -255,6 +268,13 @@ export default function Categories() {
           setSelectedCategory(null);
         }}
         category={selectedCategory}
+      />
+
+      <CategoryProductsDialog
+        open={productsDialogOpen}
+        onOpenChange={setProductsDialogOpen}
+        categoryId={viewingCategory?.id || null}
+        categoryName={viewingCategory?.name || ""}
       />
     </div>
   );
