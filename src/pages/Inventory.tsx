@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Warehouse, AlertTriangle, TrendingUp, TrendingDown, Download, ShoppingCart } from "lucide-react"
+import { Warehouse, AlertTriangle, TrendingUp, TrendingDown, Download, ShoppingCart, Upload } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { InventoryForm } from "@/components/InventoryForm"
 import { StockPurchaseForm } from "@/components/StockPurchaseForm"
 import { StockAdjustmentForm } from "@/components/StockAdjustmentForm"
+import { StockUploadForm } from "@/components/StockUploadForm"
 import * as XLSX from 'xlsx'
 import { useToast } from "@/hooks/use-toast"
 
@@ -25,6 +26,7 @@ export default function Inventory() {
   const [formType, setFormType] = useState<'add' | 'remove' | 'adjust'>('add')
   const [purchaseFormOpen, setPurchaseFormOpen] = useState(false)
   const [adjustmentFormOpen, setAdjustmentFormOpen] = useState(false)
+  const [uploadFormOpen, setUploadFormOpen] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -116,7 +118,7 @@ export default function Inventory() {
           <h1 className="text-3xl font-bold text-foreground">Inventory</h1>
           <p className="text-muted-foreground">Monitor and manage your stock levels</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button 
             variant="outline"
             onClick={handleDownloadExcel}
@@ -124,6 +126,13 @@ export default function Inventory() {
           >
             <Download className="w-4 h-4 mr-2" />
             Download Excel
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => setUploadFormOpen(true)}
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Upload Excel
           </Button>
           <Button 
             className="bg-gradient-primary hover:bg-primary/90"
@@ -297,6 +306,12 @@ export default function Inventory() {
         onOpenChange={setInventoryFormOpen}
         onSuccess={fetchInventory}
         type={formType}
+      />
+
+      <StockUploadForm
+        open={uploadFormOpen}
+        onOpenChange={setUploadFormOpen}
+        onSuccess={fetchInventory}
       />
     </div>
   )
