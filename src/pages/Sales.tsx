@@ -637,12 +637,15 @@ export default function Sales() {
                   {paymentMethod === 'cash' && (
                     <>
                       <div>
-                        <label className="text-sm font-medium text-foreground mb-2 block">Amount Paid</label>
+                        <label className="text-sm font-medium text-foreground mb-2 block">Jumlah Dibayar</label>
                         <Input
-                          type="number"
-                          placeholder="Enter amount paid"
-                          value={amountPaid}
-                          onChange={(e) => setAmountPaid(e.target.value)}
+                          type="text"
+                          placeholder="Masukkan jumlah"
+                          value={amountPaid ? Number(amountPaid).toLocaleString('id-ID') : ''}
+                          onChange={(e) => {
+                            const rawValue = e.target.value.replace(/[^0-9]/g, '');
+                            setAmountPaid(rawValue);
+                          }}
                           className="text-lg"
                         />
                       </div>
