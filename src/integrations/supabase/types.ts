@@ -464,6 +464,9 @@ export type Database = {
           id: string
           notes: string | null
           purchase_date: string
+          returned_at: string | null
+          returned_by: string | null
+          status: string | null
           supplier: string
           total_cost: number
           total_items: number
@@ -474,6 +477,9 @@ export type Database = {
           id?: string
           notes?: string | null
           purchase_date: string
+          returned_at?: string | null
+          returned_by?: string | null
+          status?: string | null
           supplier: string
           total_cost?: number
           total_items?: number
@@ -484,6 +490,9 @@ export type Database = {
           id?: string
           notes?: string | null
           purchase_date?: string
+          returned_at?: string | null
+          returned_by?: string | null
+          status?: string | null
           supplier?: string
           total_cost?: number
           total_items?: number
