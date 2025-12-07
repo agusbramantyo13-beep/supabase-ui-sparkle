@@ -4,8 +4,11 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ChevronDown, ChevronUp, Undo2 } from "lucide-react";
 import { format } from "date-fns";
+import PurchaseReturnDialog from "@/components/PurchaseReturnDialog";
 
 interface PurchaseSession {
   id: string;
@@ -17,6 +20,7 @@ interface PurchaseSession {
   created_at: string;
   created_by: string | null;
   creator_name?: string | null;
+  status?: string | null;
 }
 
 interface PurchaseItem {
@@ -40,6 +44,8 @@ export default function PurchaseReport() {
   const [sessionItems, setSessionItems] = useState<Record<string, PurchaseItem[]>>({});
   const [expandedSessions, setExpandedSessions] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [returnDialogOpen, setReturnDialogOpen] = useState(false);
+  const [selectedSession, setSelectedSession] = useState<PurchaseSession | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -123,6 +129,11 @@ export default function PurchaseReport() {
     setExpandedSessions(newExpanded);
   };
 
+  const handleReturnClick = (session: PurchaseSession) => {
+    setSelectedSession(session);
+    setReturnDialogOpen(true);
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <Card>
@@ -142,14 +153,19 @@ export default function PurchaseReport() {
                   open={expandedSessions.has(session.id)}
                   onOpenChange={() => toggleSession(session.id)}
                 >
-                  <Card>
+                  <Card className={session.status === 'returned' ? 'opacity-60' : ''}>
                     <CollapsibleTrigger className="w-full">
                       <div className="p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
                         <div className="flex items-center gap-4 flex-1">
                           <div className="text-left flex-1">
-                            <p className="font-semibold">
-                              {format(new Date(session.purchase_date), 'dd MMM yyyy')}
-                            </p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-semibold">
+                                {format(new Date(session.purchase_date), 'dd MMM yyyy')}
+                              </p>
+                              {session.status === 'returned' && (
+                                <Badge variant="destructive">Diretur</Badge>
+                              )}
+                            </div>
                             <p className="text-sm text-muted-foreground">
                               Supplier: {session.supplier}
                             </p>
@@ -234,6 +250,22 @@ export default function PurchaseReport() {
                             </TableBody>
                           </Table>
                         )}
+                        
+                        {session.status !== 'returned' && (
+                          <div className="mt-4 pt-4 border-t flex justify-end">
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleReturnClick(session);
+                              }}
+                            >
+                              <Undo2 className="h-4 w-4 mr-2" />
+                              Retur Pembelian
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </CollapsibleContent>
                   </Card>
@@ -243,6 +275,21 @@ export default function PurchaseReport() {
           )}
         </CardContent>
       </Card>
+
+      {selectedSession && (
+        <PurchaseReturnDialog
+          open={returnDialogOpen}
+          onOpenChange={setReturnDialogOpen}
+          sessionId={selectedSession.id}
+          sessionInfo={{
+            supplier: selectedSession.supplier,
+            purchase_date: format(new Date(selectedSession.purchase_date), 'dd MMM yyyy'),
+            total_cost: selectedSession.total_cost,
+            total_items: selectedSession.total_items,
+          }}
+          onSuccess={fetchSessions}
+        />
+      )}
     </div>
   );
 }
