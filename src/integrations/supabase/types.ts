@@ -573,7 +573,10 @@ export type Database = {
           payment_details: Json | null
           payment_method: string | null
           receipt_number: string | null
+          returned_at: string | null
+          returned_by: string | null
           shift_id: string | null
+          status: string | null
           subtotal: number
           tax_total: number
           total: number
@@ -586,7 +589,10 @@ export type Database = {
           payment_details?: Json | null
           payment_method?: string | null
           receipt_number?: string | null
+          returned_at?: string | null
+          returned_by?: string | null
           shift_id?: string | null
+          status?: string | null
           subtotal?: number
           tax_total?: number
           total?: number
@@ -599,7 +605,10 @@ export type Database = {
           payment_details?: Json | null
           payment_method?: string | null
           receipt_number?: string | null
+          returned_at?: string | null
+          returned_by?: string | null
           shift_id?: string | null
+          status?: string | null
           subtotal?: number
           tax_total?: number
           total?: number
