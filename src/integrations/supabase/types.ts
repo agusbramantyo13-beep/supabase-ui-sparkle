@@ -346,6 +346,48 @@ export type Database = {
           },
         ]
       }
+      point_redemption_rules: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          max_discount: number | null
+          min_purchase: number | null
+          name: string
+          points_required: number
+          reward_type: string
+          reward_value: number
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          max_discount?: number | null
+          min_purchase?: number | null
+          name: string
+          points_required?: number
+          reward_type?: string
+          reward_value?: number
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          max_discount?: number | null
+          min_purchase?: number | null
+          name?: string
+          points_required?: number
+          reward_type?: string
+          reward_value?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           category_id: number | null
