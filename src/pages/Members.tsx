@@ -48,7 +48,8 @@ export default function Members() {
     phone: "",
     address: "",
     date_of_birth: "",
-    status: "active" as "active" | "inactive"
+    status: "active" as "active" | "inactive",
+    points: 0
   });
 
   const { toast } = useToast();
@@ -84,7 +85,8 @@ export default function Members() {
       phone: "",
       address: "",
       date_of_birth: "",
-      status: "active"
+      status: "active",
+      points: 0
     });
   };
 
@@ -145,8 +147,13 @@ export default function Members() {
       const { error } = await supabase
         .from('members')
         .update({
-          ...formData,
-          date_of_birth: formData.date_of_birth || null
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          date_of_birth: formData.date_of_birth || null,
+          status: formData.status,
+          points: formData.points
         })
         .eq('id', selectedMember.id);
 
@@ -211,7 +218,8 @@ export default function Members() {
       phone: member.phone || "",
       address: member.address || "",
       date_of_birth: member.date_of_birth || "",
-      status: (member.status as "active" | "inactive")
+      status: (member.status as "active" | "inactive"),
+      points: member.points || 0
     });
     setDialogOpen(true);
   };
@@ -521,6 +529,17 @@ export default function Members() {
                     <SelectItem value="inactive">Inactive</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div>
+                <Label htmlFor="edit-points">Points</Label>
+                <Input
+                  id="edit-points"
+                  type="number"
+                  min="0"
+                  placeholder="Enter points"
+                  value={formData.points}
+                  onChange={(e) => setFormData(prev => ({ ...prev, points: parseInt(e.target.value) || 0 }))}
+                />
               </div>
               <div className="flex gap-2 justify-end">
                 <Button
