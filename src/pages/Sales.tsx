@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Minus, Trash2, CreditCard, DollarSign, Receipt, Tag, UserCheck } from "lucide-react";
+import { Plus, Minus, Trash2, CreditCard, DollarSign, Receipt, Tag, UserCheck, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -52,6 +52,17 @@ interface LoyaltyPointRule {
   active: boolean;
 }
 
+interface PointRedemptionRule {
+  id: string;
+  name: string;
+  points_required: number;
+  reward_type: string;
+  reward_value: number;
+  max_discount: number | null;
+  min_purchase: number | null;
+  active: boolean;
+}
+
 export default function Sales() {
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -65,6 +76,8 @@ export default function Sales() {
   const [selectedMemberId, setSelectedMemberId] = useState<string>("");
   const [loyaltyRules, setLoyaltyRules] = useState<LoyaltyPointRule[]>([]);
   const [earnedPoints, setEarnedPoints] = useState<number>(0);
+  const [redemptionRules, setRedemptionRules] = useState<PointRedemptionRule[]>([]);
+  const [selectedRedemptionId, setSelectedRedemptionId] = useState<string>("");
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -73,11 +86,17 @@ export default function Sales() {
     fetchDiscounts();
     fetchMembers();
     fetchLoyaltyRules();
+    fetchRedemptionRules();
   }, []);
 
   useEffect(() => {
     calculateEarnedPoints();
   }, [selectedMemberId, cart]);
+
+  // Reset redemption selection when member changes
+  useEffect(() => {
+    setSelectedRedemptionId("");
+  }, [selectedMemberId]);
 
   const fetchProducts = async () => {
     const { data, error } = await supabase
@@ -162,6 +181,61 @@ export default function Sales() {
     }
 
     setLoyaltyRules(data || []);
+  };
+
+  const fetchRedemptionRules = async () => {
+    const { data, error } = await supabase
+      .from('point_redemption_rules')
+      .select('*')
+      .eq('active', true);
+
+    if (error) {
+      console.error("Error fetching redemption rules:", error);
+      return;
+    }
+
+    setRedemptionRules(data || []);
+  };
+
+  // Get available redemption rules for selected member
+  const getAvailableRedemptions = () => {
+    if (!selectedMemberId || selectedMemberId === "none") return [];
+    
+    const member = members.find(m => m.id === selectedMemberId);
+    if (!member) return [];
+
+    const subtotal = getSubtotal();
+    
+    return redemptionRules.filter(rule => {
+      // Check if member has enough points
+      if (member.points < rule.points_required) return false;
+      // Check minimum purchase requirement
+      if (rule.min_purchase && subtotal < rule.min_purchase) return false;
+      return true;
+    });
+  };
+
+  // Calculate redemption discount
+  const getRedemptionDiscount = () => {
+    if (!selectedRedemptionId || selectedRedemptionId === "none") return 0;
+    
+    const rule = redemptionRules.find(r => r.id === selectedRedemptionId);
+    if (!rule) return 0;
+
+    const subtotal = getSubtotal();
+    let discount = 0;
+
+    if (rule.reward_type === "discount_percentage") {
+      discount = (subtotal * rule.reward_value) / 100;
+      // Apply max discount cap if exists
+      if (rule.max_discount && discount > rule.max_discount) {
+        discount = rule.max_discount;
+      }
+    } else if (rule.reward_type === "discount_fixed") {
+      discount = rule.reward_value;
+    }
+
+    return discount;
   };
 
   const calculateEarnedPoints = () => {
@@ -279,7 +353,7 @@ export default function Sales() {
   };
 
   const getTotalAmount = () => {
-    return getSubtotal() - getDiscountAmount();
+    return getSubtotal() - getDiscountAmount() - getRedemptionDiscount();
   };
 
   const getChange = () => {
@@ -387,14 +461,33 @@ export default function Sales() {
         }
       }
 
-      // Update member points if member is selected and earned points
-      if (selectedMemberId && earnedPoints > 0) {
+      // Calculate points change for member
+      let pointsChange = 0;
+      let redeemedPointsAmount = 0;
+      
+      // Deduct points if redemption is used
+      if (selectedRedemptionId && selectedRedemptionId !== "none") {
+        const redemptionRule = redemptionRules.find(r => r.id === selectedRedemptionId);
+        if (redemptionRule) {
+          redeemedPointsAmount = redemptionRule.points_required;
+          pointsChange -= redeemedPointsAmount;
+        }
+      }
+      
+      // Add earned points
+      if (earnedPoints > 0) {
+        pointsChange += earnedPoints;
+      }
+
+      // Update member points if member is selected
+      if (selectedMemberId && selectedMemberId !== "none" && pointsChange !== 0) {
         const selectedMember = members.find(m => m.id === selectedMemberId);
         if (selectedMember) {
+          const newPoints = Math.max(0, (selectedMember.points || 0) + pointsChange);
           const { error: memberError } = await supabase
             .from('members')
             .update({ 
-              points: (selectedMember.points || 0) + earnedPoints,
+              points: newPoints,
               total_purchases: (selectedMember.total_purchases || 0) + total
             })
             .eq('id', selectedMemberId);
@@ -409,9 +502,16 @@ export default function Sales() {
         ? `Sale completed! Receipt: ${receiptNumber}\nChange: Rp ${change.toLocaleString()}`
         : `Sale completed! Receipt: ${receiptNumber}`;
       
-      const pointsMessage = selectedMemberId && earnedPoints > 0 
-        ? `\n\nMember mendapat ${earnedPoints} poin!`
-        : '';
+      let pointsMessage = '';
+      if (selectedMemberId && selectedMemberId !== "none") {
+        if (redeemedPointsAmount > 0 && earnedPoints > 0) {
+          pointsMessage = `\n\nPoin ditukar: -${redeemedPointsAmount} | Poin didapat: +${earnedPoints}`;
+        } else if (redeemedPointsAmount > 0) {
+          pointsMessage = `\n\nPoin ditukar: -${redeemedPointsAmount}`;
+        } else if (earnedPoints > 0) {
+          pointsMessage = `\n\nMember mendapat ${earnedPoints} poin!`;
+        }
+      }
 
       toast({
         title: "Success",
@@ -422,6 +522,7 @@ export default function Sales() {
       setAmountPaid("");
       setSelectedDiscountId("");
       setSelectedMemberId("");
+      setSelectedRedemptionId("");
       setEarnedPoints(0);
       
       // Refresh product list to update stock
@@ -576,6 +677,50 @@ export default function Sales() {
                       </div>
                     )}
                   </div>
+
+                  {/* Point Redemption Section - Only show when member is selected */}
+                  {selectedMemberId && selectedMemberId !== "none" && (
+                    <div className="space-y-2 p-3 bg-muted/20 rounded-lg border border-primary/20">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Gift className="w-4 h-4 text-primary" />
+                        <span className="text-sm font-semibold text-foreground">Redeem Poin</span>
+                      </div>
+
+                      <Select 
+                        value={selectedRedemptionId} 
+                        onValueChange={setSelectedRedemptionId}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Pilih promo redeem (opsional)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Tidak redeem poin</SelectItem>
+                          {getAvailableRedemptions().map((rule) => (
+                            <SelectItem key={rule.id} value={rule.id}>
+                              {rule.name} - {rule.points_required} poin = {
+                                rule.reward_type === "discount_percentage" 
+                                  ? `Diskon ${rule.reward_value}%${rule.max_discount ? ` (max Rp ${rule.max_discount.toLocaleString()})` : ''}`
+                                  : `Rp ${rule.reward_value.toLocaleString()}`
+                              }
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      {getAvailableRedemptions().length === 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          Tidak ada promo yang tersedia (poin tidak cukup atau belum memenuhi syarat)
+                        </p>
+                      )}
+
+                      {getRedemptionDiscount() > 0 && (
+                        <div className="flex justify-between items-center pt-2 text-success">
+                          <span className="text-sm">Potongan Redeem:</span>
+                          <span className="font-semibold">- Rp {getRedemptionDiscount().toLocaleString()}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Discount Section */}
                   <div className="space-y-2 p-3 bg-muted/20 rounded-lg">
