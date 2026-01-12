@@ -375,6 +375,7 @@ export default function Sales() {
     setLoading(true);
 
     try {
+      const selectedMember = members.find(m => m.id === selectedMemberId);
       const subtotal = getSubtotal();
       const discountAmount = getDiscountAmount();
       const total = getTotalAmount();
@@ -405,7 +406,9 @@ export default function Sales() {
           receipt_number: receiptNumber,
           payment_details: {
             amount_paid: paid,
-            change: change
+            change: change,
+            member_id: selectedMemberId || null,
+            member_name: selectedMember?.name || null
           },
           user_id: user?.id || null
         })
