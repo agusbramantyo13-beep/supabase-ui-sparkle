@@ -40,3 +40,8 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Mirror video for selfie camera */
+.mirror-video {
+  transform: scaleX(-1);
+}

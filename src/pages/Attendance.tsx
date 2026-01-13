@@ -82,23 +82,44 @@ export default function Attendance() {
 
   const startCamera = async () => {
     try {
+      // Request camera permission with more compatible constraints
       const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'user' },
+        video: { 
+          facingMode: 'user',
+          width: { ideal: 640 },
+          height: { ideal: 480 }
+        },
         audio: false 
       });
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-      }
       
       setStream(mediaStream);
       setCameraActive(true);
       setCapturedImage(null);
-    } catch (error) {
+      
+      // Wait for next render cycle to ensure video element is mounted
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream;
+          videoRef.current.play().catch(err => {
+            console.error('Error playing video:', err);
+          });
+        }
+      }, 100);
+    } catch (error: any) {
       console.error('Error accessing camera:', error);
+      let errorMessage = "Could not access camera. Please check permissions.";
+      
+      if (error.name === 'NotAllowedError') {
+        errorMessage = "Camera access denied. Please allow camera permission in your browser settings.";
+      } else if (error.name === 'NotFoundError') {
+        errorMessage = "No camera found on this device.";
+      } else if (error.name === 'NotReadableError') {
+        errorMessage = "Camera is already in use by another application.";
+      }
+      
       toast({
         title: "Error",
-        description: "Could not access camera. Please check permissions.",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -274,7 +295,8 @@ export default function Attendance() {
                   ref={videoRef}
                   autoPlay
                   playsInline
-                  className="w-full h-full object-cover"
+                  muted
+                  className="w-full h-full object-cover mirror-video"
                 />
               ) : capturedImage ? (
                 <img
