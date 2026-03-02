@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { User, UserPlus, Edit, Trash2, Shield, ShoppingCart, Store, Eye, EyeOff } from "lucide-react";
+import { User, UserPlus, Edit, Trash2, Shield, ShoppingCart, Store, Eye, EyeOff, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,9 +24,9 @@ export default function Users() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editNameDialogOpen, setEditNameDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editedName, setEditedName] = useState("");
+  const [editedRole, setEditedRole] = useState<'owner' | 'store_keeper'>('store_keeper');
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
@@ -37,6 +37,8 @@ export default function Users() {
   const [newUserRole, setNewUserRole] = useState<'owner' | 'store_keeper'>('store_keeper');
   const [isCreating, setIsCreating] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [isSendingReset, setIsSendingReset] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -62,58 +64,48 @@ export default function Users() {
     setLoading(false);
   };
 
-  const updateUserRole = async (userId: string, newRole: 'owner' | 'store_keeper') => {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ role: newRole })
-      .eq('id', userId);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update user role",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    toast({
-      title: "Success",
-      description: "User role updated successfully",
-    });
-
-    fetchUsers();
-    setDialogOpen(false);
-  };
-
-  const updateUserName = async (userId: string, newName: string) => {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ name: newName })
-      .eq('id', userId);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update user name",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    toast({
-      title: "Success",
-      description: "User name updated successfully",
-    });
-
-    fetchUsers();
-    setEditNameDialogOpen(false);
-  };
-
-  const openEditNameDialog = (user: UserProfile) => {
+  const openEditDialog = (user: UserProfile) => {
     setSelectedUser(user);
     setEditedName(user.name || "");
-    setEditNameDialogOpen(true);
+    setEditedRole(user.role);
+    setEditDialogOpen(true);
+  };
+
+  const saveUserEdit = async () => {
+    if (!selectedUser) return;
+    setIsSavingEdit(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ name: editedName, role: editedRole })
+        .eq('id', selectedUser.id);
+
+      if (error) throw error;
+
+      toast({ title: "Berhasil", description: "Data pengguna berhasil diperbarui" });
+      fetchUsers();
+      setEditDialogOpen(false);
+    } catch (error: any) {
+      toast({ title: "Gagal", description: error.message || "Gagal memperbarui data pengguna", variant: "destructive" });
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+  const sendResetPasswordLink = async () => {
+    if (!selectedUser?.email) return;
+    setIsSendingReset(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(selectedUser.email, {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+      if (error) throw error;
+      toast({ title: "Berhasil", description: `Link reset password telah dikirim ke ${selectedUser.email}` });
+    } catch (error: any) {
+      toast({ title: "Gagal", description: error.message || "Gagal mengirim link reset", variant: "destructive" });
+    } finally {
+      setIsSendingReset(false);
+    }
   };
 
   const createUser = async () => {
@@ -511,64 +503,11 @@ export default function Users() {
                       variant="outline"
                       size="sm"
                       className="flex-1"
-                      onClick={() => openEditNameDialog(user)}
+                      onClick={() => openEditDialog(user)}
                     >
                       <Edit className="w-4 h-4 mr-2" />
-                      Edit Name
+                      Edit
                     </Button>
-                    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => setSelectedUser(user)}
-                        >
-                          <Edit className="w-4 h-4 mr-2" />
-                          Edit Role
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Edit User Role</DialogTitle>
-                        </DialogHeader>
-                        {selectedUser && (
-                          <div className="space-y-4">
-                            <div>
-                              <Label>Email</Label>
-                              <Input value={selectedUser.email} disabled />
-                            </div>
-                            <div>
-                              <Label>Role</Label>
-                              <Select
-                                defaultValue={selectedUser.role}
-                                onValueChange={(value: 'owner' | 'store_keeper') => 
-                                  updateUserRole(selectedUser.id, value)
-                                }
-                              >
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="store_keeper">
-                                    <div className="flex items-center gap-2">
-                                      <ShoppingCart className="w-4 h-4" />
-                                      Penjaga Toko (Store Keeper)
-                                    </div>
-                                  </SelectItem>
-                                  <SelectItem value="owner">
-                                    <div className="flex items-center gap-2">
-                                      <Shield className="w-4 h-4" />
-                                      Pemilik (Owner)
-                                    </div>
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-                        )}
-                      </DialogContent>
-                    </Dialog>
                     <Button
                       variant="outline"
                       size="sm"
@@ -576,7 +515,7 @@ export default function Users() {
                       onClick={() => openDeleteDialog(user)}
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
-                      Delete
+                      Hapus
                     </Button>
                   </div>
                 </div>
@@ -586,11 +525,11 @@ export default function Users() {
         </div>
       )}
 
-      {/* Edit Name Dialog */}
-      <Dialog open={editNameDialogOpen} onOpenChange={setEditNameDialogOpen}>
+      {/* Edit User Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit User Name</DialogTitle>
+            <DialogTitle>Edit Pengguna</DialogTitle>
           </DialogHeader>
           {selectedUser && (
             <div className="space-y-4">
@@ -608,18 +547,56 @@ export default function Users() {
                   onChange={(e) => setEditedName(e.target.value)}
                 />
               </div>
-              <div className="flex gap-2 justify-end">
+              <div>
+                <Label>Role</Label>
+                <Select value={editedRole} onValueChange={(value: 'owner' | 'store_keeper') => setEditedRole(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="store_keeper">
+                      <div className="flex items-center gap-2">
+                        <ShoppingCart className="w-4 h-4" />
+                        Penjaga Toko
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="owner">
+                      <div className="flex items-center gap-2">
+                        <Shield className="w-4 h-4" />
+                        Pemilik
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="border-t border-border pt-4">
+                <Label className="text-muted-foreground text-sm">Reset Password</Label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Kirim link reset password ke email pengguna ini.
+                </p>
                 <Button
+                  type="button"
                   variant="outline"
-                  onClick={() => setEditNameDialogOpen(false)}
+                  className="w-full"
+                  onClick={sendResetPasswordLink}
+                  disabled={isSendingReset}
                 >
-                  Cancel
+                  <KeyRound className="w-4 h-4 mr-2" />
+                  {isSendingReset ? "Mengirim..." : "Kirim Link Reset Password"}
+                </Button>
+              </div>
+
+              <div className="flex gap-2 justify-end pt-2">
+                <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+                  Batal
                 </Button>
                 <Button
-                  onClick={() => updateUserName(selectedUser.id, editedName)}
+                  onClick={saveUserEdit}
+                  disabled={isSavingEdit}
                   className="bg-gradient-primary hover:bg-primary/90"
                 >
-                  Update Name
+                  {isSavingEdit ? "Menyimpan..." : "Simpan"}
                 </Button>
               </div>
             </div>
