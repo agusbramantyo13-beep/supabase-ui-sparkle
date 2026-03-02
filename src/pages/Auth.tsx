@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { LogIn, UserPlus, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,30 +24,39 @@ export default function Auth() {
   const [recoveryPasswordConfirm, setRecoveryPasswordConfirm] = useState("");
   const [updatingPassword, setUpdatingPassword] = useState(false);
   const [showRecoveryPassword, setShowRecoveryPassword] = useState(false);
+  const [isRecovery, setIsRecovery] = useState(false);
 
   const navigate = useNavigate();
-  const location = useLocation();
   const { toast } = useToast();
 
-  const isRecovery = useMemo(() => {
-    // Supabase password recovery biasanya mengirim user ke /auth#...&type=recovery
-    const params = new URLSearchParams(location.hash.replace(/^#/, ""));
-    return params.get("type") === "recovery";
-  }, [location.hash]);
-
   useEffect(() => {
-    const checkUser = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+    // Listen for PASSWORD_RECOVERY event from Supabase
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setIsRecovery(true);
+      } else if (event === "SIGNED_IN" && !isRecovery) {
+        // Only redirect if not in recovery mode
+        navigate("/");
+      }
+    });
 
-      // Jangan redirect saat flow recovery/reset password
+    // Check existing session but don't redirect if hash contains recovery
+    const hash = window.location.hash;
+    const params = new URLSearchParams(hash.replace(/^#/, ""));
+    if (params.get("type") === "recovery") {
+      setIsRecovery(true);
+      return;
+    }
+
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       if (session && !isRecovery) {
         navigate("/");
       }
     };
-
     checkUser();
+
+    return () => subscription.unsubscribe();
   }, [navigate, isRecovery]);
 
   const handleSignIn = async (e: React.FormEvent) => {
