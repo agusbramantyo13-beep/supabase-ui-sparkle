@@ -38,7 +38,9 @@ export default function Users() {
   const [isCreating, setIsCreating] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
-  const [isSendingReset, setIsSendingReset] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -68,6 +70,8 @@ export default function Users() {
     setSelectedUser(user);
     setEditedName(user.name || "");
     setEditedRole(user.role);
+    setNewPassword("");
+    setShowNewPassword(false);
     setEditDialogOpen(true);
   };
 
@@ -92,19 +96,25 @@ export default function Users() {
     }
   };
 
-  const sendResetPasswordLink = async () => {
-    if (!selectedUser?.email) return;
-    setIsSendingReset(true);
+  const resetUserPassword = async () => {
+    if (!selectedUser || !newPassword) return;
+    if (newPassword.length < 6) {
+      toast({ title: "Gagal", description: "Password minimal 6 karakter", variant: "destructive" });
+      return;
+    }
+    setIsResettingPassword(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(selectedUser.email, {
-        redirectTo: `${window.location.origin}/auth`,
+      const { data, error } = await supabase.functions.invoke('admin-reset-password', {
+        body: { user_id: selectedUser.id, new_password: newPassword },
       });
       if (error) throw error;
-      toast({ title: "Berhasil", description: `Link reset password telah dikirim ke ${selectedUser.email}` });
+      if (data?.error) throw new Error(data.error);
+      toast({ title: "Berhasil", description: "Password berhasil diubah" });
+      setNewPassword("");
     } catch (error: any) {
-      toast({ title: "Gagal", description: error.message || "Gagal mengirim link reset", variant: "destructive" });
+      toast({ title: "Gagal", description: error.message || "Gagal mengubah password", variant: "destructive" });
     } finally {
-      setIsSendingReset(false);
+      setIsResettingPassword(false);
     }
   };
 
@@ -571,20 +581,38 @@ export default function Users() {
               </div>
 
               <div className="border-t border-border pt-4">
-                <Label className="text-muted-foreground text-sm">Reset Password</Label>
+                <Label className="text-muted-foreground text-sm">Ganti Password</Label>
                 <p className="text-xs text-muted-foreground mb-2">
-                  Kirim link reset password ke email pengguna ini.
+                  Masukkan password baru untuk pengguna ini (minimal 6 karakter).
                 </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={sendResetPasswordLink}
-                  disabled={isSendingReset}
-                >
-                  <KeyRound className="w-4 h-4 mr-2" />
-                  {isSendingReset ? "Mengirim..." : "Kirim Link Reset Password"}
-                </Button>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Input
+                      type={showNewPassword ? "text" : "password"}
+                      placeholder="Password baru"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="pr-10"
+                      minLength={6}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={resetUserPassword}
+                    disabled={isResettingPassword || !newPassword}
+                  >
+                    <KeyRound className="w-4 h-4 mr-2" />
+                    {isResettingPassword ? "Mengubah..." : "Ubah"}
+                  </Button>
+                </div>
               </div>
 
               <div className="flex gap-2 justify-end pt-2">
