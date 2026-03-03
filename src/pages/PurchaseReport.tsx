@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, ChevronUp, Undo2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Undo2, Printer } from "lucide-react";
 import { format } from "date-fns";
 import PurchaseReturnDialog from "@/components/PurchaseReturnDialog";
 
@@ -134,6 +134,45 @@ export default function PurchaseReport() {
     setReturnDialogOpen(true);
   };
 
+  const handlePrint = async (session: PurchaseSession) => {
+    if (!sessionItems[session.id]) {
+      await fetchSessionItems(session.id);
+    }
+    const items = sessionItems[session.id] || [];
+    const dateStr = format(new Date(session.purchase_date), 'dd MMM yyyy');
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    printWindow.document.write(`
+      <html><head><title>Cetak Pembelian - ${dateStr}</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h2 { margin-bottom: 4px; }
+        p { margin: 2px 0; color: #555; }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        th { background: #f5f5f5; }
+        td.right { text-align: right; }
+        @media print { body { padding: 0; } }
+      </style></head><body>
+      <h2>Laporan Pembelian</h2>
+      <p>Tanggal: ${dateStr}</p>
+      <p>Supplier: ${session.supplier}</p>
+      <table>
+        <thead><tr><th>No</th><th>Nama Produk</th><th>Jumlah</th></tr></thead>
+        <tbody>
+          ${items.map((item, i) => {
+            const name = (item.variants?.products?.name || item.product_snapshot?.name || 'Unknown') +
+              (item.variants?.name ? ' - ' + item.variants.name : '');
+            return `<tr><td>${i + 1}</td><td>${name}</td><td class="right">${item.quantity}</td></tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+      </body></html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <Card>
@@ -251,21 +290,32 @@ export default function PurchaseReport() {
                           </Table>
                         )}
                         
-                        {session.status !== 'returned' && (
-                          <div className="mt-4 pt-4 border-t flex justify-end">
+                        <div className="mt-4 pt-4 border-t flex justify-end gap-2">
                             <Button
-                              variant="destructive"
+                              variant="outline"
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleReturnClick(session);
+                                handlePrint(session);
                               }}
                             >
-                              <Undo2 className="h-4 w-4 mr-2" />
-                              Retur Pembelian
+                              <Printer className="h-4 w-4 mr-2" />
+                              Cetak
                             </Button>
+                            {session.status !== 'returned' && (
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleReturnClick(session);
+                                }}
+                              >
+                                <Undo2 className="h-4 w-4 mr-2" />
+                                Retur Pembelian
+                              </Button>
+                            )}
                           </div>
-                        )}
                       </div>
                     </CollapsibleContent>
                   </Card>
