@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Printer } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 
 interface AdjustmentSession {
@@ -121,6 +122,60 @@ export default function StockAdjustmentReport() {
     setExpandedSessions(newExpanded);
   };
 
+  const handlePrint = async (session: AdjustmentSession) => {
+    if (!sessionItems[session.id]) {
+      await fetchSessionItems(session.id);
+    }
+    const items = sessionItems[session.id] || [];
+    const dateStr = format(new Date(session.created_at), 'dd MMM yyyy HH:mm');
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    printWindow.document.write(`
+      <html><head><title>Cetak Penyesuaian Stok - ${dateStr}</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h2 { margin-bottom: 4px; }
+        p { margin: 2px 0; color: #555; }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        th { background: #f5f5f5; }
+        td.right { text-align: right; }
+        .green { color: green; } .red { color: red; }
+        @media print { body { padding: 0; } }
+      </style></head><body>
+      <h2>Laporan Penyesuaian Stok</h2>
+      <p>Tanggal: ${dateStr}</p>
+      <p>Oleh: ${session.creator_name || 'Unknown'}</p>
+      <p>Status: ${session.status || 'draft'}</p>
+      ${session.note ? `<p>Catatan: ${session.note}</p>` : ''}
+      <table>
+        <thead><tr>
+          <th>No</th><th>Produk</th><th>Stok Lama</th><th>Stok Baru</th><th>Selisih Qty</th><th>Nilai Satuan</th><th>Selisih Nilai</th>
+        </tr></thead>
+        <tbody>
+          ${items.map((item, i) => {
+            const name = (item.variants?.products?.name || 'Unknown') + ' - ' + (item.variants?.name || '');
+            const diffClass = item.quantity_difference >= 0 ? 'green' : 'red';
+            const valClass = item.total_value_difference >= 0 ? 'green' : 'red';
+            return `<tr>
+              <td>${i + 1}</td>
+              <td>${name}</td>
+              <td class="right">${item.old_quantity}</td>
+              <td class="right">${item.new_quantity}</td>
+              <td class="right ${diffClass}">${item.quantity_difference >= 0 ? '+' : ''}${item.quantity_difference}</td>
+              <td class="right">Rp ${item.unit_value.toLocaleString('id-ID')}</td>
+              <td class="right ${valClass}">${item.total_value_difference >= 0 ? '+' : ''}Rp ${item.total_value_difference.toLocaleString('id-ID')}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+      <p style="margin-top:12px;font-weight:bold;">Total Selisih Nilai: <span class="${session.total_value_difference >= 0 ? 'green' : 'red'}">${session.total_value_difference >= 0 ? '+' : ''}Rp ${session.total_value_difference.toLocaleString('id-ID')}</span></p>
+      </body></html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <Card>
@@ -222,6 +277,19 @@ export default function StockAdjustmentReport() {
                             </TableBody>
                           </Table>
                         )}
+                        <div className="mt-4 pt-4 border-t flex justify-end">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePrint(session);
+                            }}
+                          >
+                            <Printer className="h-4 w-4 mr-2" />
+                            Cetak
+                          </Button>
+                        </div>
                       </div>
                     </CollapsibleContent>
                   </Card>
