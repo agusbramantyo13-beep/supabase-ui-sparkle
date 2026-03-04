@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { useStore } from "@/contexts/StoreContext";
 import { format } from "date-fns";
 import SalesReturnDialog from "@/components/SalesReturnDialog";
 
@@ -22,6 +23,7 @@ interface Transaction {
 export default function TransactionHistory() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const { currentStoreId } = useStore();
   const [days, setDays] = useState("7");
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
@@ -49,6 +51,7 @@ export default function TransactionHistory() {
           status,
           profiles:user_id(name, email)
         `)
+        .eq('store_id', currentStoreId)
         .gte('created_at', startDate.toISOString())
         .lte('created_at', endDate.toISOString())
         .order('created_at', { ascending: false });

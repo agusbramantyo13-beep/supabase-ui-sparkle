@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { FolderOpen, Plus, Edit, Trash2, Search, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useStore } from "@/contexts/StoreContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +37,7 @@ export default function Categories() {
   const [productsDialogOpen, setProductsDialogOpen] = useState(false);
   const [viewingCategory, setViewingCategory] = useState<Category | null>(null);
   const { toast } = useToast();
+  const { currentStoreId } = useStore();
 
   useEffect(() => {
     fetchCategories();
@@ -50,6 +52,7 @@ export default function Categories() {
           *,
           products(count)
         `)
+        .eq('store_id', currentStoreId)
         .order('name', { ascending: true });
 
       if (error) throw error;

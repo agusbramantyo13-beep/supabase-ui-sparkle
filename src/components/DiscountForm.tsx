@@ -22,6 +22,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useStore } from "@/contexts/StoreContext";
 import { Switch } from "@/components/ui/switch";
 
 const formSchema = z.object({
@@ -53,6 +54,7 @@ interface DiscountFormProps {
 export function DiscountForm({ discount, onSuccess, onCancel }: DiscountFormProps) {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { currentStoreId } = useStore();
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
 
@@ -83,6 +85,7 @@ export function DiscountForm({ discount, onSuccess, onCancel }: DiscountFormProp
       const { data, error } = await supabase
         .from("products")
         .select("id, name")
+        .eq('store_id', currentStoreId)
         .order("name");
 
       if (error) throw error;
@@ -105,6 +108,7 @@ export function DiscountForm({ discount, onSuccess, onCancel }: DiscountFormProp
         ends_at: values.ends_at ? new Date(values.ends_at).toISOString() : null,
         active: values.active,
         created_by: user?.id,
+        store_id: currentStoreId,
       };
 
       if (discount) {

@@ -12,6 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useStore } from "@/contexts/StoreContext";
 
 interface Member {
   id: string;
@@ -54,6 +55,7 @@ export default function Members() {
 
   const { toast } = useToast();
   const { user } = useAuth();
+  const { currentStoreId } = useStore();
 
   useEffect(() => {
     fetchMembers();
@@ -63,6 +65,7 @@ export default function Members() {
     const { data, error } = await supabase
       .from('members')
       .select('*')
+      .eq('store_id', currentStoreId)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -107,7 +110,8 @@ export default function Members() {
         .insert({
           ...formData,
           created_by: user?.id,
-          date_of_birth: formData.date_of_birth || null
+          date_of_birth: formData.date_of_birth || null,
+          store_id: currentStoreId
         });
 
       if (error) throw error;

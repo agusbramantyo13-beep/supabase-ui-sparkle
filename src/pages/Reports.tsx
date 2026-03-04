@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useStore } from "@/contexts/StoreContext";
 import MemberTransactionReport from "@/components/MemberTransactionReport";
 
 interface ReportData {
@@ -19,6 +20,7 @@ interface ReportData {
 
 export default function Reports() {
   const { user } = useAuth();
+  const { currentStoreId } = useStore();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [reportData, setReportData] = useState<ReportData>({
     totalSales: 0,
@@ -63,6 +65,7 @@ export default function Reports() {
       const { data: salesData } = await supabase
         .from('sales')
         .select('*')
+        .eq('store_id', currentStoreId)
         .gte('created_at', startDate.toISOString())
         .lte('created_at', endDate.toISOString());
 

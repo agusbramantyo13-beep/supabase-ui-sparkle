@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, Calendar, Gift, Coins } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useStore } from "@/contexts/StoreContext";
 import { DiscountForm } from "@/components/DiscountForm";
 import { LoyaltyPointForm } from "@/components/LoyaltyPointForm";
 import { PointRedemptionForm } from "@/components/PointRedemptionForm";
@@ -71,6 +72,7 @@ export default function Discounts() {
   const [deleteLoyaltyId, setDeleteLoyaltyId] = useState<string | null>(null);
   const [deleteRedemptionId, setDeleteRedemptionId] = useState<string | null>(null);
   const { toast } = useToast();
+  const { currentStoreId } = useStore();
 
   useEffect(() => {
     fetchDiscounts();
@@ -83,6 +85,7 @@ export default function Discounts() {
       const { data, error } = await supabase
         .from("discounts")
         .select("*")
+        .eq('store_id', currentStoreId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -104,6 +107,7 @@ export default function Discounts() {
       const { data, error } = await supabase
         .from("point_redemption_rules")
         .select("*")
+        .eq('store_id', currentStoreId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -123,6 +127,7 @@ export default function Discounts() {
       const { data, error } = await supabase
         .from("loyalty_point_rules")
         .select("*")
+        .eq('store_id', currentStoreId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;

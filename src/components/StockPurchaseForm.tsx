@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useStore } from "@/contexts/StoreContext";
 import { Plus, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -48,6 +49,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
   }]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { currentStoreId } = useStore();
 
   useEffect(() => {
     if (open) {
@@ -85,6 +87,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
         cost_price,
         products!inner(name)
       `)
+      .eq('store_id', currentStoreId)
       .order('name');
 
     if (error) {
@@ -197,7 +200,8 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
           notes,
           total_items: totals.totalItems,
           total_cost: totals.totalCost,
-          created_by: user?.id
+          created_by: user?.id,
+          store_id: currentStoreId
         })
         .select()
         .single();
@@ -243,7 +247,8 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
             .from('inventory')
             .insert({
               variant_id: parseInt(item.variant_id),
-              quantity: item.quantity
+              quantity: item.quantity,
+              store_id: currentStoreId
             });
 
           if (inventoryError) throw inventoryError;
@@ -267,7 +272,8 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
             variant_id: parseInt(item.variant_id),
             movement: 'in',
             quantity: item.quantity,
-            created_by: user?.id
+            created_by: user?.id,
+            store_id: currentStoreId
           });
 
         if (movementError) throw movementError;

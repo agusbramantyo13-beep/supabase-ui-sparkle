@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useStore } from "@/contexts/StoreContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -47,6 +48,7 @@ export default function PurchaseReport() {
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<PurchaseSession | null>(null);
   const { toast } = useToast();
+  const { currentStoreId } = useStore();
 
   useEffect(() => {
     fetchSessions();
@@ -57,6 +59,7 @@ export default function PurchaseReport() {
     const { data: sessionsData, error: sessionsError } = await supabase
       .from('purchase_sessions')
       .select('*')
+      .eq('store_id', currentStoreId)
       .order('purchase_date', { ascending: false })
       .order('created_at', { ascending: false });
 

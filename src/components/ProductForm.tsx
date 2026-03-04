@@ -8,6 +8,7 @@ import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { CategoryForm } from "@/components/CategoryForm";
+import { useStore } from "@/contexts/StoreContext";
 
 interface Category {
   id: number;
@@ -35,6 +36,7 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { currentStoreId } = useStore();
 
   useEffect(() => {
     fetchCategories();
@@ -68,6 +70,7 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
     const { data, error } = await supabase
       .from('categories')
       .select('*')
+      .eq('store_id', currentStoreId)
       .order('name');
 
     if (error) {
@@ -134,7 +137,8 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
           .from('products')
           .insert({
             name: formData.name,
-            category_id: parseInt(formData.category_id)
+            category_id: parseInt(formData.category_id),
+            store_id: currentStoreId
           })
           .select()
           .single();
@@ -149,7 +153,8 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
             name: formData.variant_name,
             price: parseFloat(formData.variant_price),
             cost_price: formData.variant_cost_price ? parseFloat(formData.variant_cost_price) : 0,
-            sku: formData.variant_sku || null
+            sku: formData.variant_sku || null,
+            store_id: currentStoreId
           })
           .select()
           .single();
@@ -162,7 +167,8 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
             .from('inventory')
             .insert({
               variant_id: variantData.id,
-              quantity: parseInt(formData.initial_quantity)
+              quantity: parseInt(formData.initial_quantity),
+              store_id: currentStoreId
             });
 
           if (inventoryError) throw inventoryError;
