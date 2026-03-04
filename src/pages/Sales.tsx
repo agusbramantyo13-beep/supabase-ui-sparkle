@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useStore } from "@/contexts/StoreContext";
 
 interface Product {
   id: string;
@@ -80,6 +81,7 @@ export default function Sales() {
   const [selectedRedemptionId, setSelectedRedemptionId] = useState<string>("");
   const { toast } = useToast();
   const { user } = useAuth();
+  const { currentStoreId } = useStore();
 
   useEffect(() => {
     fetchProducts();
@@ -109,7 +111,8 @@ export default function Sales() {
           name,
           categories(name)
         )
-      `);
+      `)
+      .eq('store_id', currentStoreId);
 
     if (error) {
       toast({
@@ -123,7 +126,8 @@ export default function Sales() {
     // Fetch inventory data
     const { data: inventoryData } = await supabase
       .from('inventory')
-      .select('variant_id, quantity');
+      .select('variant_id, quantity')
+      .eq('store_id', currentStoreId);
 
     const inventoryMap = new Map(
       inventoryData?.map(inv => [inv.variant_id, inv.quantity]) || []
@@ -144,7 +148,8 @@ export default function Sales() {
     const { data, error } = await supabase
       .from('discounts')
       .select('*')
-      .eq('active', true);
+      .eq('active', true)
+      .eq('store_id', currentStoreId);
 
     if (error) {
       console.error("Error fetching discounts:", error);
@@ -159,6 +164,7 @@ export default function Sales() {
       .from('members')
       .select('id, name, member_code, points')
       .eq('status', 'active')
+      .eq('store_id', currentStoreId)
       .order('name');
 
     if (error) {
@@ -173,7 +179,8 @@ export default function Sales() {
     const { data, error } = await supabase
       .from('loyalty_point_rules')
       .select('*')
-      .eq('active', true);
+      .eq('active', true)
+      .eq('store_id', currentStoreId);
 
     if (error) {
       console.error("Error fetching loyalty rules:", error);
@@ -187,7 +194,8 @@ export default function Sales() {
     const { data, error } = await supabase
       .from('point_redemption_rules')
       .select('*')
-      .eq('active', true);
+      .eq('active', true)
+      .eq('store_id', currentStoreId);
 
     if (error) {
       console.error("Error fetching redemption rules:", error);
@@ -410,7 +418,8 @@ export default function Sales() {
             member_id: selectedMemberId || null,
             member_name: selectedMember?.name || null
           },
-          user_id: user?.id || null
+          user_id: user?.id || null,
+          store_id: currentStoreId
         })
         .select()
         .single();

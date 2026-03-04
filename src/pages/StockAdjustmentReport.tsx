@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useStore } from "@/contexts/StoreContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +42,7 @@ export default function StockAdjustmentReport() {
   const [expandedSessions, setExpandedSessions] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { currentStoreId } = useStore();
 
   useEffect(() => {
     fetchSessions();
@@ -51,6 +53,7 @@ export default function StockAdjustmentReport() {
     const { data: sessionsData, error: sessionsError } = await supabase
       .from('stock_adjustment_sessions')
       .select('*')
+      .eq('store_id', currentStoreId)
       .order('created_at', { ascending: false });
 
     if (sessionsError) {

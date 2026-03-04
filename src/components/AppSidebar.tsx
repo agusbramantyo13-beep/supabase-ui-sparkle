@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react"
-import { LayoutDashboard, Package, ShoppingCart, Warehouse, Users, BarChart3, Settings, LogOut, UserCheck, Receipt, Tag, ClipboardList, FileText } from "lucide-react"
-import { NavLink, useLocation } from "react-router-dom"
+import { LayoutDashboard, Package, ShoppingCart, Warehouse, Users, BarChart3, Settings, LogOut, UserCheck, Receipt, Tag, ClipboardList, FileText, Store, ChevronsUpDown } from "lucide-react"
+import { NavLink, useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
+import { useStore } from "@/contexts/StoreContext"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 import {
   Sidebar,
@@ -37,85 +39,82 @@ const allMenuItems = [
 export function AppSidebar() {
   const { state } = useSidebar()
   const { signOut, user, userName } = useAuth()
+  const { stores, currentStore, setCurrentStore, userStoreRole } = useStore()
   const { toast } = useToast()
   const location = useLocation()
+  const navigate = useNavigate()
   const currentPath = location.pathname
   const collapsed = state === "collapsed"
-  const [userRole, setUserRole] = useState<string | null>(null)
   const [menuItems, setMenuItems] = useState<typeof allMenuItems>([])
 
   useEffect(() => {
-    const fetchUserRole = async () => {
-      if (!user) return;
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .maybeSingle();
-
-        if (error) {
-          console.error('Error fetching user role:', error);
-        }
-
-        const role = (data?.role as string) || 'store_keeper';
-        setUserRole(role);
-
-        const filteredItems = allMenuItems.filter(item => item.roles.includes(role));
-        setMenuItems(filteredItems);
-      } catch (err) {
-        console.error('Unexpected error fetching user role:', err);
-        setUserRole('store_keeper');
-        setMenuItems(allMenuItems.filter(item => item.roles.includes('store_keeper')));
-      }
-    };
-
-    fetchUserRole();
-  }, [user]);
+    if (userStoreRole) {
+      const filteredItems = allMenuItems.filter(item => item.roles.includes(userStoreRole));
+      setMenuItems(filteredItems);
+    } else {
+      setMenuItems(allMenuItems.filter(item => item.roles.includes('store_keeper')));
+    }
+  }, [userStoreRole]);
 
   const handleLogout = async () => {
     try {
       await signOut()
-      toast({
-        title: "Berhasil",
-        description: "Berhasil keluar!",
-      })
+      toast({ title: "Berhasil", description: "Berhasil keluar!" })
     } catch (error) {
-      toast({
-        title: "Gagal",
-        description: "Gagal keluar",
-        variant: "destructive",
-      })
+      toast({ title: "Gagal", description: "Gagal keluar", variant: "destructive" })
     }
   }
 
-  const isActive = (path: string) => {
-    if (path === "/" && currentPath === "/") return true
-    if (path !== "/" && currentPath.startsWith(path)) return true
-    return false
+  const handleSwitchStore = (store: any) => {
+    setCurrentStore(store);
+    navigate("/");
+    window.location.reload();
   }
-
-  const getNavCls = (path: string) =>
-    isActive(path) 
-      ? "bg-gradient-primary text-primary-foreground font-medium shadow-elegant" 
-      : "hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-all duration-200"
 
   return (
     <Sidebar collapsible="icon">
       <SidebarContent className="bg-gradient-card border-r border-border/50">
-        {/* Header */}
-        <div className="p-6 border-b border-border/50">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <ShoppingCart className="w-5 h-5 text-primary-foreground" />
-            </div>
-            {!collapsed && (
-              <div>
-                <h2 className="text-lg font-semibold text-foreground">KENZHO</h2>
-                <p className="text-xs text-muted-foreground">POS & Inventory</p>
+        {/* Store Switcher */}
+        <div className="p-4 border-b border-border/50">
+          <DropdownMenu>
+            <DropdownMenuTrigger className="w-full">
+              <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Store className="w-5 h-5 text-primary" />
+                </div>
+                {!collapsed && (
+                  <>
+                    <div className="flex-1 text-left min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">
+                        {currentStore?.name || "Pilih Toko"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {userStoreRole === 'owner' ? 'Owner' : 'Karyawan'}
+                      </p>
+                    </div>
+                    <ChevronsUpDown className="w-4 h-4 text-muted-foreground" />
+                  </>
+                )}
               </div>
-            )}
-          </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              {stores.map((store) => (
+                <DropdownMenuItem
+                  key={store.id}
+                  onClick={() => handleSwitchStore(store)}
+                  className={store.id === currentStore?.id ? "bg-primary/10 font-semibold" : ""}
+                >
+                  <Store className="w-4 h-4 mr-2" />
+                  {store.name}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate("/select-store")}>
+                <Settings className="w-4 h-4 mr-2" />
+                Kelola Toko
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Navigation */}

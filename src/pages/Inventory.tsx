@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { Warehouse, AlertTriangle, TrendingUp, TrendingDown, Download, ShoppingCart, Upload } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
+import { useStore } from "@/contexts/StoreContext"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -28,6 +29,7 @@ export default function Inventory() {
   const [adjustmentFormOpen, setAdjustmentFormOpen] = useState(false)
   const [uploadFormOpen, setUploadFormOpen] = useState(false)
   const { toast } = useToast()
+  const { currentStoreId } = useStore()
 
   useEffect(() => {
     fetchInventory()
@@ -38,6 +40,7 @@ export default function Inventory() {
       const { data, error } = await supabase
         .from('v_current_inventory')
         .select('*')
+        .eq('store_id', currentStoreId)
         .order('quantity', { ascending: true })
 
       if (error) throw error

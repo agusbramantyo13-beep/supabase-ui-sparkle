@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useStore } from "@/contexts/StoreContext";
 import { Plus, Trash2 } from "lucide-react";
 
 interface ProductVariant {
@@ -38,6 +39,7 @@ export function StockAdjustmentForm({ open, onOpenChange, onSuccess }: StockAdju
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { currentStoreId } = useStore();
 
   useEffect(() => {
     if (open) {
@@ -61,6 +63,7 @@ export function StockAdjustmentForm({ open, onOpenChange, onSuccess }: StockAdju
         cost_price,
         products!inner(name)
       `)
+      .eq('store_id', currentStoreId)
       .order('name');
 
     if (error) {
@@ -156,7 +159,8 @@ export function StockAdjustmentForm({ open, onOpenChange, onSuccess }: StockAdju
           created_by: user?.id,
           note,
           total_value_difference: calculateTotalValueDifference(),
-          status: 'completed'
+          status: 'completed',
+          store_id: currentStoreId
         })
         .select()
         .single();
@@ -201,7 +205,8 @@ export function StockAdjustmentForm({ open, onOpenChange, onSuccess }: StockAdju
             .from('inventory')
             .insert({
               variant_id: parseInt(item.variant_id),
-              quantity: item.new_quantity
+              quantity: item.new_quantity,
+              store_id: currentStoreId
             });
           if (invError) throw invError;
         }
@@ -213,7 +218,8 @@ export function StockAdjustmentForm({ open, onOpenChange, onSuccess }: StockAdju
             variant_id: parseInt(item.variant_id),
             movement: qtyDiff >= 0 ? 'in' : 'out',
             quantity: Math.abs(qtyDiff),
-            created_by: user?.id
+            created_by: user?.id,
+            store_id: currentStoreId
           });
 
         if (movementError) throw movementError;

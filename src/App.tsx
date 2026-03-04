@@ -6,7 +6,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { StoreProvider } from "@/contexts/StoreContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { StoreRequiredRoute } from "@/components/StoreRequiredRoute";
 import { RoleBasedRoute } from "@/components/RoleBasedRoute";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
@@ -22,6 +24,7 @@ import Members from "./pages/Members";
 import Discounts from "./pages/Discounts";
 import StockAdjustmentReport from "./pages/StockAdjustmentReport";
 import PurchaseReport from "./pages/PurchaseReport";
+import StoreSelection from "./pages/StoreSelection";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -31,109 +34,118 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route
-              path="/*"
-              element={
+        <StoreProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/select-store" element={
                 <ProtectedRoute>
-                  <SidebarProvider defaultOpen={true}>
-                    <div className="flex min-h-screen w-full">
-                      <AppSidebar />
-                      <SidebarInset className="flex-1">
-                        <header className="flex h-16 shrink-0 items-center gap-2 border-b border-border/50 px-4">
-                          <SidebarTrigger className="mr-2" />
-                          <div className="flex items-center gap-2">
-                            <h1 className="text-lg font-semibold">KENZHO Apps</h1>
-                          </div>
-                        </header>
-                        <main className="flex-1 p-6">
-                          <Routes>
-                            <Route path="/" element={
-                              <RoleBasedRoute allowedRoles={["owner"]}>
-                                <Index />
-                              </RoleBasedRoute>
-                            } />
-                            <Route path="/products" element={
-                              <RoleBasedRoute allowedRoles={["owner"]}>
-                                <Products />
-                              </RoleBasedRoute>
-                            } />
-                            <Route path="/categories" element={
-                              <RoleBasedRoute allowedRoles={["owner"]}>
-                                <Categories />
-                              </RoleBasedRoute>
-                            } />
-                            <Route path="/inventory" element={
-                              <RoleBasedRoute allowedRoles={["owner"]}>
-                                <Inventory />
-                              </RoleBasedRoute>
-                            } />
-                            <Route path="/sales" element={
-                              <RoleBasedRoute allowedRoles={["owner", "store_keeper"]}>
-                                <Sales />
-                              </RoleBasedRoute>
-                            } />
-                            <Route path="/users" element={
-                              <RoleBasedRoute allowedRoles={["owner"]}>
-                                <Users />
-                              </RoleBasedRoute>
-                            } />
-                            <Route path="/reports" element={
-                              <RoleBasedRoute allowedRoles={["owner"]}>
-                                <Reports />
-                              </RoleBasedRoute>
-                            } />
-                            <Route path="/transaction-history" element={
-                              <RoleBasedRoute allowedRoles={["owner", "store_keeper"]}>
-                                <TransactionHistory />
-                              </RoleBasedRoute>
-                            } />
-                            <Route path="/attendance" element={
-                              <RoleBasedRoute allowedRoles={["owner", "store_keeper"]}>
-                                <Attendance />
-                              </RoleBasedRoute>
-                            } />
-                            <Route path="/members" element={
-                              <RoleBasedRoute allowedRoles={["owner", "store_keeper"]}>
-                                <Members />
-                              </RoleBasedRoute>
-                            } />
-                            <Route path="/discounts" element={
-                              <RoleBasedRoute allowedRoles={["owner"]}>
-                                <Discounts />
-                              </RoleBasedRoute>
-                            } />
-                            <Route path="/settings" element={
-                              <RoleBasedRoute allowedRoles={["owner", "store_keeper"]}>
-                                <Settings />
-                              </RoleBasedRoute>
-                            } />
-                            <Route path="/stock-adjustment-report" element={
-                              <RoleBasedRoute allowedRoles={["owner"]}>
-                                <StockAdjustmentReport />
-                              </RoleBasedRoute>
-                            } />
-                            <Route path="/purchase-report" element={
-                              <RoleBasedRoute allowedRoles={["owner"]}>
-                                <PurchaseReport />
-                              </RoleBasedRoute>
-                            } />
-                            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                            <Route path="*" element={<NotFound />} />
-                          </Routes>
-                        </main>
-                      </SidebarInset>
-                    </div>
-                  </SidebarProvider>
+                  <StoreSelection />
                 </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </BrowserRouter>
+              } />
+              <Route
+                path="/*"
+                element={
+                  <ProtectedRoute>
+                    <StoreRequiredRoute>
+                      <SidebarProvider defaultOpen={true}>
+                        <div className="flex min-h-screen w-full">
+                          <AppSidebar />
+                          <SidebarInset className="flex-1">
+                            <header className="flex h-16 shrink-0 items-center gap-2 border-b border-border/50 px-4">
+                              <SidebarTrigger className="mr-2" />
+                              <div className="flex items-center gap-2">
+                                <h1 className="text-lg font-semibold">KENZHO Apps</h1>
+                              </div>
+                            </header>
+                            <main className="flex-1 p-6">
+                              <Routes>
+                                <Route path="/" element={
+                                  <RoleBasedRoute allowedRoles={["owner"]}>
+                                    <Index />
+                                  </RoleBasedRoute>
+                                } />
+                                <Route path="/products" element={
+                                  <RoleBasedRoute allowedRoles={["owner"]}>
+                                    <Products />
+                                  </RoleBasedRoute>
+                                } />
+                                <Route path="/categories" element={
+                                  <RoleBasedRoute allowedRoles={["owner"]}>
+                                    <Categories />
+                                  </RoleBasedRoute>
+                                } />
+                                <Route path="/inventory" element={
+                                  <RoleBasedRoute allowedRoles={["owner"]}>
+                                    <Inventory />
+                                  </RoleBasedRoute>
+                                } />
+                                <Route path="/sales" element={
+                                  <RoleBasedRoute allowedRoles={["owner", "store_keeper"]}>
+                                    <Sales />
+                                  </RoleBasedRoute>
+                                } />
+                                <Route path="/users" element={
+                                  <RoleBasedRoute allowedRoles={["owner"]}>
+                                    <Users />
+                                  </RoleBasedRoute>
+                                } />
+                                <Route path="/reports" element={
+                                  <RoleBasedRoute allowedRoles={["owner"]}>
+                                    <Reports />
+                                  </RoleBasedRoute>
+                                } />
+                                <Route path="/transaction-history" element={
+                                  <RoleBasedRoute allowedRoles={["owner", "store_keeper"]}>
+                                    <TransactionHistory />
+                                  </RoleBasedRoute>
+                                } />
+                                <Route path="/attendance" element={
+                                  <RoleBasedRoute allowedRoles={["owner", "store_keeper"]}>
+                                    <Attendance />
+                                  </RoleBasedRoute>
+                                } />
+                                <Route path="/members" element={
+                                  <RoleBasedRoute allowedRoles={["owner", "store_keeper"]}>
+                                    <Members />
+                                  </RoleBasedRoute>
+                                } />
+                                <Route path="/discounts" element={
+                                  <RoleBasedRoute allowedRoles={["owner"]}>
+                                    <Discounts />
+                                  </RoleBasedRoute>
+                                } />
+                                <Route path="/settings" element={
+                                  <RoleBasedRoute allowedRoles={["owner", "store_keeper"]}>
+                                    <Settings />
+                                  </RoleBasedRoute>
+                                } />
+                                <Route path="/stock-adjustment-report" element={
+                                  <RoleBasedRoute allowedRoles={["owner"]}>
+                                    <StockAdjustmentReport />
+                                  </RoleBasedRoute>
+                                } />
+                                <Route path="/purchase-report" element={
+                                  <RoleBasedRoute allowedRoles={["owner"]}>
+                                    <PurchaseReport />
+                                  </RoleBasedRoute>
+                                } />
+                                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                                <Route path="*" element={<NotFound />} />
+                              </Routes>
+                            </main>
+                          </SidebarInset>
+                        </div>
+                      </SidebarProvider>
+                    </StoreRequiredRoute>
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </BrowserRouter>
+        </StoreProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

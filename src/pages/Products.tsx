@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { Package, Plus, Edit, Trash2, Search, Filter } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
+import { useStore } from "@/contexts/StoreContext"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -35,6 +36,7 @@ export default function Products() {
   const [productToDelete, setProductToDelete] = useState<Product | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const { toast } = useToast()
+  const { currentStoreId } = useStore()
 
   useEffect(() => {
     fetchProducts()
@@ -56,6 +58,7 @@ export default function Products() {
             inventory(quantity)
           )
         `)
+        .eq('store_id', currentStoreId)
         .order('created_at', { ascending: false })
 
       if (error) throw error

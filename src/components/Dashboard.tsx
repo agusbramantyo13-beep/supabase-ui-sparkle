@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { DollarSign, Package, ShoppingCart, TrendingUp, Users, Warehouse } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
+import { useStore } from "@/contexts/StoreContext"
 import { StatCard } from "@/components/StatCard"
 import { SalesByCategoryReport } from "@/components/SalesByCategoryReport"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -30,6 +31,7 @@ export function Dashboard() {
   })
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
+  const { currentStoreId } = useStore()
 
   useEffect(() => {
     fetchDashboardData()
@@ -41,11 +43,12 @@ export function Dashboard() {
       const { data: salesData } = await supabase
         .from('sales')
         .select('total')
-      
+        .eq('store_id', currentStoreId)
       // Fetch products count
       const { data: productsData, count: productsCount } = await supabase
         .from('products')
         .select('*', { count: 'exact' })
+        .eq('store_id', currentStoreId)
 
       // Fetch orders count
       const { data: ordersData, count: ordersCount } = await supabase
@@ -64,6 +67,7 @@ export function Dashboard() {
           *,
           profiles!sales_user_id_fkey(email)
         `)
+        .eq('store_id', currentStoreId)
         .order('created_at', { ascending: false })
         .limit(5)
 
@@ -74,6 +78,7 @@ export function Dashboard() {
           quantity,
           variants!inner(cost_price)
         `)
+        .eq('store_id', currentStoreId)
       
       const totalCapital = inventoryData?.reduce((sum, item) => {
         const costPrice = Number(item.variants?.cost_price || 0)

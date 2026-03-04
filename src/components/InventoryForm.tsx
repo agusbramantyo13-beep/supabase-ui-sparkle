@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useStore } from "@/contexts/StoreContext";
 
 interface ProductVariant {
   id: string;
@@ -30,6 +31,7 @@ export function InventoryForm({ open, onOpenChange, onSuccess, type }: Inventory
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { currentStoreId } = useStore();
 
   useEffect(() => {
     if (open) {
@@ -53,6 +55,7 @@ export function InventoryForm({ open, onOpenChange, onSuccess, type }: Inventory
         name,
         products!inner(name)
       `)
+      .eq('store_id', currentStoreId)
       .order('name');
 
     if (error) {
@@ -153,7 +156,8 @@ export function InventoryForm({ open, onOpenChange, onSuccess, type }: Inventory
           .from('inventory')
           .insert({
             variant_id: parseInt(formData.variant_id),
-            quantity: newQuantity
+            quantity: newQuantity,
+            store_id: currentStoreId
           });
         if (inventoryError) throw inventoryError;
       }
@@ -169,7 +173,8 @@ export function InventoryForm({ open, onOpenChange, onSuccess, type }: Inventory
           variant_id: parseInt(formData.variant_id),
           movement: getMovementType(),
           quantity: Math.abs(actualQuantityChange),
-          created_by: null // Would be current user in real app
+          created_by: null,
+          store_id: currentStoreId
         });
 
       if (movementError) throw movementError;
