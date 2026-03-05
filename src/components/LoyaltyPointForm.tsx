@@ -23,6 +23,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
+import { useStore } from "@/contexts/StoreContext";
 
 const formSchema = z.object({
   name: z.string().min(1, "Nama harus diisi"),
