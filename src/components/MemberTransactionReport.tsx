@@ -61,11 +61,13 @@ export default function MemberTransactionReport() {
   }, [selectedMemberId]);
 
   const fetchMembers = async () => {
-    const { data, error } = await supabase
+    let query = supabase
       .from('members')
       .select('id, name, member_code, phone, points, total_purchases')
       .eq('status', 'active')
       .order('name');
+    if (currentStoreId) query = query.eq('store_id', currentStoreId);
+    const { data, error } = await query;
 
     if (!error && data) {
       setMembers(data);
