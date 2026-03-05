@@ -27,6 +27,7 @@ interface CategorySales {
 }
 
 export function SalesByCategoryReport() {
+  const { currentStoreId } = useStore();
   const [startDate, setStartDate] = useState<Date | undefined>(
     new Date(new Date().getFullYear(), new Date().getMonth(), 1)
   )
