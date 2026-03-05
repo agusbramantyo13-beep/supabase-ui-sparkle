@@ -50,7 +50,7 @@ export default function MemberTransactionReport() {
 
   useEffect(() => {
     fetchMembers();
-  }, []);
+  }, [currentStoreId]);
 
   useEffect(() => {
     if (selectedMemberId) {
