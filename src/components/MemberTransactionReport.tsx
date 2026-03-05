@@ -41,6 +41,7 @@ interface MemberTransaction {
 }
 
 export default function MemberTransactionReport() {
+  const { currentStoreId } = useStore();
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedMemberId, setSelectedMemberId] = useState<string>("");
   const [transactions, setTransactions] = useState<MemberTransaction[]>([]);
