@@ -84,7 +84,7 @@ export function StockUploadForm({ open, onOpenChange, onSuccess }: StockUploadFo
       const skus = jsonData.map(row => row.SKU || row.sku || '').filter(Boolean)
       
       // Fetch all variants with their SKUs
-      const { data: variants } = await supabase
+      let variantQuery = supabase
         .from('variants')
         .select(`
           id,
@@ -93,6 +93,8 @@ export function StockUploadForm({ open, onOpenChange, onSuccess }: StockUploadFo
           products(name)
         `)
         .in('sku', skus)
+      if (currentStoreId) variantQuery = variantQuery.eq('store_id', currentStoreId)
+      const { data: variants } = await variantQuery
 
       const variantMap = new Map(
         (variants || []).map(v => [v.sku, {
