@@ -54,6 +54,7 @@ interface PointRedemptionFormProps {
 
 export function PointRedemptionForm({ rule, onSuccess, onCancel }: PointRedemptionFormProps) {
   const { toast } = useToast();
+  const { currentStoreId } = useStore();
   const [loading, setLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
