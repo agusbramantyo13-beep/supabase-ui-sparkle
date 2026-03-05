@@ -46,6 +46,7 @@ export function StockUploadForm({ open, onOpenChange, onSuccess }: StockUploadFo
   const [fileName, setFileName] = useState<string>('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
+  const { currentStoreId } = useStore()
 
   const resetForm = () => {
     setUploadedData([])
