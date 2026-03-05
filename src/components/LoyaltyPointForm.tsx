@@ -57,6 +57,7 @@ interface LoyaltyPointFormProps {
 
 export function LoyaltyPointForm({ rule, onSuccess, onCancel }: LoyaltyPointFormProps) {
   const { toast } = useToast();
+  const { currentStoreId } = useStore();
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
 
