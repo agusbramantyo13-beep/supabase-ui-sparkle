@@ -45,17 +45,19 @@ export function SalesByCategoryReport() {
       const endISO = format(endDate, "yyyy-MM-dd") + "T23:59:59"
 
       // Fetch sale items with variant, product, and category info
-      const { data: saleItems, error } = await supabase
+      let salesQuery = supabase
         .from('sale_items')
         .select(`
           quantity,
           total,
           product_snapshot,
           variant_id,
-          sales!inner(created_at)
+          sales!inner(created_at, store_id)
         `)
         .gte('sales.created_at', startISO)
         .lte('sales.created_at', endISO)
+      if (currentStoreId) salesQuery = salesQuery.eq('sales.store_id', currentStoreId)
+      const { data: saleItems, error } = await salesQuery
 
       if (error) throw error
 
