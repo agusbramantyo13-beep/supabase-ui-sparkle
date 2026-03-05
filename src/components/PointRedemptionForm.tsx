@@ -23,6 +23,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { useStore } from "@/contexts/StoreContext";
 
 const formSchema = z.object({
   name: z.string().min(1, "Nama harus diisi"),
@@ -53,6 +54,7 @@ interface PointRedemptionFormProps {
 
 export function PointRedemptionForm({ rule, onSuccess, onCancel }: PointRedemptionFormProps) {
   const { toast } = useToast();
+  const { currentStoreId } = useStore();
   const [loading, setLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -83,6 +85,7 @@ export function PointRedemptionForm({ rule, onSuccess, onCancel }: PointRedempti
           : null,
         min_purchase: values.min_purchase ? parseFloat(values.min_purchase) : 0,
         active: values.active,
+        store_id: currentStoreId,
       };
 
       if (rule) {

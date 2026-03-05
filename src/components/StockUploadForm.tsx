@@ -21,6 +21,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
 import * as XLSX from 'xlsx'
+import { useStore } from "@/contexts/StoreContext"
 
 interface StockUploadFormProps {
   open: boolean
@@ -45,6 +46,7 @@ export function StockUploadForm({ open, onOpenChange, onSuccess }: StockUploadFo
   const [fileName, setFileName] = useState<string>('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
+  const { currentStoreId } = useStore()
 
   const resetForm = () => {
     setUploadedData([])
@@ -82,7 +84,7 @@ export function StockUploadForm({ open, onOpenChange, onSuccess }: StockUploadFo
       const skus = jsonData.map(row => row.SKU || row.sku || '').filter(Boolean)
       
       // Fetch all variants with their SKUs
-      const { data: variants } = await supabase
+      let variantQuery = supabase
         .from('variants')
         .select(`
           id,
@@ -91,6 +93,8 @@ export function StockUploadForm({ open, onOpenChange, onSuccess }: StockUploadFo
           products(name)
         `)
         .in('sku', skus)
+      if (currentStoreId) variantQuery = variantQuery.eq('store_id', currentStoreId)
+      const { data: variants } = await variantQuery
 
       const variantMap = new Map(
         (variants || []).map(v => [v.sku, {
@@ -185,11 +189,12 @@ export function StockUploadForm({ open, onOpenChange, onSuccess }: StockUploadFo
           if (!row.variant_id) continue
 
           // Check if inventory exists
-          const { data: existingInventory } = await supabase
+          let invQuery = supabase
             .from('inventory')
             .select('id, quantity')
             .eq('variant_id', row.variant_id)
-            .maybeSingle()
+          if (currentStoreId) invQuery = invQuery.eq('store_id', currentStoreId)
+          const { data: existingInventory } = await invQuery.maybeSingle()
 
           if (existingInventory) {
             // Update existing inventory
@@ -211,7 +216,8 @@ export function StockUploadForm({ open, onOpenChange, onSuccess }: StockUploadFo
               .from('inventory')
               .insert({
                 variant_id: row.variant_id,
-                quantity: row.quantity
+                quantity: row.quantity,
+                store_id: currentStoreId
               })
 
             if (insertError) {
@@ -225,7 +231,8 @@ export function StockUploadForm({ open, onOpenChange, onSuccess }: StockUploadFo
             variant_id: row.variant_id,
             quantity: row.quantity,
             movement: 'in',
-            created_by: user?.id
+            created_by: user?.id,
+            store_id: currentStoreId
           })
 
           successCount++

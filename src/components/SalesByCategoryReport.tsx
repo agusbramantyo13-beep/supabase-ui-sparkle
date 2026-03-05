@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { cn } from "@/lib/utils"
+import { useStore } from "@/contexts/StoreContext"
 
 interface SaleItem {
   product_name: string
@@ -26,6 +27,7 @@ interface CategorySales {
 }
 
 export function SalesByCategoryReport() {
+  const { currentStoreId } = useStore();
   const [startDate, setStartDate] = useState<Date | undefined>(
     new Date(new Date().getFullYear(), new Date().getMonth(), 1)
   )
@@ -43,17 +45,19 @@ export function SalesByCategoryReport() {
       const endISO = format(endDate, "yyyy-MM-dd") + "T23:59:59"
 
       // Fetch sale items with variant, product, and category info
-      const { data: saleItems, error } = await supabase
+      let salesQuery = supabase
         .from('sale_items')
         .select(`
           quantity,
           total,
           product_snapshot,
           variant_id,
-          sales!inner(created_at)
+          sales!inner(created_at, store_id)
         `)
         .gte('sales.created_at', startISO)
         .lte('sales.created_at', endISO)
+      if (currentStoreId) salesQuery = salesQuery.eq('sales.store_id', currentStoreId)
+      const { data: saleItems, error } = await salesQuery
 
       if (error) throw error
 
@@ -144,7 +148,7 @@ export function SalesByCategoryReport() {
 
   useEffect(() => {
     fetchSalesData()
-  }, [startDate, endDate])
+  }, [startDate, endDate, currentStoreId])
 
   const toggleCategory = (categoryName: string) => {
     const newExpanded = new Set(expandedCategories)

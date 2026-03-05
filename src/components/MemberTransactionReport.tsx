@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
+import { useStore } from "@/contexts/StoreContext";
 
 interface Member {
   id: string;
@@ -40,6 +41,7 @@ interface MemberTransaction {
 }
 
 export default function MemberTransactionReport() {
+  const { currentStoreId } = useStore();
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedMemberId, setSelectedMemberId] = useState<string>("");
   const [transactions, setTransactions] = useState<MemberTransaction[]>([]);
@@ -48,7 +50,7 @@ export default function MemberTransactionReport() {
 
   useEffect(() => {
     fetchMembers();
-  }, []);
+  }, [currentStoreId]);
 
   useEffect(() => {
     if (selectedMemberId) {
@@ -59,11 +61,13 @@ export default function MemberTransactionReport() {
   }, [selectedMemberId]);
 
   const fetchMembers = async () => {
-    const { data, error } = await supabase
+    let query = supabase
       .from('members')
       .select('id, name, member_code, phone, points, total_purchases')
       .eq('status', 'active')
       .order('name');
+    if (currentStoreId) query = query.eq('store_id', currentStoreId);
+    const { data, error } = await query;
 
     if (!error && data) {
       setMembers(data);
@@ -76,7 +80,7 @@ export default function MemberTransactionReport() {
     setLoading(true);
     try {
       // First get sales with member info from payment_details
-      const { data: salesData, error } = await supabase
+      let salesQuery = supabase
         .from('sales')
         .select(`
           id,
@@ -96,6 +100,8 @@ export default function MemberTransactionReport() {
           )
         `)
         .order('created_at', { ascending: false });
+      if (currentStoreId) salesQuery = salesQuery.eq('store_id', currentStoreId);
+      const { data: salesData, error } = await salesQuery;
 
       if (error) {
         console.error('Error fetching transactions:', error);

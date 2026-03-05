@@ -23,6 +23,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
+import { useStore } from "@/contexts/StoreContext";
 
 const formSchema = z.object({
   name: z.string().min(1, "Nama harus diisi"),
@@ -56,6 +57,7 @@ interface LoyaltyPointFormProps {
 
 export function LoyaltyPointForm({ rule, onSuccess, onCancel }: LoyaltyPointFormProps) {
   const { toast } = useToast();
+  const { currentStoreId } = useStore();
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
 
@@ -79,10 +81,12 @@ export function LoyaltyPointForm({ rule, onSuccess, onCancel }: LoyaltyPointForm
 
   const fetchProducts = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("products")
         .select("id, name")
         .order("name");
+      if (currentStoreId) query = query.eq("store_id", currentStoreId);
+      const { data, error } = await query;
 
       if (error) throw error;
       setProducts(data || []);
@@ -101,6 +105,7 @@ export function LoyaltyPointForm({ rule, onSuccess, onCancel }: LoyaltyPointForm
         applies_to: values.applies_to,
         target_id: values.applies_to === "product" ? values.target_id : null,
         active: values.active,
+        store_id: currentStoreId,
       };
 
       if (rule) {
