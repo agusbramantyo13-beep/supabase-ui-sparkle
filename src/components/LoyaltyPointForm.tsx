@@ -81,10 +81,12 @@ export function LoyaltyPointForm({ rule, onSuccess, onCancel }: LoyaltyPointForm
 
   const fetchProducts = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("products")
         .select("id, name")
         .order("name");
+      if (currentStoreId) query = query.eq("store_id", currentStoreId);
+      const { data, error } = await query;
 
       if (error) throw error;
       setProducts(data || []);
