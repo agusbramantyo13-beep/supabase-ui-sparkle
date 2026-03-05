@@ -216,7 +216,8 @@ export function StockUploadForm({ open, onOpenChange, onSuccess }: StockUploadFo
               .from('inventory')
               .insert({
                 variant_id: row.variant_id,
-                quantity: row.quantity
+                quantity: row.quantity,
+                store_id: currentStoreId
               })
 
             if (insertError) {
