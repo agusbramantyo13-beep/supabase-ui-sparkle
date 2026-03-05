@@ -105,6 +105,7 @@ export function LoyaltyPointForm({ rule, onSuccess, onCancel }: LoyaltyPointForm
         applies_to: values.applies_to,
         target_id: values.applies_to === "product" ? values.target_id : null,
         active: values.active,
+        store_id: currentStoreId,
       };
 
       if (rule) {

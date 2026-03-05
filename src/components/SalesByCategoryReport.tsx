@@ -148,7 +148,7 @@ export function SalesByCategoryReport() {
 
   useEffect(() => {
     fetchSalesData()
-  }, [startDate, endDate])
+  }, [startDate, endDate, currentStoreId])
 
   const toggleCategory = (categoryName: string) => {
     const newExpanded = new Set(expandedCategories)

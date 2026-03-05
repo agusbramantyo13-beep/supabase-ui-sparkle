@@ -231,7 +231,8 @@ export function StockUploadForm({ open, onOpenChange, onSuccess }: StockUploadFo
             variant_id: row.variant_id,
             quantity: row.quantity,
             movement: 'in',
-            created_by: user?.id
+            created_by: user?.id,
+            store_id: currentStoreId
           })
 
           successCount++

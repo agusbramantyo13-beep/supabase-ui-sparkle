@@ -85,6 +85,7 @@ export function PointRedemptionForm({ rule, onSuccess, onCancel }: PointRedempti
           : null,
         min_purchase: values.min_purchase ? parseFloat(values.min_purchase) : 0,
         active: values.active,
+        store_id: currentStoreId,
       };
 
       if (rule) {

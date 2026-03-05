@@ -80,7 +80,7 @@ export default function MemberTransactionReport() {
     setLoading(true);
     try {
       // First get sales with member info from payment_details
-      const { data: salesData, error } = await supabase
+      let salesQuery = supabase
         .from('sales')
         .select(`
           id,
@@ -100,6 +100,8 @@ export default function MemberTransactionReport() {
           )
         `)
         .order('created_at', { ascending: false });
+      if (currentStoreId) salesQuery = salesQuery.eq('store_id', currentStoreId);
+      const { data: salesData, error } = await salesQuery;
 
       if (error) {
         console.error('Error fetching transactions:', error);
