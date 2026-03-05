@@ -189,11 +189,12 @@ export function StockUploadForm({ open, onOpenChange, onSuccess }: StockUploadFo
           if (!row.variant_id) continue
 
           // Check if inventory exists
-          const { data: existingInventory } = await supabase
+          let invQuery = supabase
             .from('inventory')
             .select('id, quantity')
             .eq('variant_id', row.variant_id)
-            .maybeSingle()
+          if (currentStoreId) invQuery = invQuery.eq('store_id', currentStoreId)
+          const { data: existingInventory } = await invQuery.maybeSingle()
 
           if (existingInventory) {
             // Update existing inventory
