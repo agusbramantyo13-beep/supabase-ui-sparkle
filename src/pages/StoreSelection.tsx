@@ -124,7 +124,15 @@ export default function StoreSelection() {
           </div>
         )}
 
-        {!showCreateForm ? (
+        {stores.length === 0 && !isOwner && (
+          <Card>
+            <CardContent className="p-6 text-center text-muted-foreground">
+              Anda belum terdaftar di toko manapun. Hubungi pemilik toko untuk menambahkan Anda.
+            </CardContent>
+          </Card>
+        )}
+
+        {isOwner && !showCreateForm ? (
           <div className="flex gap-3 justify-center">
             <Button onClick={() => setShowCreateForm(true)} variant="outline">
               <Plus className="w-4 h-4 mr-2" />
@@ -135,7 +143,7 @@ export default function StoreSelection() {
               Keluar
             </Button>
           </div>
-        ) : (
+        ) : isOwner && showCreateForm ? (
           <Card>
             <CardHeader>
               <CardTitle>Buat Toko Baru</CardTitle>
@@ -175,6 +183,13 @@ export default function StoreSelection() {
               </div>
             </CardContent>
           </Card>
+        ) : (
+          <div className="flex justify-center">
+            <Button onClick={signOut} variant="ghost">
+              <LogOut className="w-4 h-4 mr-2" />
+              Keluar
+            </Button>
+          </div>
         )}
       </div>
     </div>
