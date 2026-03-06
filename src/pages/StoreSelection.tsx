@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStore } from "@/contexts/StoreContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,6 +13,22 @@ import { Store, Plus, LogOut } from "lucide-react";
 export default function StoreSelection() {
   const { stores, setCurrentStore, refreshStores, loading } = useStore();
   const { user, signOut, userName } = useAuth();
+  const [profileRole, setProfileRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          setProfileRole(data?.role || null);
+        });
+    }
+  }, [user]);
+
+  const isOwner = profileRole === 'owner';
   const navigate = useNavigate();
   const { toast } = useToast();
   const [showCreateForm, setShowCreateForm] = useState(false);
