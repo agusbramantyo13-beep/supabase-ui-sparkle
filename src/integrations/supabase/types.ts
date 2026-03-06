@@ -1209,6 +1209,7 @@ export type Database = {
         Args: { _store_id: string; _user_id: string }
         Returns: boolean
       }
+      store_has_members: { Args: { _store_id: string }; Returns: boolean }
     }
     Enums: {
       applies_to: "global" | "product" | "variant" | "category"
