@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStore } from "@/contexts/StoreContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,6 +13,22 @@ import { Store, Plus, LogOut } from "lucide-react";
 export default function StoreSelection() {
   const { stores, setCurrentStore, refreshStores, loading } = useStore();
   const { user, signOut, userName } = useAuth();
+  const [profileRole, setProfileRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          setProfileRole(data?.role || null);
+        });
+    }
+  }, [user]);
+
+  const isOwner = profileRole === 'owner';
   const navigate = useNavigate();
   const { toast } = useToast();
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -108,7 +124,15 @@ export default function StoreSelection() {
           </div>
         )}
 
-        {!showCreateForm ? (
+        {stores.length === 0 && !isOwner && (
+          <Card>
+            <CardContent className="p-6 text-center text-muted-foreground">
+              Anda belum terdaftar di toko manapun. Hubungi pemilik toko untuk menambahkan Anda.
+            </CardContent>
+          </Card>
+        )}
+
+        {isOwner && !showCreateForm ? (
           <div className="flex gap-3 justify-center">
             <Button onClick={() => setShowCreateForm(true)} variant="outline">
               <Plus className="w-4 h-4 mr-2" />
@@ -119,7 +143,7 @@ export default function StoreSelection() {
               Keluar
             </Button>
           </div>
-        ) : (
+        ) : isOwner && showCreateForm ? (
           <Card>
             <CardHeader>
               <CardTitle>Buat Toko Baru</CardTitle>
@@ -159,6 +183,13 @@ export default function StoreSelection() {
               </div>
             </CardContent>
           </Card>
+        ) : (
+          <div className="flex justify-center">
+            <Button onClick={signOut} variant="ghost">
+              <LogOut className="w-4 h-4 mr-2" />
+              Keluar
+            </Button>
+          </div>
         )}
       </div>
     </div>
