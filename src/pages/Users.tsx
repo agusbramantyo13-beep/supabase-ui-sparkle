@@ -73,7 +73,9 @@ export default function Users() {
 
   const fetchAllStores = async () => {
     const { data } = await supabase.from('stores').select('id, name').order('name');
-    setAllStores(data || []);
+    // Deduplicate stores (multiple RLS policies may return duplicates)
+    const unique = (data || []).filter((s, i, arr) => arr.findIndex(x => x.id === s.id) === i);
+    setAllStores(unique);
   };
 
   const fetchUserMemberships = async (userId: string) => {
@@ -202,7 +204,8 @@ export default function Users() {
       if (error) throw error;
 
       toast({ title: "Berhasil", description: "Data pengguna berhasil diperbarui" });
-      fetchUsers();
+      await fetchUsers();
+      await fetchAllUserMemberships();
       setEditDialogOpen(false);
     } catch (error: any) {
       toast({ title: "Gagal", description: error.message || "Gagal memperbarui data pengguna", variant: "destructive" });
