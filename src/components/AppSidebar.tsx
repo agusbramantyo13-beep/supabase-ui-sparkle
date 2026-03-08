@@ -22,7 +22,6 @@ import {
 const allMenuItems = [
   { title: "Dasbor", url: "/", icon: LayoutDashboard, roles: ["owner"] },
   { title: "Produk", url: "/products", icon: Package, roles: ["owner"] },
-  { title: "Kategori", url: "/categories", icon: Package, roles: ["owner"] },
   { title: "Penjualan", url: "/sales", icon: ShoppingCart, roles: ["owner", "store_keeper"] },
   { title: "Inventori", url: "/inventory", icon: Warehouse, roles: ["owner"] },
   { title: "Laporan Pembelian", url: "/purchase-report", icon: FileText, roles: ["owner"] },

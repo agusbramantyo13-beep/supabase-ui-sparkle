@@ -12,7 +12,7 @@ import { StoreRequiredRoute } from "@/components/StoreRequiredRoute";
 import { RoleBasedRoute } from "@/components/RoleBasedRoute";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
-import Categories from "./pages/Categories";
+
 import Inventory from "./pages/Inventory";
 import Sales from "./pages/Sales";
 import Users from "./pages/Users";
@@ -70,11 +70,6 @@ const App = () => (
                                 <Route path="/products" element={
                                   <RoleBasedRoute allowedRoles={["owner"]}>
                                     <Products />
-                                  </RoleBasedRoute>
-                                } />
-                                <Route path="/categories" element={
-                                  <RoleBasedRoute allowedRoles={["owner"]}>
-                                    <Categories />
                                   </RoleBasedRoute>
                                 } />
                                 <Route path="/inventory" element={

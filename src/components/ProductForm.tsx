@@ -1,14 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
+import { Plus, Check, ChevronsUpDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { CategoryForm } from "@/components/CategoryForm";
 import { useStore } from "@/contexts/StoreContext";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 interface Category {
   id: number;
@@ -24,7 +24,9 @@ interface ProductFormProps {
 
 export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductFormProps) {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [categoryFormOpen, setCategoryFormOpen] = useState(false);
+  const [categorySearch, setCategorySearch] = useState("");
+  const [categoryPopoverOpen, setCategoryPopoverOpen] = useState(false);
+  const [creatingCategory, setCreatingCategory] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     category_id: "",
@@ -53,6 +55,10 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
         variant_sku: product.variant_sku || "",
         initial_quantity: product.quantity?.toString() || ""
       });
+      // Set search text to current category name
+      if (product.category_name) {
+        setCategorySearch(product.category_name);
+      }
     } else {
       setFormData({
         name: "",
@@ -63,6 +69,7 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
         variant_sku: "",
         initial_quantity: ""
       });
+      setCategorySearch("");
     }
   }, [product, open]);
 
@@ -74,26 +81,57 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
       .order('name');
 
     if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to load categories",
-        variant: "destructive"
-      });
+      toast({ title: "Error", description: "Failed to load categories", variant: "destructive" });
       return;
     }
-
     setCategories(data || []);
+  };
+
+  const selectedCategory = categories.find(c => c.id.toString() === formData.category_id);
+
+  const filteredCategories = categories.filter(c =>
+    c.name.toLowerCase().includes(categorySearch.toLowerCase())
+  );
+
+  const exactMatch = categories.some(c => c.name.toLowerCase() === categorySearch.trim().toLowerCase());
+
+  const handleCreateCategory = async () => {
+    const name = categorySearch.trim();
+    if (!name) return;
+
+    setCreatingCategory(true);
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .insert({ name, store_id: currentStoreId })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await fetchCategories();
+      setFormData(prev => ({ ...prev, category_id: data.id.toString() }));
+      setCategorySearch(data.name);
+      setCategoryPopoverOpen(false);
+      toast({ title: "Berhasil", description: `Kategori "${name}" berhasil ditambahkan` });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "Gagal membuat kategori", variant: "destructive" });
+    } finally {
+      setCreatingCategory(false);
+    }
+  };
+
+  const handleSelectCategory = (cat: Category) => {
+    setFormData(prev => ({ ...prev, category_id: cat.id.toString() }));
+    setCategorySearch(cat.name);
+    setCategoryPopoverOpen(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.category_id || !formData.variant_name || !formData.variant_price) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive"
-      });
+      toast({ title: "Error", description: "Please fill in all required fields", variant: "destructive" });
       return;
     }
 
@@ -101,18 +139,12 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
 
     try {
       if (product?.id) {
-        // Update existing product
         const { error: productError } = await supabase
           .from('products')
-          .update({
-            name: formData.name,
-            category_id: parseInt(formData.category_id)
-          })
+          .update({ name: formData.name, category_id: parseInt(formData.category_id) })
           .eq('id', product.id);
-
         if (productError) throw productError;
 
-        // Update variant if it exists
         if (product.variant_id) {
           const { error: variantError } = await supabase
             .from('variants')
@@ -123,29 +155,18 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
               sku: formData.variant_sku || null
             })
             .eq('id', product.variant_id);
-
           if (variantError) throw variantError;
         }
 
-        toast({
-          title: "Success",
-          description: "Product updated successfully",
-        });
+        toast({ title: "Success", description: "Product updated successfully" });
       } else {
-        // Create new product
         const { data: productData, error: productError } = await supabase
           .from('products')
-          .insert({
-            name: formData.name,
-            category_id: parseInt(formData.category_id),
-            store_id: currentStoreId
-          })
+          .insert({ name: formData.name, category_id: parseInt(formData.category_id), store_id: currentStoreId })
           .select()
           .single();
-
         if (productError) throw productError;
 
-        // Create variant
         const { data: variantData, error: variantError } = await supabase
           .from('variants')
           .insert({
@@ -158,36 +179,22 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
           })
           .select()
           .single();
-
         if (variantError) throw variantError;
 
-        // Create initial inventory record if quantity is provided
         if (formData.initial_quantity && parseInt(formData.initial_quantity) > 0) {
           const { error: inventoryError } = await supabase
             .from('inventory')
-            .insert({
-              variant_id: variantData.id,
-              quantity: parseInt(formData.initial_quantity),
-              store_id: currentStoreId
-            });
-
+            .insert({ variant_id: variantData.id, quantity: parseInt(formData.initial_quantity), store_id: currentStoreId });
           if (inventoryError) throw inventoryError;
         }
 
-        toast({
-          title: "Success",
-          description: "Product created successfully",
-        });
+        toast({ title: "Success", description: "Product created successfully" });
       }
 
       onSuccess();
       onOpenChange(false);
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to save product",
-        variant: "destructive"
-      });
+      toast({ title: "Error", description: error.message || "Failed to save product", variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -212,33 +219,73 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
           </div>
 
           <div>
-            <Label htmlFor="category">Category *</Label>
-            <div className="flex gap-2">
-              <Select 
-                value={formData.category_id} 
-                onValueChange={(value) => setFormData({ ...formData, category_id: value })}
-              >
-                <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent className="bg-background border-border/50 z-50">
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id.toString()}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="icon"
-                onClick={() => setCategoryFormOpen(true)}
-                title="Add new category"
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
+            <Label>Kategori *</Label>
+            <Popover open={categoryPopoverOpen} onOpenChange={setCategoryPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={categoryPopoverOpen}
+                  className="w-full justify-between font-normal"
+                  type="button"
+                >
+                  {selectedCategory ? selectedCategory.name : "Pilih atau ketik kategori baru..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                <div className="p-2">
+                  <Input
+                    placeholder="Cari atau ketik kategori baru..."
+                    value={categorySearch}
+                    onChange={(e) => setCategorySearch(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+                <div className="max-h-48 overflow-y-auto">
+                  {filteredCategories.length > 0 ? (
+                    filteredCategories.map((cat) => (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        className={cn(
+                          "flex items-center w-full px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors",
+                          formData.category_id === cat.id.toString() && "bg-accent"
+                        )}
+                        onClick={() => handleSelectCategory(cat)}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            formData.category_id === cat.id.toString() ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {cat.name}
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-3 py-2 text-sm text-muted-foreground">
+                      Tidak ada kategori ditemukan
+                    </div>
+                  )}
+                </div>
+                {categorySearch.trim() && !exactMatch && (
+                  <div className="border-t border-border p-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start text-primary"
+                      onClick={handleCreateCategory}
+                      disabled={creatingCategory}
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      {creatingCategory ? "Membuat..." : `Buat kategori "${categorySearch.trim()}"`}
+                    </Button>
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div>
@@ -264,7 +311,6 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
                 placeholder="0.00"
               />
             </div>
-
             <div>
               <Label htmlFor="variant_cost_price">Cost Price</Label>
               <Input
@@ -311,15 +357,6 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
           </div>
         </form>
       </DialogContent>
-
-      <CategoryForm
-        open={categoryFormOpen}
-        onOpenChange={setCategoryFormOpen}
-        onSuccess={() => {
-          fetchCategories();
-          setCategoryFormOpen(false);
-        }}
-      />
     </Dialog>
   );
 }
