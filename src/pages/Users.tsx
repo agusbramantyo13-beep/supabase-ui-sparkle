@@ -81,13 +81,15 @@ export default function Users() {
   const fetchUserMemberships = async (userId: string) => {
     const { data } = await supabase
       .from('store_members')
-      .select('id, store_id, role')
+      .select('id, store_id, role, stores(name)')
       .eq('user_id', userId);
 
     if (data) {
-      const memberships: StoreMembership[] = data.map(m => ({
-        ...m,
-        store_name: allStores.find(s => s.id === m.store_id)?.name || 'Unknown'
+      const memberships: StoreMembership[] = data.map((m: any) => ({
+        id: m.id,
+        store_id: m.store_id,
+        role: m.role,
+        store_name: m.stores?.name || 'Unknown'
       }));
       setUserMemberships(memberships);
     } else {
