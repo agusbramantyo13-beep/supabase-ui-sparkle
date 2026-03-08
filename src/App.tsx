@@ -72,11 +72,6 @@ const App = () => (
                                     <Products />
                                   </RoleBasedRoute>
                                 } />
-                                <Route path="/categories" element={
-                                  <RoleBasedRoute allowedRoles={["owner"]}>
-                                    <Categories />
-                                  </RoleBasedRoute>
-                                } />
                                 <Route path="/inventory" element={
                                   <RoleBasedRoute allowedRoles={["owner"]}>
                                     <Inventory />
