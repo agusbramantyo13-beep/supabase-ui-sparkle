@@ -81,13 +81,15 @@ export default function Users() {
   const fetchUserMemberships = async (userId: string) => {
     const { data } = await supabase
       .from('store_members')
-      .select('id, store_id, role')
+      .select('id, store_id, role, stores(name)')
       .eq('user_id', userId);
 
     if (data) {
-      const memberships: StoreMembership[] = data.map(m => ({
-        ...m,
-        store_name: allStores.find(s => s.id === m.store_id)?.name || 'Unknown'
+      const memberships: StoreMembership[] = data.map((m: any) => ({
+        id: m.id,
+        store_id: m.store_id,
+        role: m.role,
+        store_name: m.stores?.name || 'Unknown'
       }));
       setUserMemberships(memberships);
     } else {
@@ -98,17 +100,17 @@ export default function Users() {
   const fetchAllUserMemberships = async () => {
     const { data } = await supabase
       .from('store_members')
-      .select('id, store_id, role, user_id');
+      .select('id, store_id, role, user_id, stores(name)');
 
     if (data) {
       const map: Record<string, StoreMembership[]> = {};
-      data.forEach(m => {
+      (data as any[]).forEach(m => {
         if (!map[m.user_id]) map[m.user_id] = [];
         map[m.user_id].push({
           id: m.id,
           store_id: m.store_id,
           role: m.role,
-          store_name: ''
+          store_name: m.stores?.name || 'Unknown'
         });
       });
       setUserStoreMap(map);
@@ -131,10 +133,10 @@ export default function Users() {
   };
 
   useEffect(() => {
-    if (allStores.length > 0 && users.length > 0) {
+    if (users.length > 0) {
       fetchAllUserMemberships();
     }
-  }, [allStores, users]);
+  }, [users]);
 
   const openEditDialog = async (user: UserProfile) => {
     setSelectedUser(user);
@@ -362,7 +364,7 @@ export default function Users() {
 
   const getStoreNames = (userId: string) => {
     const memberships = userStoreMap[userId] || [];
-    return memberships.map(m => allStores.find(s => s.id === m.store_id)?.name).filter(Boolean);
+    return memberships.map(m => m.store_name).filter(Boolean);
   };
 
   const filteredUsers = users.filter(user =>
