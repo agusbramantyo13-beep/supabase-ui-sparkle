@@ -364,7 +364,7 @@ export default function Users() {
 
   const getStoreNames = (userId: string) => {
     const memberships = userStoreMap[userId] || [];
-    return memberships.map(m => allStores.find(s => s.id === m.store_id)?.name).filter(Boolean);
+    return memberships.map(m => m.store_name).filter(Boolean);
   };
 
   const filteredUsers = users.filter(user =>
