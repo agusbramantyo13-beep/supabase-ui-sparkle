@@ -133,10 +133,10 @@ export default function Users() {
   };
 
   useEffect(() => {
-    if (allStores.length > 0 && users.length > 0) {
+    if (users.length > 0) {
       fetchAllUserMemberships();
     }
-  }, [allStores, users]);
+  }, [users]);
 
   const openEditDialog = async (user: UserProfile) => {
     setSelectedUser(user);
