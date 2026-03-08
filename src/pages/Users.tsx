@@ -100,17 +100,17 @@ export default function Users() {
   const fetchAllUserMemberships = async () => {
     const { data } = await supabase
       .from('store_members')
-      .select('id, store_id, role, user_id');
+      .select('id, store_id, role, user_id, stores(name)');
 
     if (data) {
       const map: Record<string, StoreMembership[]> = {};
-      data.forEach(m => {
+      (data as any[]).forEach(m => {
         if (!map[m.user_id]) map[m.user_id] = [];
         map[m.user_id].push({
           id: m.id,
           store_id: m.store_id,
           role: m.role,
-          store_name: ''
+          store_name: m.stores?.name || 'Unknown'
         });
       });
       setUserStoreMap(map);
