@@ -23,6 +23,7 @@ import Settings from "./pages/Settings";
 import Members from "./pages/Members";
 import Discounts from "./pages/Discounts";
 import StockAdjustmentReport from "./pages/StockAdjustmentReport";
+import StockTransfer from "./pages/StockTransfer";
 import PurchaseReport from "./pages/PurchaseReport";
 import StoreSelection from "./pages/StoreSelection";
 import Auth from "./pages/Auth";
@@ -125,6 +126,11 @@ const App = () => (
                                 <Route path="/purchase-report" element={
                                   <RoleBasedRoute allowedRoles={["owner"]}>
                                     <PurchaseReport />
+                                  </RoleBasedRoute>
+                                } />
+                                <Route path="/stock-transfer" element={
+                                  <RoleBasedRoute allowedRoles={["owner"]}>
+                                    <StockTransfer />
                                   </RoleBasedRoute>
                                 } />
                                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
