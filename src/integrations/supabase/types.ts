@@ -1036,6 +1036,106 @@ export type Database = {
         }
         Relationships: []
       }
+      stock_transfer_items: {
+        Row: {
+          created_at: string | null
+          id: string
+          product_name: string
+          quantity: number
+          transfer_id: string
+          variant_id: number | null
+          variant_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          product_name: string
+          quantity: number
+          transfer_id: string
+          variant_id?: number | null
+          variant_name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          product_name?: string
+          quantity?: number
+          transfer_id?: string
+          variant_id?: number | null
+          variant_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_transfer_items_transfer_id_fkey"
+            columns: ["transfer_id"]
+            isOneToOne: false
+            referencedRelation: "stock_transfers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transfer_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "v_current_inventory"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "stock_transfer_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_transfers: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          from_store_id: string
+          id: string
+          notes: string | null
+          status: string
+          to_store_id: string
+          transfer_number: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          from_store_id: string
+          id?: string
+          notes?: string | null
+          status?: string
+          to_store_id: string
+          transfer_number?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          from_store_id?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          to_store_id?: string
+          transfer_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_transfers_from_store_id_fkey"
+            columns: ["from_store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transfers_to_store_id_fkey"
+            columns: ["to_store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_members: {
         Row: {
           created_at: string | null
