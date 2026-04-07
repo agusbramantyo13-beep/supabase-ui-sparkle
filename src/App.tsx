@@ -128,6 +128,11 @@ const App = () => (
                                     <PurchaseReport />
                                   </RoleBasedRoute>
                                 } />
+                                <Route path="/stock-transfer" element={
+                                  <RoleBasedRoute allowedRoles={["owner"]}>
+                                    <StockTransfer />
+                                  </RoleBasedRoute>
+                                } />
                                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                                 <Route path="*" element={<NotFound />} />
                               </Routes>
