@@ -175,7 +175,7 @@ export default function Reports() {
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Total Sales</p>
                     <p className="text-2xl font-bold text-foreground">
-                      Rp {reportData.totalSales.toLocaleString()}
+                      Rp {reportData.totalSales.toLocaleString('id-ID')}
                     </p>
                     <p className="text-xs text-success">+12% from previous period</p>
                   </div>
@@ -191,7 +191,7 @@ export default function Reports() {
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Total Profit</p>
                       <p className="text-2xl font-bold text-foreground">
-                        Rp {reportData.totalProfit.toLocaleString()}
+                        Rp {reportData.totalProfit.toLocaleString('id-ID')}
                       </p>
                       <p className="text-xs text-success">+8% from previous period</p>
                     </div>
@@ -207,7 +207,7 @@ export default function Reports() {
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Transactions</p>
                     <p className="text-2xl font-bold text-foreground">
-                      {reportData.totalTransactions.toLocaleString()}
+                      {reportData.totalTransactions.toLocaleString('id-ID')}
                     </p>
                     <p className="text-xs text-warning">-2% from previous period</p>
                   </div>
@@ -268,7 +268,7 @@ export default function Reports() {
                       </div>
                       <div className="text-right">
                         <p className="font-semibold text-foreground">
-                          Rp {Number(day.total_sales || 0).toLocaleString()}
+                          Rp {Number(day.total_sales || 0).toLocaleString('id-ID')}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           Discounts: Rp {Number(day.total_discounts || 0).toFixed(2)}

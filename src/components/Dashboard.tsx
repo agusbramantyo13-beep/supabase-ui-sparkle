@@ -144,7 +144,7 @@ export function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Total Sales"
-          value={`Rp ${stats.totalSales.toLocaleString()}`}
+          value={`Rp ${stats.totalSales.toLocaleString('id-ID')}`}
           subtitle="This month"
           icon={<DollarSign className="w-6 h-6 text-primary-foreground" />}
           trend={{ value: "+12%", isPositive: true }}
@@ -177,7 +177,7 @@ export function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard
           title="Inventory Value"
-          value={`Rp ${stats.inventoryValue.toLocaleString()}`}
+          value={`Rp ${stats.inventoryValue.toLocaleString('id-ID')}`}
           subtitle="Current stock value"
           icon={<Warehouse className="w-6 h-6 text-primary-foreground" />}
         />
@@ -246,7 +246,7 @@ export function Dashboard() {
                   </div>
                   <div className="text-right">
                     <p className="text-lg font-semibold text-foreground">
-                      Rp {Number(sale.total).toLocaleString()}
+                      Rp {Number(sale.total).toLocaleString('id-ID')}
                     </p>
                     <Badge variant="secondary" className="text-xs">
                       {sale.payment_method || 'Cash'}
