@@ -511,7 +511,7 @@ export default function Sales() {
       }
 
       const successMessage = paymentMethod === 'cash' 
-        ? `Sale completed! Receipt: ${receiptNumber}\nChange: Rp ${change.toLocaleString()}`
+        ? `Sale completed! Receipt: ${receiptNumber}\nChange: Rp ${change.toLocaleString('id-ID')}`
         : `Sale completed! Receipt: ${receiptNumber}`;
       
       let pointsMessage = '';
@@ -578,7 +578,7 @@ export default function Sales() {
               <CardContent className="p-4">
                 <h3 className="font-semibold text-foreground truncate">{product.name}</h3>
                 <p className="text-sm text-muted-foreground">{product.category_name}</p>
-                <p className="text-lg font-bold text-primary mt-2">Rp {product.price.toLocaleString()}</p>
+                <p className="text-lg font-bold text-primary mt-2">Rp {product.price.toLocaleString('id-ID')}</p>
               </CardContent>
             </Card>
           ))}
@@ -614,7 +614,7 @@ export default function Sales() {
                     <div key={item.product.id} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
                       <div className="flex-1">
                         <h4 className="font-medium text-foreground">{item.product.name}</h4>
-                        <p className="text-sm text-muted-foreground">Rp {item.product.price.toLocaleString()} each</p>
+                        <p className="text-sm text-muted-foreground">Rp {item.product.price.toLocaleString('id-ID')} each</p>
                       </div>
                       
                       <div className="flex items-center gap-2">
@@ -646,7 +646,7 @@ export default function Sales() {
                       </div>
                       
                       <div className="text-right ml-4">
-                        <p className="font-semibold text-foreground">Rp {item.subtotal.toLocaleString()}</p>
+                        <p className="font-semibold text-foreground">Rp {item.subtotal.toLocaleString('id-ID')}</p>
                       </div>
                     </div>
                   ))}
@@ -658,7 +658,7 @@ export default function Sales() {
                   {/* Subtotal */}
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Subtotal:</span>
-                    <span className="text-lg font-semibold text-foreground">Rp {getSubtotal().toLocaleString()}</span>
+                    <span className="text-lg font-semibold text-foreground">Rp {getSubtotal().toLocaleString('id-ID')}</span>
                   </div>
 
                   {/* Member Section */}
@@ -711,8 +711,8 @@ export default function Sales() {
                             <SelectItem key={rule.id} value={rule.id}>
                               {rule.name} - {rule.points_required} poin = {
                                 rule.reward_type === "discount_percentage" 
-                                  ? `Diskon ${rule.reward_value}%${rule.max_discount ? ` (max Rp ${rule.max_discount.toLocaleString()})` : ''}`
-                                  : `Rp ${rule.reward_value.toLocaleString()}`
+                                  ? `Diskon ${rule.reward_value}%${rule.max_discount ? ` (max Rp ${rule.max_discount.toLocaleString('id-ID')})` : ''}`
+                                  : `Rp ${rule.reward_value.toLocaleString('id-ID')}`
                               }
                             </SelectItem>
                           ))}
@@ -728,7 +728,7 @@ export default function Sales() {
                       {getRedemptionDiscount() > 0 && (
                         <div className="flex justify-between items-center pt-2 text-success">
                           <span className="text-sm">Potongan Redeem:</span>
-                          <span className="font-semibold">- Rp {getRedemptionDiscount().toLocaleString()}</span>
+                          <span className="font-semibold">- Rp {getRedemptionDiscount().toLocaleString('id-ID')}</span>
                         </div>
                       )}
                     </div>
@@ -751,7 +751,7 @@ export default function Sales() {
                           <SelectItem key={discount.id} value={discount.id}>
                             {discount.name} - {discount.discount_type === "percentage" 
                               ? `${discount.value}%` 
-                              : `Rp ${discount.value.toLocaleString()}`}
+                              : `Rp ${discount.value.toLocaleString('id-ID')}`}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -760,7 +760,7 @@ export default function Sales() {
                     {getDiscountAmount() > 0 && (
                       <div className="flex justify-between items-center pt-2 text-success">
                         <span className="text-sm">Potongan:</span>
-                        <span className="font-semibold">- Rp {getDiscountAmount().toLocaleString()}</span>
+                        <span className="font-semibold">- Rp {getDiscountAmount().toLocaleString('id-ID')}</span>
                       </div>
                     )}
                   </div>
@@ -768,7 +768,7 @@ export default function Sales() {
                   {/* Total */}
                   <div className="flex justify-between items-center pt-2">
                     <span className="text-lg font-bold text-foreground">Total:</span>
-                    <span className="text-2xl font-bold text-primary">Rp {getTotalAmount().toLocaleString()}</span>
+                    <span className="text-2xl font-bold text-primary">Rp {getTotalAmount().toLocaleString('id-ID')}</span>
                   </div>
 
                   <Select value={paymentMethod} onValueChange={setPaymentMethod}>
@@ -810,7 +810,7 @@ export default function Sales() {
                       {amountPaid && Number(amountPaid) >= getTotalAmount() && (
                         <div className="flex justify-between items-center p-3 bg-success/10 rounded-lg">
                           <span className="text-sm font-semibold text-success">Change:</span>
-                          <span className="text-xl font-bold text-success">Rp {getChange().toLocaleString()}</span>
+                          <span className="text-xl font-bold text-success">Rp {getChange().toLocaleString('id-ID')}</span>
                         </div>
                       )}
                     </>

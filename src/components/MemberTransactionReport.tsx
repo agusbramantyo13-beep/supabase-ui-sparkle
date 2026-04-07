@@ -204,7 +204,7 @@ export default function MemberTransactionReport() {
                 <div>
                   <p className="text-sm text-muted-foreground">Total Belanja</p>
                   <p className="font-semibold text-foreground">
-                    Rp {totalSpending.toLocaleString()}
+                    Rp {totalSpending.toLocaleString('id-ID')}
                   </p>
                   <p className="text-xs text-muted-foreground">{transactions.length} transaksi</p>
                 </div>
@@ -221,7 +221,7 @@ export default function MemberTransactionReport() {
                 <div>
                   <p className="text-sm text-muted-foreground">Total Poin</p>
                   <p className="font-semibold text-foreground">
-                    {(selectedMember.points || 0).toLocaleString()} pts
+                    {(selectedMember.points || 0).toLocaleString('id-ID')} pts
                   </p>
                   <p className="text-xs text-muted-foreground">Poin aktif</p>
                 </div>
@@ -271,7 +271,7 @@ export default function MemberTransactionReport() {
                       <div className="flex items-center gap-4">
                         <div className="text-right">
                           <p className="font-semibold text-foreground">
-                            Rp {transaction.total.toLocaleString()}
+                            Rp {transaction.total.toLocaleString('id-ID')}
                           </p>
                           <div className="flex items-center gap-2">
                             <Badge variant={transaction.status === 'returned' ? 'destructive' : 'secondary'}>
@@ -317,13 +317,13 @@ export default function MemberTransactionReport() {
                                 </TableCell>
                                 <TableCell className="text-center">{item.quantity}</TableCell>
                                 <TableCell className="text-right">
-                                  Rp {item.unit_price.toLocaleString()}
+                                  Rp {item.unit_price.toLocaleString('id-ID')}
                                 </TableCell>
                                 <TableCell className="text-right">
-                                  {item.discount > 0 ? `Rp ${item.discount.toLocaleString()}` : '-'}
+                                  {item.discount > 0 ? `Rp ${item.discount.toLocaleString('id-ID')}` : '-'}
                                 </TableCell>
                                 <TableCell className="text-right font-medium">
-                                  Rp {item.total.toLocaleString()}
+                                  Rp {item.total.toLocaleString('id-ID')}
                                 </TableCell>
                               </TableRow>
                             ))}

@@ -245,13 +245,13 @@ export function SalesByCategoryReport() {
                 <div>
                   <p className="text-sm text-muted-foreground">Total Penjualan</p>
                   <p className="text-2xl font-bold text-foreground">
-                    Rp {grandTotal.toLocaleString()}
+                    Rp {grandTotal.toLocaleString('id-ID')}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Total Item Terjual</p>
                   <p className="text-2xl font-bold text-foreground">
-                    {grandItems.toLocaleString()} item
+                    {grandItems.toLocaleString('id-ID')} item
                   </p>
                 </div>
               </div>
@@ -280,7 +280,7 @@ export function SalesByCategoryReport() {
                       </div>
                     </div>
                     <p className="text-lg font-semibold text-foreground">
-                      Rp {category.total_sales.toLocaleString()}
+                      Rp {category.total_sales.toLocaleString('id-ID')}
                     </p>
                   </div>
                 </CollapsibleTrigger>
@@ -303,7 +303,7 @@ export function SalesByCategoryReport() {
                             <TableCell className="text-muted-foreground">{item.variant_name}</TableCell>
                             <TableCell className="text-right">{item.quantity}</TableCell>
                             <TableCell className="text-right">
-                              Rp {item.total.toLocaleString()}
+                              Rp {item.total.toLocaleString('id-ID')}
                             </TableCell>
                           </TableRow>
                         ))}
