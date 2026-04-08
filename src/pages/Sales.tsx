@@ -288,7 +288,7 @@ export default function Sales() {
     setEarnedPoints(totalPoints);
   };
 
-  const addToCart = (product: Product) => {
+  const addToCart = (product: ProductVariant) => {
     const existingItem = cart.find(item => item.product.id === product.id);
     const currentQuantity = existingItem ? existingItem.quantity : 0;
     const availableStock = product.available_stock || 0;
