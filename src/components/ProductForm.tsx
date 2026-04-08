@@ -8,7 +8,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useStore } from "@/contexts/StoreContext";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+import { cn, formatNumber } from "@/lib/utils";
+
+const formatPriceInput = (value: string): string => {
+  const num = value.replace(/\D/g, "");
+  if (!num) return "";
+  return new Intl.NumberFormat("id-ID").format(parseInt(num));
+};
+
+const parsePriceInput = (value: string): string => {
+  return value.replace(/\D/g, "");
+};
 
 interface Category {
   id: number;
@@ -303,24 +313,22 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
               <Label htmlFor="variant_price">Price *</Label>
               <Input
                 id="variant_price"
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.variant_price}
-                onChange={(e) => setFormData({ ...formData, variant_price: e.target.value })}
-                placeholder="0.00"
+                type="text"
+                inputMode="numeric"
+                value={formatPriceInput(formData.variant_price)}
+                onChange={(e) => setFormData({ ...formData, variant_price: parsePriceInput(e.target.value) })}
+                placeholder="0"
               />
             </div>
             <div>
               <Label htmlFor="variant_cost_price">Cost Price</Label>
               <Input
                 id="variant_cost_price"
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.variant_cost_price}
-                onChange={(e) => setFormData({ ...formData, variant_cost_price: e.target.value })}
-                placeholder="0.00"
+                type="text"
+                inputMode="numeric"
+                value={formatPriceInput(formData.variant_cost_price)}
+                onChange={(e) => setFormData({ ...formData, variant_cost_price: parsePriceInput(e.target.value) })}
+                placeholder="0"
               />
             </div>
           </div>
