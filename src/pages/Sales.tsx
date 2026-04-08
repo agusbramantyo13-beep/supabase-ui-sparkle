@@ -580,7 +580,6 @@ export default function Sales() {
     });
   });
 
-  const [expandedSalesProducts, setExpandedSalesProducts] = useState<Set<string>>(new Set());
 
   const toggleSalesExpanded = (productName: string) => {
     setExpandedSalesProducts(prev => {
