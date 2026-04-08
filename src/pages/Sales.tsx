@@ -86,6 +86,7 @@ export default function Sales() {
   const [earnedPoints, setEarnedPoints] = useState<number>(0);
   const [redemptionRules, setRedemptionRules] = useState<PointRedemptionRule[]>([]);
   const [selectedRedemptionId, setSelectedRedemptionId] = useState<string>("");
+  const [expandedSalesProducts, setExpandedSalesProducts] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const { user } = useAuth();
   const { currentStoreId } = useStore();
