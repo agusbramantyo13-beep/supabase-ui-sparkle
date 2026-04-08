@@ -559,8 +559,36 @@ export default function Sales() {
   };
 
   const filteredProducts = products.filter(product =>
+    product.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Group by product name
+  const groupedProducts: GroupedProduct[] = [];
+  const groupMap = new Map<string, ProductVariant[]>();
+  filteredProducts.forEach(p => {
+    const key = p.product_name;
+    if (!groupMap.has(key)) groupMap.set(key, []);
+    groupMap.get(key)!.push(p);
+  });
+  groupMap.forEach((variants, product_name) => {
+    groupedProducts.push({
+      product_name,
+      category_name: variants[0]?.category_name,
+      variants
+    });
+  });
+
+  const [expandedSalesProducts, setExpandedSalesProducts] = useState<Set<string>>(new Set());
+
+  const toggleSalesExpanded = (productName: string) => {
+    setExpandedSalesProducts(prev => {
+      const next = new Set(prev);
+      if (next.has(productName)) next.delete(productName);
+      else next.add(productName);
+      return next;
+    });
+  };
 
   return (
     <div className="h-full grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -576,20 +604,72 @@ export default function Sales() {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[calc(100vh-200px)] overflow-y-auto">
-          {filteredProducts.map((product) => (
-            <Card 
-              key={product.id} 
-              className="cursor-pointer hover:shadow-card transition-shadow bg-gradient-card"
-              onClick={() => addToCart(product)}
-            >
-              <CardContent className="p-4">
-                <h3 className="font-semibold text-foreground truncate">{product.name}</h3>
-                <p className="text-sm text-muted-foreground">{product.category_name}</p>
-                <p className="text-lg font-bold text-primary mt-2">Rp {product.price.toLocaleString('id-ID')}</p>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto">
+          {groupedProducts.map((group) => {
+            const isExpanded = expandedSalesProducts.has(group.product_name);
+            const hasMultipleVariants = group.variants.length > 1;
+
+            // Single variant: click directly adds to cart
+            if (!hasMultipleVariants) {
+              const variant = group.variants[0];
+              return (
+                <Card
+                  key={variant.id}
+                  className="cursor-pointer hover:shadow-card transition-shadow bg-gradient-card"
+                  onClick={() => addToCart(variant)}
+                >
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold text-foreground truncate">{group.product_name}</h3>
+                    <p className="text-sm text-muted-foreground">{group.category_name}</p>
+                    <div className="flex items-center justify-between mt-2">
+                      <p className="text-lg font-bold text-primary">Rp {variant.price.toLocaleString('id-ID')}</p>
+                      <span className="text-xs text-muted-foreground">Stok: {variant.available_stock || 0}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            }
+
+            // Multiple variants: expandable
+            return (
+              <Card key={group.product_name} className="bg-gradient-card overflow-hidden">
+                <div
+                  className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+                  onClick={() => toggleSalesExpanded(group.product_name)}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    {isExpanded ? (
+                      <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                    )}
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-foreground truncate">{group.product_name}</h3>
+                      <p className="text-sm text-muted-foreground">{group.category_name} · {group.variants.length} varian</p>
+                    </div>
+                  </div>
+                </div>
+
+                {isExpanded && (
+                  <div className="border-t border-border/50">
+                    {group.variants.map((variant) => (
+                      <div
+                        key={variant.id}
+                        className="flex items-center justify-between px-4 py-3 pl-10 cursor-pointer hover:bg-muted/20 transition-colors border-b border-border/30 last:border-b-0"
+                        onClick={() => addToCart(variant)}
+                      >
+                        <div>
+                          <p className="font-medium text-foreground">{variant.name}</p>
+                          <span className="text-xs text-muted-foreground">Stok: {variant.available_stock || 0}</span>
+                        </div>
+                        <p className="text-lg font-bold text-primary">Rp {variant.price.toLocaleString('id-ID')}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            );
+          })}
         </div>
       </div>
 
