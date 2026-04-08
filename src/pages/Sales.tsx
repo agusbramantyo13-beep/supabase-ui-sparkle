@@ -444,7 +444,7 @@ export default function Sales() {
         total: item.subtotal,
         discount: 0,
         product_snapshot: {
-          name: item.product.name,
+          name: `${item.product.product_name} - ${item.product.name}`,
           price: item.product.price
         }
       }));
