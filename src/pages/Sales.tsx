@@ -140,9 +140,10 @@ export default function Sales() {
       inventoryData?.map(inv => [inv.variant_id, inv.quantity]) || []
     );
 
-    const formattedProducts = data?.map(variant => ({
+    const formattedProducts: ProductVariant[] = data?.map(variant => ({
       id: variant.id.toString(),
-      name: `${variant.products.name} - ${variant.name}`,
+      name: variant.name,
+      product_name: variant.products.name,
       price: Number(variant.price) || 0,
       category_name: variant.products.categories?.name,
       available_stock: inventoryMap.get(variant.id) || 0
