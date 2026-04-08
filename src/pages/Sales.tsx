@@ -11,16 +11,23 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStore } from "@/contexts/StoreContext";
 
-interface Product {
+interface ProductVariant {
   id: string;
   name: string;
   price: number;
   category_name?: string;
   available_stock?: number;
+  product_name: string;
+}
+
+interface GroupedProduct {
+  product_name: string;
+  category_name?: string;
+  variants: ProductVariant[];
 }
 
 interface CartItem {
-  product: Product;
+  product: ProductVariant;
   quantity: number;
   subtotal: number;
 }
