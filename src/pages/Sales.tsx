@@ -701,7 +701,7 @@ export default function Sales() {
                   {cart.map((item) => (
                     <div key={item.product.id} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
                       <div className="flex-1">
-                        <h4 className="font-medium text-foreground">{item.product.name}</h4>
+                        <h4 className="font-medium text-foreground">{item.product.product_name} - {item.product.name}</h4>
                         <p className="text-sm text-muted-foreground">Rp {item.product.price.toLocaleString('id-ID')} each</p>
                       </div>
                       
