@@ -399,7 +399,7 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
               ))}
             </div>
           </form>
-        </ScrollArea>
+        </div>
 
         <div className="flex gap-2 pt-4 border-t">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
