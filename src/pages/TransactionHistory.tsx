@@ -185,6 +185,9 @@ export default function TransactionHistory() {
                       <TableCell className="text-foreground">
                         {transaction.user_name || '-'}
                       </TableCell>
+                      <TableCell className="text-foreground">
+                        {transaction.member_name || '---'}
+                      </TableCell>
                       <TableCell className="text-foreground capitalize">
                         {transaction.payment_method || '-'}
                       </TableCell>
