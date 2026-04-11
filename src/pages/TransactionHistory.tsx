@@ -163,6 +163,7 @@ export default function TransactionHistory() {
                     <TableHead className="text-muted-foreground">Tanggal & Waktu</TableHead>
                     <TableHead className="text-muted-foreground">No. Struk</TableHead>
                     <TableHead className="text-muted-foreground">Kasir</TableHead>
+                    <TableHead className="text-muted-foreground">Member</TableHead>
                     <TableHead className="text-muted-foreground">Pembayaran</TableHead>
                     <TableHead className="text-right text-muted-foreground">Total</TableHead>
                     <TableHead className="text-muted-foreground">Status</TableHead>
