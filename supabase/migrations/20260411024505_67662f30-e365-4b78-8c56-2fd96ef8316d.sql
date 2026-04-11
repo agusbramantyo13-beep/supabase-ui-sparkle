@@ -1,0 +1,1 @@
+ALTER TABLE public.sales ADD COLUMN member_id uuid REFERENCES public.members(id) ON DELETE SET NULL DEFAULT NULL;

@@ -18,6 +18,7 @@ interface Transaction {
   payment_method: string | null;
   user_name: string | null;
   status: string | null;
+  member_name: string | null;
 }
 
 export default function TransactionHistory() {
@@ -49,7 +50,9 @@ export default function TransactionHistory() {
           payment_method,
           user_id,
           status,
-          profiles:user_id(name, email)
+          member_id,
+          profiles:user_id(name, email),
+          members:member_id(name, member_code)
         `)
         .eq('store_id', currentStoreId)
         .gte('created_at', startDate.toISOString())
@@ -62,8 +65,9 @@ export default function TransactionHistory() {
         total: sale.total,
         created_at: sale.created_at,
         payment_method: sale.payment_method,
-        user_name: sale.profiles?.name || sale.profiles?.email || 'Unknown',
-        status: sale.status
+        user_name: (sale.profiles as any)?.name || (sale.profiles as any)?.email || 'Unknown',
+        status: sale.status,
+        member_name: (sale.members as any)?.name || null
       })) || [];
 
       if (error) throw error;
@@ -159,6 +163,7 @@ export default function TransactionHistory() {
                     <TableHead className="text-muted-foreground">Tanggal & Waktu</TableHead>
                     <TableHead className="text-muted-foreground">No. Struk</TableHead>
                     <TableHead className="text-muted-foreground">Kasir</TableHead>
+                    <TableHead className="text-muted-foreground">Member</TableHead>
                     <TableHead className="text-muted-foreground">Pembayaran</TableHead>
                     <TableHead className="text-right text-muted-foreground">Total</TableHead>
                     <TableHead className="text-muted-foreground">Status</TableHead>
@@ -179,6 +184,9 @@ export default function TransactionHistory() {
                       </TableCell>
                       <TableCell className="text-foreground">
                         {transaction.user_name || '-'}
+                      </TableCell>
+                      <TableCell className="text-foreground">
+                        {transaction.member_name || '---'}
                       </TableCell>
                       <TableCell className="text-foreground capitalize">
                         {transaction.payment_method || '-'}
