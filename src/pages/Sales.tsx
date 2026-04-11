@@ -428,7 +428,8 @@ export default function Sales() {
             member_name: selectedMember?.name || null
           },
           user_id: user?.id || null,
-          store_id: currentStoreId
+          store_id: currentStoreId,
+          member_id: selectedMemberId || null
         })
         .select()
         .single();
