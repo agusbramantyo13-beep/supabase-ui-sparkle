@@ -717,6 +717,7 @@ export type Database = {
           created_at: string | null
           discount_total: number
           id: string
+          member_id: string | null
           payment_details: Json | null
           payment_method: string | null
           receipt_number: string | null
@@ -734,6 +735,7 @@ export type Database = {
           created_at?: string | null
           discount_total?: number
           id?: string
+          member_id?: string | null
           payment_details?: Json | null
           payment_method?: string | null
           receipt_number?: string | null
@@ -751,6 +753,7 @@ export type Database = {
           created_at?: string | null
           discount_total?: number
           id?: string
+          member_id?: string | null
           payment_details?: Json | null
           payment_method?: string | null
           receipt_number?: string | null
@@ -765,6 +768,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "sales_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sales_shift_id_fkey"
             columns: ["shift_id"]

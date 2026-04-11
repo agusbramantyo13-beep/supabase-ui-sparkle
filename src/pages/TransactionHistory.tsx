@@ -18,6 +18,7 @@ interface Transaction {
   payment_method: string | null;
   user_name: string | null;
   status: string | null;
+  member_name: string | null;
 }
 
 export default function TransactionHistory() {
