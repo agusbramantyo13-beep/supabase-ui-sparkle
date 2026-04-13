@@ -124,8 +124,8 @@ export default function Sales() {
 
     if (error) {
       toast({
-        title: "Error",
-        description: "Failed to load products",
+        title: "Gagal",
+        description: "Gagal memuat produk",
         variant: "destructive"
       });
       return;
@@ -382,8 +382,8 @@ export default function Sales() {
   const processSale = async () => {
     if (cart.length === 0) {
       toast({
-        title: "Error",
-        description: "Cart is empty",
+        title: "Gagal",
+        description: "Keranjang kosong",
         variant: "destructive"
       });
       return;
@@ -401,8 +401,8 @@ export default function Sales() {
 
       if (paymentMethod === 'cash' && paid < total) {
         toast({
-          title: "Error",
-          description: "Amount paid is less than total",
+          title: "Gagal",
+          description: "Jumlah bayar kurang dari total",
           variant: "destructive"
         });
         setLoading(false);
@@ -521,8 +521,8 @@ export default function Sales() {
       }
 
       const successMessage = paymentMethod === 'cash' 
-        ? `Sale completed! Receipt: ${receiptNumber}\nChange: Rp ${change.toLocaleString('id-ID')}`
-        : `Sale completed! Receipt: ${receiptNumber}`;
+        ? `Penjualan berhasil! Struk: ${receiptNumber}\nKembalian: Rp ${change.toLocaleString('id-ID')}`
+        : `Penjualan berhasil! Struk: ${receiptNumber}`;
       
       let pointsMessage = '';
       if (selectedMemberId && selectedMemberId !== "none") {
@@ -536,7 +536,7 @@ export default function Sales() {
       }
 
       toast({
-        title: "Success",
+        title: "Berhasil",
         description: successMessage + pointsMessage,
       });
 
@@ -551,8 +551,8 @@ export default function Sales() {
       fetchProducts();
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to process sale",
+        title: "Gagal",
+        description: error.message || "Gagal memproses penjualan",
         variant: "destructive"
       });
     } finally {
@@ -596,9 +596,9 @@ export default function Sales() {
       {/* Products Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-foreground">Products</h2>
+          <h2 className="text-2xl font-bold text-foreground">Produk</h2>
           <Input
-            placeholder="Search products..."
+            placeholder="Cari produk..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-xs"
@@ -677,11 +677,11 @@ export default function Sales() {
       {/* Cart Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-foreground">Cart</h2>
+          <h2 className="text-2xl font-bold text-foreground">Keranjang</h2>
           {cart.length > 0 && (
             <Button variant="outline" size="sm" onClick={clearCart}>
               <Trash2 className="w-4 h-4 mr-2" />
-              Clear
+              Hapus Semua
             </Button>
           )}
         </div>
@@ -692,8 +692,8 @@ export default function Sales() {
               <div className="flex-1 flex items-center justify-center text-center">
                 <div>
                   <Receipt className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">Cart is empty</p>
-                  <p className="text-sm text-muted-foreground">Add products to start a sale</p>
+                  <p className="text-muted-foreground">Keranjang kosong</p>
+                  <p className="text-sm text-muted-foreground">Tambahkan produk untuk memulai penjualan</p>
                 </div>
               </div>
             ) : (
@@ -703,7 +703,7 @@ export default function Sales() {
                     <div key={item.product.id} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
                       <div className="flex-1">
                         <h4 className="font-medium text-foreground">{item.product.product_name} - {item.product.name}</h4>
-                        <p className="text-sm text-muted-foreground">Rp {item.product.price.toLocaleString('id-ID')} each</p>
+                        <p className="text-sm text-muted-foreground">Rp {item.product.price.toLocaleString('id-ID')} /pcs</p>
                       </div>
                       
                       <div className="flex items-center gap-2">
@@ -862,19 +862,19 @@ export default function Sales() {
 
                   <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Payment method" />
+                      <SelectValue placeholder="Metode pembayaran" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="cash">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold">Rp</span>
-                          Cash
+                          Tunai
                         </div>
                       </SelectItem>
                       <SelectItem value="card">
                         <div className="flex items-center gap-2">
                           <CreditCard className="w-4 h-4" />
-                          Card
+                          Kartu
                         </div>
                       </SelectItem>
                     </SelectContent>
@@ -898,7 +898,7 @@ export default function Sales() {
 
                       {amountPaid && Number(amountPaid) >= getTotalAmount() && (
                         <div className="flex justify-between items-center p-3 bg-success/10 rounded-lg">
-                          <span className="text-sm font-semibold text-success">Change:</span>
+                          <span className="text-sm font-semibold text-success">Kembalian:</span>
                           <span className="text-xl font-bold text-success">Rp {getChange().toLocaleString('id-ID')}</span>
                         </div>
                       )}
@@ -910,7 +910,7 @@ export default function Sales() {
                     onClick={processSale}
                     disabled={loading}
                   >
-                    {loading ? "Processing..." : "Complete Sale"}
+                    {loading ? "Memproses..." : "Selesaikan Penjualan"}
                   </Button>
                 </div>
               </>
