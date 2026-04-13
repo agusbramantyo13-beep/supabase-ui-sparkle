@@ -70,7 +70,7 @@ export default function Settings() {
     storeEmail: "store@kenzho.com",
     taxRate: "8.25",
     currency: "IDR",
-    receiptFooter: "Thank you for your business!",
+    receiptFooter: "Terima kasih atas kunjungan Anda!",
     
     // Notifications
     lowStockAlerts: true,
@@ -100,8 +100,8 @@ export default function Settings() {
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     toast({
-      title: "Success",
-      description: "Settings saved successfully",
+      title: "Berhasil",
+      description: "Pengaturan berhasil disimpan",
     });
     
     setLoading(false);
@@ -181,15 +181,15 @@ export default function Settings() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Settings</h1>
-          <p className="text-muted-foreground">Configure your store and application preferences</p>
+          <h1 className="text-3xl font-bold text-foreground">Pengaturan</h1>
+          <p className="text-muted-foreground">Konfigurasi toko dan preferensi aplikasi Anda</p>
         </div>
         <Button 
           className="bg-gradient-primary hover:bg-primary/90"
           onClick={handleSave}
           disabled={loading}
         >
-          {loading ? "Saving..." : "Save Changes"}
+          {loading ? "Menyimpan..." : "Simpan Perubahan"}
         </Button>
       </div>
 
@@ -248,11 +248,11 @@ export default function Settings() {
 
       <Tabs defaultValue="store" className="space-y-6">
         <TabsList className="grid grid-cols-5 w-full max-w-2xl">
-          <TabsTrigger value="store">Store</TabsTrigger>
+          <TabsTrigger value="store">Toko</TabsTrigger>
           <TabsTrigger value="printer">Printer</TabsTrigger>
-          <TabsTrigger value="notifications">Alerts</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="system">System</TabsTrigger>
+          <TabsTrigger value="notifications">Notifikasi</TabsTrigger>
+          <TabsTrigger value="security">Keamanan</TabsTrigger>
+          <TabsTrigger value="system">Sistem</TabsTrigger>
         </TabsList>
 
         <TabsContent value="store" className="space-y-6">
@@ -260,13 +260,13 @@ export default function Settings() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Store className="w-5 h-5 text-primary" />
-                <CardTitle>Store Information</CardTitle>
+                <CardTitle>Informasi Toko</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="storeName">Store Name</Label>
+                  <Label htmlFor="storeName">Nama Toko</Label>
                   <Input
                     id="storeName"
                     value={settings.storeName}
@@ -274,7 +274,7 @@ export default function Settings() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="storeEmail">Email Address</Label>
+                  <Label htmlFor="storeEmail">Alamat Email</Label>
                   <Input
                     id="storeEmail"
                     type="email"
@@ -285,7 +285,7 @@ export default function Settings() {
               </div>
 
               <div>
-                <Label htmlFor="storeAddress">Address</Label>
+                <Label htmlFor="storeAddress">Alamat</Label>
                 <Input
                   id="storeAddress"
                   value={settings.storeAddress}
@@ -295,7 +295,7 @@ export default function Settings() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="storePhone">Phone Number</Label>
+                  <Label htmlFor="storePhone">Nomor Telepon</Label>
                   <Input
                     id="storePhone"
                     value={settings.storePhone}
@@ -303,7 +303,7 @@ export default function Settings() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="currency">Currency</Label>
+                  <Label htmlFor="currency">Mata Uang</Label>
                   <Input
                     id="currency"
                     value={settings.currency}
@@ -315,10 +315,10 @@ export default function Settings() {
               <Separator />
 
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">Tax & Receipt Settings</h3>
+                <h3 className="text-lg font-semibold text-foreground">Pengaturan Pajak & Struk</h3>
                 
                 <div>
-                  <Label htmlFor="taxRate">Tax Rate (%)</Label>
+                  <Label htmlFor="taxRate">Tarif Pajak (%)</Label>
                   <Input
                     id="taxRate"
                     type="number"
@@ -329,12 +329,12 @@ export default function Settings() {
                 </div>
 
                 <div>
-                  <Label htmlFor="receiptFooter">Receipt Footer Message</Label>
+                  <Label htmlFor="receiptFooter">Pesan Footer Struk</Label>
                   <Input
                     id="receiptFooter"
                     value={settings.receiptFooter}
                     onChange={(e) => handleSettingChange('receiptFooter', e.target.value)}
-                    placeholder="Message to show on receipt footer"
+                    placeholder="Pesan yang ditampilkan di footer struk"
                   />
                 </div>
               </div>
@@ -540,14 +540,14 @@ export default function Settings() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Bell className="w-5 h-5 text-primary" />
-                <CardTitle>Notification Settings</CardTitle>
+                <CardTitle>Pengaturan Notifikasi</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-sm font-medium text-foreground">Low Stock Alerts</h4>
-                  <p className="text-xs text-muted-foreground">Get notified when inventory is running low</p>
+                   <h4 className="text-sm font-medium text-foreground">Peringatan Stok Rendah</h4>
+                   <p className="text-xs text-muted-foreground">Dapatkan notifikasi saat inventori hampir habis</p>
                 </div>
                 <Switch
                   checked={settings.lowStockAlerts}
@@ -557,8 +557,8 @@ export default function Settings() {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-sm font-medium text-foreground">Sales Notifications</h4>
-                  <p className="text-xs text-muted-foreground">Receive alerts for new sales transactions</p>
+                  <h4 className="text-sm font-medium text-foreground">Notifikasi Penjualan</h4>
+                  <p className="text-xs text-muted-foreground">Terima notifikasi untuk transaksi penjualan baru</p>
                 </div>
                 <Switch
                   checked={settings.salesNotifications}
@@ -568,8 +568,8 @@ export default function Settings() {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-sm font-medium text-foreground">Email Reports</h4>
-                  <p className="text-xs text-muted-foreground">Send daily sales reports via email</p>
+                  <h4 className="text-sm font-medium text-foreground">Laporan Email</h4>
+                  <p className="text-xs text-muted-foreground">Kirim laporan penjualan harian via email</p>
                 </div>
                 <Switch
                   checked={settings.emailReports}
@@ -585,14 +585,14 @@ export default function Settings() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Shield className="w-5 h-5 text-primary" />
-                <CardTitle>Security Settings</CardTitle>
+                <CardTitle>Pengaturan Keamanan</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-sm font-medium text-foreground">Require Login for Sales</h4>
-                  <p className="text-xs text-muted-foreground">Users must login to process sales</p>
+                  <h4 className="text-sm font-medium text-foreground">Wajib Login untuk Penjualan</h4>
+                  <p className="text-xs text-muted-foreground">Pengguna harus login untuk memproses penjualan</p>
                 </div>
                 <Switch
                   checked={settings.requireLoginForSales}
@@ -601,7 +601,7 @@ export default function Settings() {
               </div>
 
               <div>
-                <Label htmlFor="sessionTimeout">Session Timeout (minutes)</Label>
+                <Label htmlFor="sessionTimeout">Batas Waktu Sesi (menit)</Label>
                 <Input
                   id="sessionTimeout"
                   type="number"
@@ -613,8 +613,8 @@ export default function Settings() {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-sm font-medium text-foreground">Enable Audit Log</h4>
-                  <p className="text-xs text-muted-foreground">Track all user actions for security</p>
+                  <h4 className="text-sm font-medium text-foreground">Aktifkan Log Audit</h4>
+                  <p className="text-xs text-muted-foreground">Lacak semua aktivitas pengguna untuk keamanan</p>
                 </div>
                 <Switch
                   checked={settings.enableAuditLog}
@@ -630,49 +630,49 @@ export default function Settings() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Database className="w-5 h-5 text-primary" />
-                <CardTitle>System Information</CardTitle>
+                <CardTitle>Informasi Sistem</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="text-sm font-medium text-foreground mb-2">Application Version</h4>
+                  <h4 className="text-sm font-medium text-foreground mb-2">Versi Aplikasi</h4>
                   <p className="text-sm text-muted-foreground">v1.0.0</p>
                 </div>
                 
                 <div>
-                  <h4 className="text-sm font-medium text-foreground mb-2">Database Status</h4>
-                  <p className="text-sm text-success">Connected</p>
+                  <h4 className="text-sm font-medium text-foreground mb-2">Status Database</h4>
+                  <p className="text-sm text-success">Terhubung</p>
                 </div>
 
                 <div>
-                  <h4 className="text-sm font-medium text-foreground mb-2">Last Backup</h4>
-                  <p className="text-sm text-muted-foreground">Today at 3:00 AM</p>
+                  <h4 className="text-sm font-medium text-foreground mb-2">Pencadangan Terakhir</h4>
+                  <p className="text-sm text-muted-foreground">Hari ini pukul 03:00</p>
                 </div>
 
                 <div>
-                  <h4 className="text-sm font-medium text-foreground mb-2">Storage Used</h4>
-                  <p className="text-sm text-muted-foreground">2.4 GB / 10 GB</p>
+                  <h4 className="text-sm font-medium text-foreground mb-2">Penyimpanan Terpakai</h4>
+                  <p className="text-sm text-muted-foreground">2,4 GB / 10 GB</p>
                 </div>
               </div>
 
               <Separator />
 
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">Maintenance Actions</h3>
+                <h3 className="text-lg font-semibold text-foreground">Tindakan Pemeliharaan</h3>
                 
                 <div className="flex flex-wrap gap-2">
                   <Button variant="outline">
-                    Backup Database
+                    Cadangkan Database
                   </Button>
                   <Button variant="outline">
-                    Clear Cache
+                    Bersihkan Cache
                   </Button>
                   <Button variant="outline">
-                    Export Data
+                    Ekspor Data
                   </Button>
                   <Button variant="destructive" className="ml-auto">
-                    Reset System
+                    Reset Sistem
                   </Button>
                 </div>
               </div>

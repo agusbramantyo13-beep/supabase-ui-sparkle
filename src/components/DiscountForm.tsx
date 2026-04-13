@@ -314,7 +314,7 @@ export function DiscountForm({ discount, onSuccess, onCancel }: DiscountFormProp
             Batal
           </Button>
           <Button type="submit" disabled={loading}>
-            {loading ? "Menyimpan..." : discount ? "Update" : "Simpan"}
+            {loading ? "Menyimpan..." : discount ? "Perbarui" : "Simpan"}
           </Button>
         </div>
       </form>

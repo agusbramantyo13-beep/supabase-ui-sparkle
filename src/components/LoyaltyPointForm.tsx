@@ -277,7 +277,7 @@ export function LoyaltyPointForm({ rule, onSuccess, onCancel }: LoyaltyPointForm
             Batal
           </Button>
           <Button type="submit" disabled={loading}>
-            {loading ? "Menyimpan..." : rule ? "Update" : "Simpan"}
+            {loading ? "Menyimpan..." : rule ? "Perbarui" : "Simpan"}
           </Button>
         </div>
       </form>

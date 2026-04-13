@@ -69,14 +69,13 @@ export default function Inventory() {
   }
 
   const getStockStatus = (quantity: number) => {
-    if (quantity === 0) return { label: 'Out of Stock', variant: 'destructive' as const, icon: AlertTriangle }
-    if (quantity < 10) return { label: 'Low Stock', variant: 'secondary' as const, icon: TrendingDown }
-    return { label: 'In Stock', variant: 'default' as const, icon: TrendingUp }
+    if (quantity === 0) return { label: 'Habis', variant: 'destructive' as const, icon: AlertTriangle }
+    if (quantity < 10) return { label: 'Stok Rendah', variant: 'secondary' as const, icon: TrendingDown }
+    return { label: 'Tersedia', variant: 'default' as const, icon: TrendingUp }
   }
 
   const handleDownloadExcel = () => {
     try {
-      // Prepare data for Excel
       const excelData = inventory.map(item => ({
         'Nama Produk': item.product_name,
         'Varian': item.variant_name,
@@ -85,29 +84,24 @@ export default function Inventory() {
         'Status': getStockStatus(item.quantity || 0).label
       }))
 
-      // Create worksheet
       const ws = XLSX.utils.json_to_sheet(excelData)
-      
-      // Create workbook
       const wb = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(wb, ws, 'Inventory')
+      XLSX.utils.book_append_sheet(wb, ws, 'Inventori')
       
-      // Generate filename with current date
       const date = new Date().toISOString().split('T')[0]
-      const filename = `inventory_${date}.xlsx`
+      const filename = `inventori_${date}.xlsx`
       
-      // Download file
       XLSX.writeFile(wb, filename)
       
       toast({
         title: "Berhasil",
-        description: "Data inventory berhasil diunduh",
+        description: "Data inventori berhasil diunduh",
       })
     } catch (error) {
       console.error('Error downloading Excel:', error)
       toast({
-        title: "Error",
-        description: "Gagal mengunduh data inventory",
+        title: "Gagal",
+        description: "Gagal mengunduh data inventori",
         variant: "destructive",
       })
     }
@@ -118,8 +112,8 @@ export default function Inventory() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Inventory</h1>
-          <p className="text-muted-foreground">Monitor and manage your stock levels</p>
+          <h1 className="text-3xl font-bold text-foreground">Inventori</h1>
+          <p className="text-muted-foreground">Pantau dan kelola level stok Anda</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button 
@@ -128,14 +122,14 @@ export default function Inventory() {
             disabled={inventory.length === 0}
           >
             <Download className="w-4 h-4 mr-2" />
-            Download Excel
+            Unduh Excel
           </Button>
           <Button 
             variant="outline"
             onClick={() => setUploadFormOpen(true)}
           >
             <Upload className="w-4 h-4 mr-2" />
-            Upload Excel
+            Unggah Excel
           </Button>
           <Button 
             className="bg-gradient-primary hover:bg-primary/90"
@@ -152,7 +146,7 @@ export default function Inventory() {
             }}
           >
             <TrendingUp className="w-4 h-4 mr-2" />
-            Add Stock
+            Tambah Stok
           </Button>
           <Button 
             variant="outline"
@@ -162,14 +156,14 @@ export default function Inventory() {
             }}
           >
             <TrendingDown className="w-4 h-4 mr-2" />
-            Remove Stock
+            Kurangi Stok
           </Button>
           <Button 
             variant="outline"
             onClick={() => setAdjustmentFormOpen(true)}
           >
             <Warehouse className="w-4 h-4 mr-2" />
-            Adjust Stock Multi-Item
+            Penyesuaian Multi-Item
           </Button>
         </div>
       </div>
@@ -180,7 +174,7 @@ export default function Inventory() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Items</p>
+                <p className="text-sm font-medium text-muted-foreground">Total Item</p>
                 <p className="text-2xl font-bold text-foreground">{inventory.length}</p>
               </div>
               <Warehouse className="w-8 h-8 text-primary" />
@@ -192,7 +186,7 @@ export default function Inventory() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">In Stock</p>
+                <p className="text-sm font-medium text-muted-foreground">Tersedia</p>
                 <p className="text-2xl font-bold text-success">
                   {inventory.filter(item => (item.quantity || 0) > 10).length}
                 </p>
@@ -206,7 +200,7 @@ export default function Inventory() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Low Stock</p>
+                <p className="text-sm font-medium text-muted-foreground">Stok Rendah</p>
                 <p className="text-2xl font-bold text-warning">{lowStockItems.length}</p>
               </div>
               <TrendingDown className="w-8 h-8 text-warning" />
@@ -218,7 +212,7 @@ export default function Inventory() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Out of Stock</p>
+                <p className="text-sm font-medium text-muted-foreground">Stok Habis</p>
                 <p className="text-2xl font-bold text-destructive">{outOfStockItems.length}</p>
               </div>
               <AlertTriangle className="w-8 h-8 text-destructive" />
@@ -230,7 +224,7 @@ export default function Inventory() {
       {/* Inventory List */}
       <Card className="bg-gradient-card border-border/50">
         <CardHeader>
-          <CardTitle className="text-foreground">Current Inventory</CardTitle>
+          <CardTitle className="text-foreground">Inventori Saat Ini</CardTitle>
         </CardHeader>
         <CardContent>
           {inventory.length > 0 ? (
@@ -258,7 +252,7 @@ export default function Inventory() {
                     <div className="flex items-center gap-4">
                       <div className="text-right">
                         <p className="text-lg font-semibold text-foreground">
-                          {item.quantity || 0} units
+                          {item.quantity || 0} unit
                         </p>
                       </div>
                       
@@ -274,9 +268,9 @@ export default function Inventory() {
           ) : (
             <div className="text-center py-8">
               <Warehouse className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-xl font-semibold text-foreground mb-2">No Inventory Data</h3>
+              <h3 className="text-xl font-semibold text-foreground mb-2">Tidak Ada Data Inventori</h3>
               <p className="text-muted-foreground mb-6">
-                Start tracking your inventory by adding products and stock levels.
+                Mulai kelola inventori dengan menambahkan produk dan level stok.
               </p>
               <Button 
                 className="bg-gradient-primary hover:bg-primary/90"
@@ -285,7 +279,7 @@ export default function Inventory() {
                   setInventoryFormOpen(true);
                 }}
               >
-                Add Inventory
+                Tambah Inventori
               </Button>
             </div>
           )}

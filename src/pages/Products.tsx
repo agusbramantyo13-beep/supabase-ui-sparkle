@@ -86,13 +86,13 @@ export default function Products() {
 
       if (error) throw error
 
-      toast({ title: "Success", description: "Product deleted successfully" })
+      toast({ title: "Berhasil", description: "Produk berhasil dihapus" })
       fetchProducts()
       setDeleteDialogOpen(false)
       setProductToDelete(null)
     } catch (error) {
       console.error('Error deleting product:', error)
-      toast({ title: "Error", description: "Failed to delete product", variant: "destructive" })
+      toast({ title: "Gagal", description: "Gagal menghapus produk", variant: "destructive" })
     } finally {
       setIsDeleting(false)
     }
@@ -156,15 +156,15 @@ export default function Products() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Products</h1>
-          <p className="text-muted-foreground">Manage your product catalog</p>
+          <h1 className="text-3xl font-bold text-foreground">Produk</h1>
+          <p className="text-muted-foreground">Kelola katalog produk Anda</p>
         </div>
         <Button 
           className="bg-gradient-primary hover:bg-primary/90"
           onClick={() => { setSelectedProduct(null); setProductFormOpen(true); }}
         >
           <Plus className="w-4 h-4 mr-2" />
-          Add Product
+          Tambah Produk
         </Button>
       </div>
 
@@ -175,7 +175,7 @@ export default function Products() {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
-                placeholder="Search products..."
+                placeholder="Cari produk..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -272,7 +272,7 @@ export default function Products() {
                               onClick={() => handleEditVariant(product, variant)}
                             >
                               <Edit className="w-3 h-3 mr-1" />
-                              Edit
+                              Ubah
                             </Button>
                           </div>
                         </div>
@@ -288,16 +288,16 @@ export default function Products() {
         <Card className="bg-gradient-card border-border/50">
           <CardContent className="p-12 text-center">
             <Package className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold text-foreground mb-2">No Products Found</h3>
+            <h3 className="text-xl font-semibold text-foreground mb-2">Produk Tidak Ditemukan</h3>
             <p className="text-muted-foreground mb-6">
-              {searchTerm ? 'No products match your search.' : 'Get started by adding your first product.'}
+              {searchTerm ? 'Tidak ada produk yang cocok dengan pencarian.' : 'Mulai dengan menambahkan produk pertama Anda.'}
             </p>
             <Button
               className="bg-gradient-primary hover:bg-primary/90"
               onClick={() => { setSelectedProduct(null); setProductFormOpen(true); }}
             >
               <Plus className="w-4 h-4 mr-2" />
-              Add Product
+              Tambah Produk
             </Button>
           </CardContent>
         </Card>
@@ -319,19 +319,19 @@ export default function Products() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Product</AlertDialogTitle>
+            <AlertDialogTitle>Hapus Produk</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{productToDelete?.name}"? This action cannot be undone.
+              Apakah Anda yakin ingin menghapus "{productToDelete?.name}"? Tindakan ini tidak dapat dibatalkan.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>Batal</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteProduct}
               disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? "Deleting..." : "Delete"}
+              {isDeleting ? "Menghapus..." : "Hapus"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
