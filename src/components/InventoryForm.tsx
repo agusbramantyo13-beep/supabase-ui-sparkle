@@ -60,8 +60,8 @@ export function InventoryForm({ open, onOpenChange, onSuccess, type }: Inventory
 
     if (error) {
       toast({
-        title: "Error",
-        description: "Failed to load product variants",
+        title: "Gagal",
+        description: "Gagal memuat varian produk",
         variant: "destructive"
       });
       return;
@@ -80,17 +80,17 @@ export function InventoryForm({ open, onOpenChange, onSuccess, type }: Inventory
     switch (type) {
       case 'add': return 'in';
       case 'remove': return 'out';
-      case 'adjust': return 'in'; // For adjustments, we'll use 'in' with proper quantity calculation
+      case 'adjust': return 'in';
       default: return 'in';
     }
   };
 
   const getTitle = () => {
     switch (type) {
-      case 'add': return 'Add Inventory';
-      case 'remove': return 'Remove Inventory';
-      case 'adjust': return 'Adjust Inventory';
-      default: return 'Inventory Movement';
+      case 'add': return 'Tambah Inventori';
+      case 'remove': return 'Kurangi Inventori';
+      case 'adjust': return 'Sesuaikan Inventori';
+      default: return 'Pergerakan Inventori';
     }
   };
 
@@ -99,8 +99,8 @@ export function InventoryForm({ open, onOpenChange, onSuccess, type }: Inventory
     
     if (!formData.variant_id || !formData.quantity) {
       toast({
-        title: "Error",
-        description: "Please fill in all required fields",
+        title: "Gagal",
+        description: "Harap isi semua field yang wajib",
         variant: "destructive"
       });
       return;
@@ -109,8 +109,8 @@ export function InventoryForm({ open, onOpenChange, onSuccess, type }: Inventory
     const quantity = parseInt(formData.quantity);
     if (isNaN(quantity) || quantity <= 0) {
       toast({
-        title: "Error",
-        description: "Please enter a valid quantity",
+        title: "Gagal",
+        description: "Masukkan jumlah yang valid",
         variant: "destructive"
       });
       return;
@@ -119,7 +119,6 @@ export function InventoryForm({ open, onOpenChange, onSuccess, type }: Inventory
     setLoading(true);
 
     try {
-      // Get current inventory
       const { data: currentInventory } = await supabase
         .from('inventory')
         .select('id, quantity')
@@ -129,7 +128,6 @@ export function InventoryForm({ open, onOpenChange, onSuccess, type }: Inventory
       const currentQty = currentInventory?.quantity || 0;
       let newQuantity = currentQty;
 
-      // Calculate new quantity based on type
       switch (type) {
         case 'add':
           newQuantity = currentQty + quantity;
@@ -142,16 +140,13 @@ export function InventoryForm({ open, onOpenChange, onSuccess, type }: Inventory
           break;
       }
 
-      // Update or create inventory record
       if (currentInventory) {
-        // Update existing inventory
         const { error: inventoryError } = await supabase
           .from('inventory')
           .update({ quantity: newQuantity })
           .eq('id', currentInventory.id);
         if (inventoryError) throw inventoryError;
       } else {
-        // Insert new inventory record
         const { error: inventoryError } = await supabase
           .from('inventory')
           .insert({
@@ -162,7 +157,6 @@ export function InventoryForm({ open, onOpenChange, onSuccess, type }: Inventory
         if (inventoryError) throw inventoryError;
       }
 
-      // Create stock movement record
       const actualQuantityChange = type === 'remove' ? -quantity : 
                                   type === 'adjust' ? (newQuantity - currentQty) : 
                                   quantity;
@@ -180,16 +174,16 @@ export function InventoryForm({ open, onOpenChange, onSuccess, type }: Inventory
       if (movementError) throw movementError;
 
       toast({
-        title: "Success",
-        description: `Inventory ${type === 'add' ? 'added' : type === 'remove' ? 'removed' : 'adjusted'} successfully`,
+        title: "Berhasil",
+        description: `Inventori berhasil ${type === 'add' ? 'ditambahkan' : type === 'remove' ? 'dikurangi' : 'disesuaikan'}`,
       });
 
       onSuccess();
       onOpenChange(false);
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update inventory",
+        title: "Gagal",
+        description: error.message || "Gagal memperbarui inventori",
         variant: "destructive"
       });
     } finally {
@@ -206,13 +200,13 @@ export function InventoryForm({ open, onOpenChange, onSuccess, type }: Inventory
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="variant">Product Variant *</Label>
+            <Label htmlFor="variant">Varian Produk *</Label>
             <Select 
               value={formData.variant_id} 
               onValueChange={(value) => setFormData({ ...formData, variant_id: value })}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select product variant" />
+                <SelectValue placeholder="Pilih varian produk" />
               </SelectTrigger>
               <SelectContent>
                 {variants.map((variant) => (
@@ -226,7 +220,7 @@ export function InventoryForm({ open, onOpenChange, onSuccess, type }: Inventory
 
           <div>
             <Label htmlFor="quantity">
-              {type === 'adjust' ? 'New Quantity' : 'Quantity'} *
+              {type === 'adjust' ? 'Jumlah Baru' : 'Jumlah'} *
             </Label>
             <Input
               id="quantity"
@@ -234,27 +228,27 @@ export function InventoryForm({ open, onOpenChange, onSuccess, type }: Inventory
               min="0"
               value={formData.quantity}
               onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-              placeholder="Enter quantity"
+              placeholder="Masukkan jumlah"
             />
           </div>
 
           <div>
-            <Label htmlFor="reason">Reason (Optional)</Label>
+            <Label htmlFor="reason">Alasan (Opsional)</Label>
             <Textarea
               id="reason"
               value={formData.reason}
               onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-              placeholder="Enter reason for this inventory change..."
+              placeholder="Masukkan alasan perubahan inventori..."
               rows={3}
             />
           </div>
 
           <div className="flex gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
-              Cancel
+              Batal
             </Button>
             <Button type="submit" disabled={loading} className="flex-1 bg-gradient-primary">
-              {loading ? "Processing..." : "Confirm"}
+              {loading ? "Memproses..." : "Konfirmasi"}
             </Button>
           </div>
         </form>

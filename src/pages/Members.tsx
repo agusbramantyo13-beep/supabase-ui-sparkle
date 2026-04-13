@@ -42,7 +42,6 @@ export default function Members() {
   const [isCreating, setIsCreating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   
-  // Form state
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -70,8 +69,8 @@ export default function Members() {
 
     if (error) {
       toast({
-        title: "Error",
-        description: "Failed to load members",
+        title: "Gagal",
+        description: "Gagal memuat data member",
         variant: "destructive"
       });
       return;
@@ -96,8 +95,8 @@ export default function Members() {
   const createMember = async () => {
     if (!formData.name.trim()) {
       toast({
-        title: "Error",
-        description: "Member name is required",
+        title: "Gagal",
+        description: "Nama member wajib diisi",
         variant: "destructive"
       });
       return;
@@ -117,8 +116,8 @@ export default function Members() {
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Member created successfully",
+        title: "Berhasil",
+        description: "Member berhasil dibuat",
       });
 
       resetForm();
@@ -127,8 +126,8 @@ export default function Members() {
     } catch (error: any) {
       console.error('Error creating member:', error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to create member",
+        title: "Gagal",
+        description: error.message || "Gagal membuat member",
         variant: "destructive"
       });
     } finally {
@@ -139,8 +138,8 @@ export default function Members() {
   const updateMember = async () => {
     if (!selectedMember || !formData.name.trim()) {
       toast({
-        title: "Error",
-        description: "Member name is required",
+        title: "Gagal",
+        description: "Nama member wajib diisi",
         variant: "destructive"
       });
       return;
@@ -164,8 +163,8 @@ export default function Members() {
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Member updated successfully",
+        title: "Berhasil",
+        description: "Member berhasil diperbarui",
       });
 
       setDialogOpen(false);
@@ -173,8 +172,8 @@ export default function Members() {
     } catch (error: any) {
       console.error('Error updating member:', error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to update member",
+        title: "Gagal",
+        description: error.message || "Gagal memperbarui member",
         variant: "destructive"
       });
     } finally {
@@ -195,8 +194,8 @@ export default function Members() {
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Member deleted successfully",
+        title: "Berhasil",
+        description: "Member berhasil dihapus",
       });
 
       fetchMembers();
@@ -205,8 +204,8 @@ export default function Members() {
     } catch (error: any) {
       console.error('Error deleting member:', error);
       toast({
-        title: "Error",
-        description: "Failed to delete member",
+        title: "Gagal",
+        description: "Gagal menghapus member",
         variant: "destructive"
       });
     } finally {
@@ -254,7 +253,7 @@ export default function Members() {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-foreground">Members</h1>
+          <h1 className="text-3xl font-bold text-foreground">Member</h1>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
@@ -273,26 +272,26 @@ export default function Members() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Members</h1>
-          <p className="text-muted-foreground">Manage member accounts and information</p>
+          <h1 className="text-3xl font-bold text-foreground">Member</h1>
+          <p className="text-muted-foreground">Kelola akun dan informasi member</p>
         </div>
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
           <DialogTrigger asChild>
             <Button className="bg-gradient-primary hover:bg-primary/90" onClick={() => resetForm()}>
               <UserPlus className="w-4 h-4 mr-2" />
-              Add Member
+              Tambah Member
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Add New Member</DialogTitle>
+              <DialogTitle>Tambah Member Baru</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="name">Name *</Label>
+                <Label htmlFor="name">Nama *</Label>
                 <Input
                   id="name"
-                  placeholder="Enter member name"
+                  placeholder="Masukkan nama member"
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 />
@@ -302,22 +301,22 @@ export default function Members() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="Enter email address"
+                  placeholder="Masukkan alamat email"
                   value={formData.email}
                   onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                 />
               </div>
               <div>
-                <Label htmlFor="phone">Phone</Label>
+                <Label htmlFor="phone">Telepon</Label>
                 <Input
                   id="phone"
-                  placeholder="Enter phone number"
+                  placeholder="Masukkan nomor telepon"
                   value={formData.phone}
                   onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                 />
               </div>
               <div>
-                <Label htmlFor="date_of_birth">Date of Birth</Label>
+                <Label htmlFor="date_of_birth">Tanggal Lahir</Label>
                 <Input
                   id="date_of_birth"
                   type="date"
@@ -326,10 +325,10 @@ export default function Members() {
                 />
               </div>
               <div>
-                <Label htmlFor="address">Address</Label>
+                <Label htmlFor="address">Alamat</Label>
                 <Textarea
                   id="address"
-                  placeholder="Enter address"
+                  placeholder="Masukkan alamat"
                   value={formData.address}
                   onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
                 />
@@ -341,8 +340,8 @@ export default function Members() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="active">Aktif</SelectItem>
+                    <SelectItem value="inactive">Nonaktif</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -351,14 +350,14 @@ export default function Members() {
                   variant="outline"
                   onClick={() => setAddDialogOpen(false)}
                 >
-                  Cancel
+                  Batal
                 </Button>
                 <Button
                   onClick={createMember}
                   disabled={isCreating}
                   className="bg-gradient-primary hover:bg-primary/90"
                 >
-                  {isCreating ? "Creating..." : "Create Member"}
+                  {isCreating ? "Membuat..." : "Buat Member"}
                 </Button>
               </div>
             </div>
@@ -368,7 +367,7 @@ export default function Members() {
 
       <div className="flex items-center gap-4">
         <Input
-          placeholder="Search members by name, email, or member code..."
+          placeholder="Cari member berdasarkan nama, email, atau kode member..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-sm"
@@ -379,15 +378,15 @@ export default function Members() {
         <Card className="bg-gradient-card">
           <CardContent className="p-12 text-center">
             <UserCheck className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">No members found</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-2">Member tidak ditemukan</h3>
             <p className="text-muted-foreground mb-4">
-              {searchTerm ? "No members match your search criteria" : "No members have been added yet"}
+              {searchTerm ? "Tidak ada member yang cocok dengan pencarian" : "Belum ada member yang ditambahkan"}
             </p>
             <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-gradient-primary hover:bg-primary/90" onClick={() => resetForm()}>
                   <UserPlus className="w-4 h-4 mr-2" />
-                  Add First Member
+                  Tambah Member Pertama
                 </Button>
               </DialogTrigger>
             </Dialog>
@@ -411,7 +410,7 @@ export default function Members() {
                     </div>
                   </div>
                   <Badge className={getStatusBadgeColor(member.status)}>
-                    {member.status}
+                    {member.status === 'active' ? 'Aktif' : 'Nonaktif'}
                   </Badge>
                 </div>
               </CardHeader>
@@ -433,12 +432,12 @@ export default function Members() {
                   {member.date_of_birth && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="w-4 h-4" />
-                      <span>{new Date(member.date_of_birth).toLocaleDateString()}</span>
+                      <span>{new Date(member.date_of_birth).toLocaleDateString('id-ID')}</span>
                     </div>
                   )}
                   <div className="flex items-center gap-2 text-sm">
                     <CreditCard className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-foreground font-medium">{member.points} Points</span>
+                    <span className="text-foreground font-medium">{member.points} Poin</span>
                   </div>
                   
                   <div className="pt-3 flex gap-2">
@@ -449,7 +448,7 @@ export default function Members() {
                       onClick={() => openEditDialog(member)}
                     >
                       <Edit className="w-4 h-4 mr-2" />
-                      Edit
+                      Ubah
                     </Button>
                     <Button
                       variant="outline"
@@ -458,7 +457,7 @@ export default function Members() {
                       onClick={() => openDeleteDialog(member)}
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
-                      Delete
+                      Hapus
                     </Button>
                   </div>
                 </div>
@@ -472,15 +471,15 @@ export default function Members() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Edit Member</DialogTitle>
+            <DialogTitle>Ubah Member</DialogTitle>
           </DialogHeader>
           {selectedMember && (
             <div className="space-y-4">
               <div>
-                <Label htmlFor="edit-name">Name *</Label>
+                <Label htmlFor="edit-name">Nama *</Label>
                 <Input
                   id="edit-name"
-                  placeholder="Enter member name"
+                  placeholder="Masukkan nama member"
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 />
@@ -490,22 +489,22 @@ export default function Members() {
                 <Input
                   id="edit-email"
                   type="email"
-                  placeholder="Enter email address"
+                  placeholder="Masukkan alamat email"
                   value={formData.email}
                   onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                 />
               </div>
               <div>
-                <Label htmlFor="edit-phone">Phone</Label>
+                <Label htmlFor="edit-phone">Telepon</Label>
                 <Input
                   id="edit-phone"
-                  placeholder="Enter phone number"
+                  placeholder="Masukkan nomor telepon"
                   value={formData.phone}
                   onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                 />
               </div>
               <div>
-                <Label htmlFor="edit-date_of_birth">Date of Birth</Label>
+                <Label htmlFor="edit-date_of_birth">Tanggal Lahir</Label>
                 <Input
                   id="edit-date_of_birth"
                   type="date"
@@ -514,10 +513,10 @@ export default function Members() {
                 />
               </div>
               <div>
-                <Label htmlFor="edit-address">Address</Label>
+                <Label htmlFor="edit-address">Alamat</Label>
                 <Textarea
                   id="edit-address"
-                  placeholder="Enter address"
+                  placeholder="Masukkan alamat"
                   value={formData.address}
                   onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
                 />
@@ -529,18 +528,18 @@ export default function Members() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="active">Aktif</SelectItem>
+                    <SelectItem value="inactive">Nonaktif</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label htmlFor="edit-points">Points</Label>
+                <Label htmlFor="edit-points">Poin</Label>
                 <Input
                   id="edit-points"
                   type="number"
                   min="0"
-                  placeholder="Enter points"
+                  placeholder="Masukkan poin"
                   value={formData.points}
                   onChange={(e) => setFormData(prev => ({ ...prev, points: parseInt(e.target.value) || 0 }))}
                 />
@@ -550,14 +549,14 @@ export default function Members() {
                   variant="outline"
                   onClick={() => setDialogOpen(false)}
                 >
-                  Cancel
+                  Batal
                 </Button>
                 <Button
                   onClick={updateMember}
                   disabled={isUpdating}
                   className="bg-gradient-primary hover:bg-primary/90"
                 >
-                  {isUpdating ? "Updating..." : "Update Member"}
+                  {isUpdating ? "Memperbarui..." : "Perbarui Member"}
                 </Button>
               </div>
             </div>
@@ -569,19 +568,19 @@ export default function Members() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Member</AlertDialogTitle>
+            <AlertDialogTitle>Hapus Member</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete member "{memberToDelete?.name}"? This action cannot be undone and will permanently remove the member from the system.
+              Apakah Anda yakin ingin menghapus member "{memberToDelete?.name}"? Tindakan ini tidak dapat dibatalkan dan akan menghapus member secara permanen.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>Batal</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteMember}
               disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? "Deleting..." : "Delete"}
+              {isDeleting ? "Menghapus..." : "Hapus"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
