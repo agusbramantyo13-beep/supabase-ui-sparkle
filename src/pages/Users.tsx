@@ -124,7 +124,7 @@ export default function Users() {
       .order('created_at', { ascending: false });
 
     if (error) {
-      toast({ title: "Error", description: "Failed to load users", variant: "destructive" });
+      toast({ title: "Gagal", description: "Gagal memuat pengguna", variant: "destructive" });
       return;
     }
 
@@ -505,7 +505,7 @@ export default function Users() {
                 </div>
               </div>
               <div>
-                <Label>Role</Label>
+                <Label>Peran</Label>
                 <Select value={newUserRole} onValueChange={(value: 'owner' | 'store_keeper') => setNewUserRole(value)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -581,7 +581,7 @@ export default function Users() {
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Role</span>
+                      <span className="text-sm text-muted-foreground">Peran</span>
                       <Badge className={getRoleBadgeColor(user.role)}>
                         <div className="flex items-center gap-1">
                           {getRoleIcon(user.role)}
@@ -637,7 +637,7 @@ export default function Users() {
                 <Input id="edit-name" type="text" placeholder="Masukkan nama lengkap" value={editedName} onChange={(e) => setEditedName(e.target.value)} />
               </div>
               <div>
-                <Label>Role</Label>
+                <Label>Peran</Label>
                 <Select value={editedRole} onValueChange={(value: 'owner' | 'store_keeper') => setEditedRole(value)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
