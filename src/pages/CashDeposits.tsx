@@ -26,7 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Wallet, Plus, CheckCircle2, XCircle, Clock, Banknote, TrendingDown } from "lucide-react";
+import { Wallet, Plus, CheckCircle2, XCircle, Clock, Banknote, TrendingDown, ShoppingBag } from "lucide-react";
 
 interface CashDeposit {
   id: string;
@@ -68,6 +68,7 @@ export default function CashDeposits() {
   const [totalApproved, setTotalApproved] = useState(0);
   const [totalPending, setTotalPending] = useState(0);
   const [todayCashSales, setTodayCashSales] = useState(0);
+  const [totalExpenses, setTotalExpenses] = useState(0);
   const [loading, setLoading] = useState(true);
 
   // Submit dialog
@@ -154,6 +155,18 @@ export default function CashDeposits() {
         .filter((s: any) => new Date(s.created_at) >= today)
         .reduce((s: number, r: any) => s + Number(r.total || 0), 0);
       setTodayCashSales(todaySales);
+
+      // Load approved store expenses (Belanja Toko) - reduce from undeposited cash
+      const { data: expensesData } = await supabase
+        .from("store_expenses")
+        .select("amount")
+        .eq("store_id", currentStore.id)
+        .eq("status", "approved");
+      const expensesSum = (expensesData || []).reduce(
+        (s: number, r: any) => s + Number(r.amount || 0),
+        0
+      );
+      setTotalExpenses(expensesSum);
     } catch (err: any) {
       console.error(err);
       toast({
@@ -263,7 +276,7 @@ export default function CashDeposits() {
     }
   };
 
-  const undeposited = totalCashSales - totalApproved;
+  const undeposited = totalCashSales - totalApproved - totalExpenses;
 
   const statusBadge = (status: string) => {
     if (status === "approved")
