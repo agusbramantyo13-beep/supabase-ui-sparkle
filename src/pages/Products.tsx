@@ -40,6 +40,8 @@ export default function Products() {
   const [productToDelete, setProductToDelete] = useState<Product | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [expandedProducts, setExpandedProducts] = useState<Set<number>>(new Set())
+  const [addVariantOpen, setAddVariantOpen] = useState(false)
+  const [productForVariant, setProductForVariant] = useState<Product | null>(null)
   const { toast } = useToast()
   const { currentStoreId } = useStore()
 
