@@ -232,6 +232,18 @@ export default function Products() {
                       <Button
                         variant="outline"
                         size="sm"
+                        onClick={() => {
+                          setProductForVariant(product)
+                          setAddVariantOpen(true)
+                        }}
+                        title="Tambah Varian"
+                      >
+                        <PackagePlus className="w-3 h-3 mr-1" />
+                        Varian
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => openDeleteDialog(product)}
                         className="text-destructive hover:text-destructive"
                       >
