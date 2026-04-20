@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Package, Plus, Edit, Trash2, Search, Filter, ChevronDown, ChevronRight } from "lucide-react"
+import { Package, Plus, Edit, Trash2, Search, Filter, ChevronDown, ChevronRight, PackagePlus } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useStore } from "@/contexts/StoreContext"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { ProductForm } from "@/components/ProductForm"
+import { AddVariantDialog } from "@/components/AddVariantDialog"
 import { useToast } from "@/hooks/use-toast"
 import { formatRupiah } from "@/lib/utils"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
@@ -39,6 +40,8 @@ export default function Products() {
   const [productToDelete, setProductToDelete] = useState<Product | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [expandedProducts, setExpandedProducts] = useState<Set<number>>(new Set())
+  const [addVariantOpen, setAddVariantOpen] = useState(false)
+  const [productForVariant, setProductForVariant] = useState<Product | null>(null)
   const { toast } = useToast()
   const { currentStoreId } = useStore()
 
@@ -229,6 +232,18 @@ export default function Products() {
                       <Button
                         variant="outline"
                         size="sm"
+                        onClick={() => {
+                          setProductForVariant(product)
+                          setAddVariantOpen(true)
+                        }}
+                        title="Tambah Varian"
+                      >
+                        <PackagePlus className="w-3 h-3 mr-1" />
+                        Varian
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => openDeleteDialog(product)}
                         className="text-destructive hover:text-destructive"
                       >
@@ -314,6 +329,22 @@ export default function Products() {
           setSelectedProduct(null)
         }}
         product={selectedProduct}
+      />
+
+      <AddVariantDialog
+        open={addVariantOpen}
+        onOpenChange={(open) => {
+          setAddVariantOpen(open)
+          if (!open) setProductForVariant(null)
+        }}
+        onSuccess={() => {
+          fetchProducts()
+          if (productForVariant) {
+            setExpandedProducts(prev => new Set(prev).add(productForVariant.id))
+          }
+        }}
+        productId={productForVariant?.id ?? null}
+        productName={productForVariant?.name ?? ""}
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
