@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { LayoutDashboard, Package, ShoppingCart, Warehouse, Users, BarChart3, Settings, LogOut, UserCheck, Receipt, Tag, ClipboardList, FileText, Store, ChevronsUpDown, ArrowRightLeft, Wallet } from "lucide-react"
+import { LayoutDashboard, Package, ShoppingCart, Warehouse, Users, BarChart3, Settings, LogOut, UserCheck, Receipt, Tag, ClipboardList, FileText, Store, ChevronsUpDown, ArrowRightLeft, Wallet, ShoppingBag } from "lucide-react"
 import { NavLink, useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 import { useStore } from "@/contexts/StoreContext"
@@ -31,6 +31,7 @@ const allMenuItems = [
   { title: "Diskon", url: "/discounts", icon: Tag, roles: ["owner"] },
   { title: "Riwayat Transaksi", url: "/transaction-history", icon: Receipt, roles: ["owner", "store_keeper"] },
   { title: "Setoran Kas", url: "/cash-deposits", icon: Wallet, roles: ["owner", "store_keeper"] },
+  { title: "Belanja Toko", url: "/store-expenses", icon: ShoppingBag, roles: ["owner", "store_keeper"] },
   { title: "Kehadiran", url: "/attendance", icon: UserCheck, roles: ["owner", "store_keeper"] },
   { title: "Laporan", url: "/reports", icon: BarChart3, roles: ["owner"] },
   { title: "Pengguna", url: "/users", icon: Users, roles: ["owner"] },

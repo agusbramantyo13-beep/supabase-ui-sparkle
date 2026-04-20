@@ -26,12 +26,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Wallet, Plus, CheckCircle2, XCircle, Clock, Banknote, TrendingDown, ShoppingBag } from "lucide-react";
+import { ShoppingBag, Plus, CheckCircle2, XCircle, Clock, TrendingDown } from "lucide-react";
 
-interface CashDeposit {
+interface StoreExpense {
   id: string;
   amount: number;
-  deposit_date: string;
+  description: string;
+  expense_date: string;
   notes: string | null;
   status: "pending" | "approved" | "rejected";
   submitted_by: string | null;
@@ -57,29 +58,28 @@ const parsePriceInput = (v: string) => {
   return digits ? parseInt(digits, 10) : 0;
 };
 
-export default function CashDeposits() {
+export default function StoreExpenses() {
   const { user } = useAuth();
   const { currentStore, userStoreRole } = useStore();
   const { toast } = useToast();
   const isOwner = userStoreRole === "owner";
 
-  const [deposits, setDeposits] = useState<CashDeposit[]>([]);
-  const [totalCashSales, setTotalCashSales] = useState(0);
+  const [expenses, setExpenses] = useState<StoreExpense[]>([]);
   const [totalApproved, setTotalApproved] = useState(0);
   const [totalPending, setTotalPending] = useState(0);
-  const [todayCashSales, setTodayCashSales] = useState(0);
-  const [totalExpenses, setTotalExpenses] = useState(0);
+  const [todayApproved, setTodayApproved] = useState(0);
   const [loading, setLoading] = useState(true);
 
   // Submit dialog
   const [submitOpen, setSubmitOpen] = useState(false);
   const [amountInput, setAmountInput] = useState("");
+  const [descInput, setDescInput] = useState("");
   const [notesInput, setNotesInput] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   // Reject dialog
   const [rejectOpen, setRejectOpen] = useState(false);
-  const [rejectTarget, setRejectTarget] = useState<CashDeposit | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<StoreExpense | null>(null);
   const [rejectReason, setRejectReason] = useState("");
 
   const loadData = async () => {
@@ -87,18 +87,16 @@ export default function CashDeposits() {
     setLoading(true);
 
     try {
-      // Load deposits
-      const { data: depositsData, error: depErr } = await supabase
-        .from("cash_deposits")
+      const { data, error } = await supabase
+        .from("store_expenses")
         .select("*")
         .eq("store_id", currentStore.id)
         .order("submitted_at", { ascending: false });
 
-      if (depErr) throw depErr;
+      if (error) throw error;
 
-      // Get profile names
       const userIds = new Set<string>();
-      (depositsData || []).forEach((d: any) => {
+      (data || []).forEach((d: any) => {
         if (d.submitted_by) userIds.add(d.submitted_by);
         if (d.approved_by) userIds.add(d.approved_by);
       });
@@ -114,64 +112,31 @@ export default function CashDeposits() {
         });
       }
 
-      const enriched: CashDeposit[] = (depositsData || []).map((d: any) => ({
+      const enriched: StoreExpense[] = (data || []).map((d: any) => ({
         ...d,
         submitter_name: d.submitted_by ? profilesMap[d.submitted_by] || "Pengguna" : "-",
         approver_name: d.approved_by ? profilesMap[d.approved_by] || "Pengguna" : undefined,
       }));
 
-      setDeposits(enriched);
+      setExpenses(enriched);
 
-      // Compute totals
-      const approved = enriched
-        .filter((d) => d.status === "approved")
-        .reduce((s, d) => s + Number(d.amount), 0);
-      const pending = enriched
-        .filter((d) => d.status === "pending")
-        .reduce((s, d) => s + Number(d.amount), 0);
-      setTotalApproved(approved);
-      setTotalPending(pending);
+      const approved = enriched.filter((d) => d.status === "approved");
+      const pending = enriched.filter((d) => d.status === "pending");
+      setTotalApproved(approved.reduce((s, d) => s + Number(d.amount), 0));
+      setTotalPending(pending.reduce((s, d) => s + Number(d.amount), 0));
 
-      // Load all cash sales for the store
-      const { data: salesData, error: salesErr } = await supabase
-        .from("sales")
-        .select("total, payment_method, created_at, status")
-        .eq("store_id", currentStore.id)
-        .eq("payment_method", "cash")
-        .neq("status", "returned");
-
-      if (salesErr) throw salesErr;
-
-      const totalSales = (salesData || []).reduce(
-        (s: number, r: any) => s + Number(r.total || 0),
-        0
-      );
-      setTotalCashSales(totalSales);
-
-      // Today's cash sales
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const todaySales = (salesData || [])
-        .filter((s: any) => new Date(s.created_at) >= today)
-        .reduce((s: number, r: any) => s + Number(r.total || 0), 0);
-      setTodayCashSales(todaySales);
-
-      // Load approved store expenses (Belanja Toko) - reduce from undeposited cash
-      const { data: expensesData } = await supabase
-        .from("store_expenses")
-        .select("amount")
-        .eq("store_id", currentStore.id)
-        .eq("status", "approved");
-      const expensesSum = (expensesData || []).reduce(
-        (s: number, r: any) => s + Number(r.amount || 0),
-        0
+      setTodayApproved(
+        approved
+          .filter((d) => new Date(d.approved_at || d.submitted_at) >= today)
+          .reduce((s, d) => s + Number(d.amount), 0)
       );
-      setTotalExpenses(expensesSum);
     } catch (err: any) {
       console.error(err);
       toast({
         title: "Gagal",
-        description: "Gagal memuat data setoran",
+        description: "Gagal memuat data belanja",
         variant: "destructive",
       });
     } finally {
@@ -194,13 +159,22 @@ export default function CashDeposits() {
       });
       return;
     }
+    if (!descInput.trim()) {
+      toast({
+        title: "Gagal",
+        description: "Keterangan belanja wajib diisi",
+        variant: "destructive",
+      });
+      return;
+    }
     if (!currentStore?.id || !user?.id) return;
 
     setSubmitting(true);
     try {
-      const { error } = await supabase.from("cash_deposits").insert({
+      const { error } = await supabase.from("store_expenses").insert({
         store_id: currentStore.id,
         amount,
+        description: descInput.trim(),
         notes: notesInput || null,
         submitted_by: user.id,
         status: "pending",
@@ -209,16 +183,17 @@ export default function CashDeposits() {
 
       toast({
         title: "Berhasil",
-        description: "Pengajuan setoran terkirim, menunggu persetujuan pemilik",
+        description: "Pengajuan belanja terkirim, menunggu persetujuan pemilik",
       });
       setSubmitOpen(false);
       setAmountInput("");
+      setDescInput("");
       setNotesInput("");
       loadData();
     } catch (err: any) {
       toast({
         title: "Gagal",
-        description: err.message || "Gagal mengajukan setoran",
+        description: err.message || "Gagal mengajukan belanja",
         variant: "destructive",
       });
     } finally {
@@ -226,24 +201,24 @@ export default function CashDeposits() {
     }
   };
 
-  const handleApprove = async (deposit: CashDeposit) => {
+  const handleApprove = async (expense: StoreExpense) => {
     if (!user?.id) return;
     try {
       const { error } = await supabase
-        .from("cash_deposits")
+        .from("store_expenses")
         .update({
           status: "approved",
           approved_by: user.id,
           approved_at: new Date().toISOString(),
         })
-        .eq("id", deposit.id);
+        .eq("id", expense.id);
       if (error) throw error;
-      toast({ title: "Berhasil", description: "Setoran disetujui" });
+      toast({ title: "Berhasil", description: "Belanja disetujui" });
       loadData();
     } catch (err: any) {
       toast({
         title: "Gagal",
-        description: err.message || "Gagal menyetujui setoran",
+        description: err.message || "Gagal menyetujui belanja",
         variant: "destructive",
       });
     }
@@ -253,7 +228,7 @@ export default function CashDeposits() {
     if (!user?.id || !rejectTarget) return;
     try {
       const { error } = await supabase
-        .from("cash_deposits")
+        .from("store_expenses")
         .update({
           status: "rejected",
           approved_by: user.id,
@@ -262,7 +237,7 @@ export default function CashDeposits() {
         })
         .eq("id", rejectTarget.id);
       if (error) throw error;
-      toast({ title: "Berhasil", description: "Setoran ditolak" });
+      toast({ title: "Berhasil", description: "Belanja ditolak" });
       setRejectOpen(false);
       setRejectTarget(null);
       setRejectReason("");
@@ -270,13 +245,11 @@ export default function CashDeposits() {
     } catch (err: any) {
       toast({
         title: "Gagal",
-        description: err.message || "Gagal menolak setoran",
+        description: err.message || "Gagal menolak belanja",
         variant: "destructive",
       });
     }
   };
-
-  const undeposited = totalCashSales - totalApproved - totalExpenses;
 
   const statusBadge = (status: string) => {
     if (status === "approved")
@@ -303,29 +276,29 @@ export default function CashDeposits() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Wallet className="w-7 h-7 text-primary" /> Setoran Kas
+            <ShoppingBag className="w-7 h-7 text-primary" /> Belanja Toko
           </h1>
           <p className="text-sm text-muted-foreground">
-            Kelola setoran uang tunai dari penjualan harian
+            Pengajuan belanja kebutuhan toko menggunakan kas
           </p>
         </div>
 
         <Dialog open={submitOpen} onOpenChange={setSubmitOpen}>
           <DialogTrigger asChild>
             <Button>
-              <Plus className="w-4 h-4 mr-2" /> Ajukan Setoran
+              <Plus className="w-4 h-4 mr-2" /> Ajukan Belanja
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Ajukan Setoran Uang</DialogTitle>
+              <DialogTitle>Ajukan Belanja Toko</DialogTitle>
               <DialogDescription>
-                Masukkan nominal uang tunai yang akan disetorkan kepada pemilik.
+                Masukkan nominal dan keterangan belanja kebutuhan toko.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label>Nominal Setoran (Rp)</Label>
+                <Label>Nominal Belanja (Rp)</Label>
                 <Input
                   inputMode="numeric"
                   placeholder="0"
@@ -334,18 +307,20 @@ export default function CashDeposits() {
                 />
               </div>
               <div>
-                <Label>Catatan (opsional)</Label>
+                <Label>Keterangan Belanja *</Label>
+                <Input
+                  placeholder="Contoh: Beli plastik kemasan, tinta printer..."
+                  value={descInput}
+                  onChange={(e) => setDescInput(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Catatan Tambahan (opsional)</Label>
                 <Textarea
-                  placeholder="Catatan setoran..."
+                  placeholder="Catatan tambahan..."
                   value={notesInput}
                   onChange={(e) => setNotesInput(e.target.value)}
                 />
-              </div>
-              <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md">
-                Saldo kas belum disetor saat ini:{" "}
-                <span className="font-semibold text-foreground">
-                  {formatRupiah(undeposited)}
-                </span>
               </div>
             </div>
             <DialogFooter>
@@ -361,74 +336,54 @@ export default function CashDeposits() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Banknote className="w-4 h-4" /> Penjualan Tunai Hari Ini
+              <TrendingDown className="w-4 h-4" /> Belanja Hari Ini (Disetujui)
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatRupiah(todayCashSales)}</div>
+            <div className="text-2xl font-bold">{formatRupiah(todayApproved)}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Banknote className="w-4 h-4" /> Total Penjualan Tunai
+              <CheckCircle2 className="w-4 h-4" /> Total Belanja Disetujui
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatRupiah(totalCashSales)}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4" /> Sudah Disetor (Disetujui)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-destructive">
               {formatRupiah(totalApproved)}
             </div>
-            {totalPending > 0 && (
-              <p className="text-xs text-muted-foreground mt-1">
-                + {formatRupiah(totalPending)} menunggu persetujuan
-              </p>
-            )}
           </CardContent>
         </Card>
-        <Card className="border-primary/30">
+        <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <TrendingDown className="w-4 h-4" /> Belum Disetor
+              <Clock className="w-4 h-4" /> Menunggu Persetujuan
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">
-              {formatRupiah(undeposited)}
+            <div className="text-2xl font-bold text-yellow-600">
+              {formatRupiah(totalPending)}
             </div>
-            {totalExpenses > 0 && (
-              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                <ShoppingBag className="w-3 h-3" /> Belanja toko: -{formatRupiah(totalExpenses)}
-              </p>
-            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Deposits table */}
+      {/* Expenses table */}
       <Card>
         <CardHeader>
-          <CardTitle>Riwayat Pengajuan Setoran</CardTitle>
+          <CardTitle>Riwayat Pengajuan Belanja</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
             <p className="text-center text-muted-foreground py-8">Memuat...</p>
-          ) : deposits.length === 0 ? (
+          ) : expenses.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">
-              Belum ada pengajuan setoran
+              Belum ada pengajuan belanja
             </p>
           ) : (
             <div className="overflow-x-auto">
@@ -437,15 +392,15 @@ export default function CashDeposits() {
                   <TableRow>
                     <TableHead>Tanggal</TableHead>
                     <TableHead>Diajukan Oleh</TableHead>
+                    <TableHead>Keterangan</TableHead>
                     <TableHead>Nominal</TableHead>
-                    <TableHead>Catatan</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Disetujui Oleh</TableHead>
                     <TableHead className="text-right">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {deposits.map((d) => (
+                  {expenses.map((d) => (
                     <TableRow key={d.id}>
                       <TableCell className="whitespace-nowrap">
                         {new Date(d.submitted_at).toLocaleString("id-ID", {
@@ -454,11 +409,16 @@ export default function CashDeposits() {
                         })}
                       </TableCell>
                       <TableCell>{d.submitter_name}</TableCell>
-                      <TableCell className="font-semibold">
-                        {formatRupiah(Number(d.amount))}
+                      <TableCell className="max-w-[260px]">
+                        <p className="font-medium text-foreground">{d.description}</p>
+                        {d.notes && (
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {d.notes}
+                          </p>
+                        )}
                       </TableCell>
-                      <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">
-                        {d.notes || "-"}
+                      <TableCell className="font-semibold text-destructive">
+                        - {formatRupiah(Number(d.amount))}
                       </TableCell>
                       <TableCell>
                         {statusBadge(d.status)}
@@ -517,26 +477,22 @@ export default function CashDeposits() {
       <Dialog open={rejectOpen} onOpenChange={setRejectOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Tolak Pengajuan Setoran</DialogTitle>
+            <DialogTitle>Tolak Pengajuan Belanja</DialogTitle>
             <DialogDescription>
-              Berikan alasan penolakan untuk setoran sebesar{" "}
-              {rejectTarget && formatRupiah(Number(rejectTarget.amount))}.
+              Berikan alasan penolakan (opsional).
             </DialogDescription>
           </DialogHeader>
-          <div>
-            <Label>Alasan Penolakan</Label>
-            <Textarea
-              placeholder="Misal: nominal tidak sesuai..."
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
-            />
-          </div>
+          <Textarea
+            placeholder="Alasan penolakan..."
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+          />
           <DialogFooter>
             <Button variant="outline" onClick={() => setRejectOpen(false)}>
               Batal
             </Button>
             <Button variant="destructive" onClick={handleReject}>
-              Tolak Setoran
+              Tolak Pengajuan
             </Button>
           </DialogFooter>
         </DialogContent>
