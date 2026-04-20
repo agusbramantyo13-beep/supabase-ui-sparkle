@@ -26,6 +26,7 @@ import StockAdjustmentReport from "./pages/StockAdjustmentReport";
 import StockTransfer from "./pages/StockTransfer";
 import PurchaseReport from "./pages/PurchaseReport";
 import StoreSelection from "./pages/StoreSelection";
+import CashDeposits from "./pages/CashDeposits";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -131,6 +132,11 @@ const App = () => (
                                 <Route path="/stock-transfer" element={
                                   <RoleBasedRoute allowedRoles={["owner"]}>
                                     <StockTransfer />
+                                  </RoleBasedRoute>
+                                } />
+                                <Route path="/cash-deposits" element={
+                                  <RoleBasedRoute allowedRoles={["owner", "store_keeper"]}>
+                                    <CashDeposits />
                                   </RoleBasedRoute>
                                 } />
                                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
