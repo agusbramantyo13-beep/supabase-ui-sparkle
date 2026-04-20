@@ -88,6 +88,62 @@ export type Database = {
         }
         Relationships: []
       }
+      cash_deposits: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          deposit_date: string
+          id: string
+          notes: string | null
+          rejection_reason: string | null
+          status: string
+          store_id: string | null
+          submitted_at: string
+          submitted_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          deposit_date?: string
+          id?: string
+          notes?: string | null
+          rejection_reason?: string | null
+          status?: string
+          store_id?: string | null
+          submitted_at?: string
+          submitted_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          deposit_date?: string
+          id?: string
+          notes?: string | null
+          rejection_reason?: string | null
+          status?: string
+          store_id?: string | null
+          submitted_at?: string
+          submitted_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_deposits_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string | null
