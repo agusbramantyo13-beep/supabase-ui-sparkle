@@ -331,6 +331,22 @@ export default function Products() {
         product={selectedProduct}
       />
 
+      <AddVariantDialog
+        open={addVariantOpen}
+        onOpenChange={(open) => {
+          setAddVariantOpen(open)
+          if (!open) setProductForVariant(null)
+        }}
+        onSuccess={() => {
+          fetchProducts()
+          if (productForVariant) {
+            setExpandedProducts(prev => new Set(prev).add(productForVariant.id))
+          }
+        }}
+        productId={productForVariant?.id ?? null}
+        productName={productForVariant?.name ?? ""}
+      />
+
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
