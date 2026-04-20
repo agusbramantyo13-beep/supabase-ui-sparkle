@@ -409,6 +409,11 @@ export default function CashDeposits() {
             <div className="text-2xl font-bold text-primary">
               {formatRupiah(undeposited)}
             </div>
+            {totalExpenses > 0 && (
+              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                <ShoppingBag className="w-3 h-3" /> Belanja toko: -{formatRupiah(totalExpenses)}
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
