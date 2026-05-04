@@ -35,6 +35,7 @@ export default function Products() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState<string>("all")
   const [productFormOpen, setProductFormOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<any>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
