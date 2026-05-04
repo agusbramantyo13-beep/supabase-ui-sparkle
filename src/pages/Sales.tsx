@@ -583,10 +583,13 @@ export default function Sales() {
     groupMap.get(key)!.push(p);
   });
   groupMap.forEach((variants, product_name) => {
+    const sortedVariants = [...variants].sort((a, b) =>
+      a.name.localeCompare(b.name, 'id-ID', { numeric: true, sensitivity: 'base' })
+    );
     groupedProducts.push({
       product_name,
-      category_name: variants[0]?.category_name,
-      variants
+      category_name: sortedVariants[0]?.category_name,
+      variants: sortedVariants
     });
   });
 
