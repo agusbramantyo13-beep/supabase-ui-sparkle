@@ -561,10 +561,18 @@ export default function Sales() {
     }
   };
 
-  const filteredProducts = products.filter(product =>
-    product.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const availableCategories = Array.from(
+    new Set(products.map(p => p.category_name).filter(Boolean) as string[])
+  ).sort();
+
+  const filteredProducts = products.filter(product => {
+    const matchesSearch =
+      product.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory =
+      selectedCategory === "all" || product.category_name === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
 
   // Group by product name
   const groupedProducts: GroupedProduct[] = [];
