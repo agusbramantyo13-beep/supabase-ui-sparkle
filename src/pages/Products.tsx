@@ -121,6 +121,12 @@ export default function Products() {
     return product.variants?.reduce((sum, v) => sum + (v.inventory?.[0]?.quantity || 0), 0) || 0
   }
 
+  const sortVariants = (variants: Variant[]): Variant[] => {
+    return [...variants].sort((a, b) =>
+      a.name.localeCompare(b.name, 'id-ID', { numeric: true, sensitivity: 'base' })
+    )
+  }
+
   const handleEditVariant = async (product: Product, variant: Variant) => {
     setSelectedProduct({
       id: product.id,
