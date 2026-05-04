@@ -281,7 +281,7 @@ export default function Products() {
                 {/* Expanded Variants */}
                 {isExpanded && product.variants && product.variants.length > 0 && (
                   <div className="border-t border-border/50">
-                    {product.variants.map((variant) => {
+                    {sortVariants(product.variants).map((variant) => {
                       const stock = variant.inventory?.[0]?.quantity || 0
                       return (
                         <div
