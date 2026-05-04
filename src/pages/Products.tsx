@@ -5,6 +5,7 @@ import { useStore } from "@/contexts/StoreContext"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { ProductForm } from "@/components/ProductForm"
 import { AddVariantDialog } from "@/components/AddVariantDialog"
@@ -34,6 +35,7 @@ export default function Products() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState<string>("all")
   const [productFormOpen, setProductFormOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<any>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -135,9 +137,15 @@ export default function Products() {
     setProductFormOpen(true)
   }
 
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const availableCategories = Array.from(
+    new Set(products.map(p => p.categories?.name).filter(Boolean) as string[])
+  ).sort()
+
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesCategory = selectedCategory === "all" || product.categories?.name === selectedCategory
+    return matchesSearch && matchesCategory
+  })
 
   if (loading) {
     return (
@@ -184,6 +192,17 @@ export default function Products() {
                 className="pl-10"
               />
             </div>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="md:w-56">
+                <SelectValue placeholder="Semua kategori" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua kategori</SelectItem>
+                {availableCategories.map((cat) => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>

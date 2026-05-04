@@ -87,6 +87,7 @@ export default function Sales() {
   const [redemptionRules, setRedemptionRules] = useState<PointRedemptionRule[]>([]);
   const [selectedRedemptionId, setSelectedRedemptionId] = useState<string>("");
   const [expandedSalesProducts, setExpandedSalesProducts] = useState<Set<string>>(new Set());
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const { toast } = useToast();
   const { user } = useAuth();
   const { currentStoreId } = useStore();
@@ -560,10 +561,18 @@ export default function Sales() {
     }
   };
 
-  const filteredProducts = products.filter(product =>
-    product.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const availableCategories = Array.from(
+    new Set(products.map(p => p.category_name).filter(Boolean) as string[])
+  ).sort();
+
+  const filteredProducts = products.filter(product => {
+    const matchesSearch =
+      product.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory =
+      selectedCategory === "all" || product.category_name === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
 
   // Group by product name
   const groupedProducts: GroupedProduct[] = [];
@@ -595,14 +604,27 @@ export default function Sales() {
     <div className="h-full grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Products Section */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <h2 className="text-2xl font-bold text-foreground">Produk</h2>
-          <Input
-            placeholder="Cari produk..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-xs"
-          />
+          <div className="flex flex-col sm:flex-row gap-2 sm:max-w-md w-full">
+            <Input
+              placeholder="Cari produk..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="flex-1"
+            />
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="sm:w-48">
+                <SelectValue placeholder="Semua kategori" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua kategori</SelectItem>
+                {availableCategories.map((cat) => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto">
