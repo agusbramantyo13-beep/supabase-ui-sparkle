@@ -137,9 +137,15 @@ export default function Products() {
     setProductFormOpen(true)
   }
 
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const availableCategories = Array.from(
+    new Set(products.map(p => p.categories?.name).filter(Boolean) as string[])
+  ).sort()
+
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesCategory = selectedCategory === "all" || product.categories?.name === selectedCategory
+    return matchesSearch && matchesCategory
+  })
 
   if (loading) {
     return (
