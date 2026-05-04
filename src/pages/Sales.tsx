@@ -604,14 +604,27 @@ export default function Sales() {
     <div className="h-full grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Products Section */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <h2 className="text-2xl font-bold text-foreground">Produk</h2>
-          <Input
-            placeholder="Cari produk..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-xs"
-          />
+          <div className="flex flex-col sm:flex-row gap-2 sm:max-w-md w-full">
+            <Input
+              placeholder="Cari produk..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="flex-1"
+            />
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="sm:w-48">
+                <SelectValue placeholder="Semua kategori" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua kategori</SelectItem>
+                {availableCategories.map((cat) => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto">
