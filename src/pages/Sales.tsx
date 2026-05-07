@@ -711,8 +711,8 @@ export default function Sales() {
           )}
         </div>
 
-        <Card className="bg-gradient-card h-[calc(100vh-200px)] flex flex-col">
-          <CardContent className="p-6 flex-1 flex flex-col">
+        <Card className="bg-gradient-card lg:h-[calc(100vh-200px)] flex flex-col">
+          <CardContent className="p-4 sm:p-6 flex-1 flex flex-col">
             {cart.length === 0 ? (
               <div className="flex-1 flex items-center justify-center text-center">
                 <div>
