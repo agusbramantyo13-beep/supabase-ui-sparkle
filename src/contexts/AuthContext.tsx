@@ -29,24 +29,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+      (event, newSession) => {
+        // Always keep session fresh (token refresh), but only update user
+        // reference when the actual user id changes. This prevents downstream
+        // effects (StoreContext, data fetches) from re-running when the user
+        // simply switches Chrome tabs and Supabase auto-refreshes the token.
+        setSession(newSession);
+        setUser((prev) => {
+          const next = newSession?.user ?? null;
+          if (prev?.id === next?.id) return prev;
+          return next;
+        });
         setLoading(false);
-        
-        // Fetch user name after state update
-        if (session?.user) {
-          setTimeout(() => {
-            supabase
-              .from('profiles')
-              .select('name')
-              .eq('id', session.user.id)
-              .maybeSingle()
-              .then(({ data }) => {
-                setUserName(data?.name || null);
-              });
-          }, 0);
-        } else {
+
+        // Only fetch profile name when user actually changes (sign in/out)
+        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+          if (newSession?.user) {
+            setTimeout(() => {
+              supabase
+                .from('profiles')
+                .select('name')
+                .eq('id', newSession.user.id)
+                .maybeSingle()
+                .then(({ data }) => {
+                  setUserName(data?.name || null);
+                });
+            }, 0);
+          }
+        } else if (event === 'SIGNED_OUT') {
           setUserName(null);
         }
       }
