@@ -30,6 +30,72 @@ interface StockItem {
   total_cost: number;
 }
 
+function ProductCombobox({
+  variants,
+  value,
+  onChange,
+}: {
+  variants: ProductVariant[];
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = variants.find((v) => v.id === value);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="h-9 w-full justify-between font-normal"
+        >
+          <span className="truncate">
+            {selected ? `${selected.product_name} - ${selected.name}` : "Pilih atau ketik produk..."}
+          </span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <Command
+          filter={(value, search) => {
+            return value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
+          }}
+        >
+          <CommandInput placeholder="Ketik nama produk..." />
+          <CommandList>
+            <CommandEmpty>Produk tidak ditemukan.</CommandEmpty>
+            <CommandGroup>
+              {variants.map((variant) => {
+                const label = `${variant.product_name} - ${variant.name}`;
+                return (
+                  <CommandItem
+                    key={variant.id}
+                    value={label}
+                    onSelect={() => {
+                      onChange(variant.id);
+                      setOpen(false);
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        value === variant.id ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    {label}
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 interface StockPurchaseFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
