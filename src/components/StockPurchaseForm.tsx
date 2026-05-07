@@ -2,14 +2,16 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useStore } from "@/contexts/StoreContext";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Check, ChevronsUpDown } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 interface ProductVariant {
   id: string;
@@ -26,6 +28,72 @@ interface StockItem {
   cost_price: number;
   selling_price: number;
   total_cost: number;
+}
+
+function ProductCombobox({
+  variants,
+  value,
+  onChange,
+}: {
+  variants: ProductVariant[];
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = variants.find((v) => v.id === value);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="h-9 w-full justify-between font-normal"
+        >
+          <span className="truncate">
+            {selected ? `${selected.product_name} - ${selected.name}` : "Pilih atau ketik produk..."}
+          </span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <Command
+          filter={(value, search) => {
+            return value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
+          }}
+        >
+          <CommandInput placeholder="Ketik nama produk..." />
+          <CommandList>
+            <CommandEmpty>Produk tidak ditemukan.</CommandEmpty>
+            <CommandGroup>
+              {variants.map((variant) => {
+                const label = `${variant.product_name} - ${variant.name}`;
+                return (
+                  <CommandItem
+                    key={variant.id}
+                    value={label}
+                    onSelect={() => {
+                      onChange(variant.id);
+                      setOpen(false);
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        value === variant.id ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    {label}
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 interface StockPurchaseFormProps {
@@ -338,21 +406,11 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
                     <div className="grid grid-cols-12 gap-3">
                       <div className="col-span-4">
                         <Label className="text-xs">Produk</Label>
-                        <Select 
-                          value={item.variant_id} 
-                          onValueChange={(value) => updateItem(index, 'variant_id', value)}
-                        >
-                          <SelectTrigger className="h-9">
-                            <SelectValue placeholder="Pilih produk" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {variants.map((variant) => (
-                              <SelectItem key={variant.id} value={variant.id}>
-                                {variant.product_name} - {variant.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <ProductCombobox
+                          variants={variants}
+                          value={item.variant_id}
+                          onChange={(value) => updateItem(index, 'variant_id', value)}
+                        />
                       </div>
 
                       <div className="col-span-2">
