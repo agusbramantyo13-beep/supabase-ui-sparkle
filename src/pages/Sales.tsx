@@ -630,7 +630,7 @@ export default function Sales() {
           </div>
         </div>
 
-        <div className="space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto">
+        <div className="space-y-2 lg:max-h-[calc(100vh-200px)] lg:overflow-y-auto">
           {groupedProducts.map((group) => {
             const isExpanded = expandedSalesProducts.has(group.product_name);
             const hasMultipleVariants = group.variants.length > 1;
