@@ -340,21 +340,11 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
                     <div className="grid grid-cols-12 gap-3">
                       <div className="col-span-4">
                         <Label className="text-xs">Produk</Label>
-                        <Select 
-                          value={item.variant_id} 
-                          onValueChange={(value) => updateItem(index, 'variant_id', value)}
-                        >
-                          <SelectTrigger className="h-9">
-                            <SelectValue placeholder="Pilih produk" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {variants.map((variant) => (
-                              <SelectItem key={variant.id} value={variant.id}>
-                                {variant.product_name} - {variant.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <ProductCombobox
+                          variants={variants}
+                          value={item.variant_id}
+                          onChange={(value) => updateItem(index, 'variant_id', value)}
+                        />
                       </div>
 
                       <div className="col-span-2">
