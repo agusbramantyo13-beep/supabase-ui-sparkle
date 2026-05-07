@@ -723,44 +723,48 @@ export default function Sales() {
               </div>
             ) : (
               <>
-                <div className="flex-1 space-y-3 overflow-y-auto">
+                <div className="flex-1 space-y-3 overflow-y-auto max-h-[50vh] lg:max-h-none">
                   {cart.map((item) => (
-                    <div key={item.product.id} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-foreground">{item.product.product_name} - {item.product.name}</h4>
-                        <p className="text-sm text-muted-foreground">Rp {item.product.price.toLocaleString('id-ID')} /pcs</p>
+                    <div key={item.product.id} className="p-3 bg-muted/20 rounded-lg space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-foreground text-sm sm:text-base break-words">{item.product.product_name} - {item.product.name}</h4>
+                          <p className="text-xs sm:text-sm text-muted-foreground">Rp {item.product.price.toLocaleString('id-ID')} /pcs</p>
+                        </div>
+                        <p className="font-semibold text-foreground text-sm sm:text-base whitespace-nowrap">Rp {item.subtotal.toLocaleString('id-ID')}</p>
                       </div>
-                      
-                      <div className="flex items-center gap-2">
+
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1">
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            className="h-8 w-8"
+                            onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                          >
+                            <Minus className="w-4 h-4" />
+                          </Button>
+
+                          <span className="font-medium w-8 text-center">{item.quantity}</span>
+
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            className="h-8 w-8"
+                            onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                          >
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                        </div>
+
                         <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                        >
-                          <Minus className="w-4 h-4" />
-                        </Button>
-                        
-                        <span className="font-medium w-8 text-center">{item.quantity}</span>
-                        
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                        >
-                          <Plus className="w-4 h-4" />
-                        </Button>
-                        
-                        <Button
-                          size="sm"
+                          size="icon"
                           variant="destructive"
+                          className="h-8 w-8"
                           onClick={() => removeFromCart(item.product.id)}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
-                      </div>
-                      
-                      <div className="text-right ml-4">
-                        <p className="font-semibold text-foreground">Rp {item.subtotal.toLocaleString('id-ID')}</p>
                       </div>
                     </div>
                   ))}
