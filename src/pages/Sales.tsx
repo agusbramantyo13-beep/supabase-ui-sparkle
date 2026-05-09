@@ -89,6 +89,7 @@ export default function Sales() {
   const [selectedRedemptionId, setSelectedRedemptionId] = useState<string>("");
   const [expandedSalesProducts, setExpandedSalesProducts] = useState<Set<string>>(new Set());
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [mobileCartOpen, setMobileCartOpen] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const { currentStoreId } = useStore();
