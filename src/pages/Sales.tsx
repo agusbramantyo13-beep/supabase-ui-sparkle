@@ -605,9 +605,12 @@ export default function Sales() {
     });
   };
 
+  const totalCartItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+
   return (
-    <div className="h-full grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="h-full grid grid-cols-1 lg:grid-cols-2 gap-6 pb-24 lg:pb-0">
       {/* Products Section */}
+
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <h2 className="text-2xl font-bold text-foreground">Produk</h2>
