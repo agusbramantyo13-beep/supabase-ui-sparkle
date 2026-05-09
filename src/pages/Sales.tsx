@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Plus, Minus, Trash2, CreditCard, DollarSign, Receipt, Tag, UserCheck, Gift, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Minus, Trash2, CreditCard, DollarSign, Receipt, Tag, UserCheck, Gift, ChevronDown, ChevronRight, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -88,6 +89,7 @@ export default function Sales() {
   const [selectedRedemptionId, setSelectedRedemptionId] = useState<string>("");
   const [expandedSalesProducts, setExpandedSalesProducts] = useState<Set<string>>(new Set());
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [mobileCartOpen, setMobileCartOpen] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const { currentStoreId } = useStore();
@@ -603,9 +605,12 @@ export default function Sales() {
     });
   };
 
+  const totalCartItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+
   return (
-    <div className="h-full grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="h-full grid grid-cols-1 lg:grid-cols-2 gap-6 pb-24 lg:pb-0">
       {/* Products Section */}
+
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <h2 className="text-2xl font-bold text-foreground">Produk</h2>
@@ -696,11 +701,12 @@ export default function Sales() {
               </Card>
             );
           })}
-        </div>
       </div>
 
-      {/* Cart Section */}
-      <div className="space-y-4">
+      </div>
+
+      {/* Cart Section - Desktop only */}
+      <div className="hidden lg:block space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold text-foreground">Keranjang</h2>
           {cart.length > 0 && (
@@ -947,6 +953,240 @@ export default function Sales() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Mobile floating cart bar */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 flex border-t border-border shadow-elegant">
+        <button
+          type="button"
+          onClick={() => setMobileCartOpen(true)}
+          className="flex-1 flex items-center justify-center gap-2 bg-gradient-primary text-primary-foreground font-semibold py-4 text-lg active:opacity-90 transition-opacity"
+        >
+          <span>Rp {getTotalAmount().toLocaleString('id-ID')}</span>
+          {totalCartItems > 0 && (
+            <span className="text-xs font-medium opacity-90">({totalCartItems} item)</span>
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileCartOpen(true)}
+          className="relative bg-primary text-primary-foreground px-6 flex items-center justify-center border-l border-primary-foreground/20 active:opacity-90 transition-opacity"
+          aria-label="Buka keranjang"
+        >
+          <ShoppingCart className="w-6 h-6" />
+          {totalCartItems > 0 && (
+            <span className="absolute top-1.5 right-2 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+              {totalCartItems}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* Mobile cart sheet */}
+      <Sheet open={mobileCartOpen} onOpenChange={setMobileCartOpen}>
+        <SheetContent side="bottom" className="h-[90vh] p-0 flex flex-col bg-background">
+          <SheetHeader className="px-4 pt-4 pb-2 border-b shrink-0">
+            <SheetTitle className="flex items-center justify-between pr-8">
+              <span>Keranjang</span>
+              {cart.length > 0 && (
+                <Button variant="outline" size="sm" onClick={clearCart}>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Hapus Semua
+                </Button>
+              )}
+            </SheetTitle>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto p-4">
+            {cart.length === 0 ? (
+              <div className="py-12 flex items-center justify-center text-center">
+                <div>
+                  <Receipt className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">Keranjang kosong</p>
+                  <p className="text-sm text-muted-foreground">Tambahkan produk untuk memulai penjualan</p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {cart.map((item) => (
+                  <div key={item.product.id} className="p-3 bg-muted/20 rounded-lg space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-foreground text-sm break-words">{item.product.product_name} - {item.product.name}</h4>
+                        <p className="text-xs text-muted-foreground">Rp {item.product.price.toLocaleString('id-ID')} /pcs</p>
+                      </div>
+                      <p className="font-semibold text-foreground text-sm whitespace-nowrap">Rp {item.subtotal.toLocaleString('id-ID')}</p>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1">
+                        <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => updateQuantity(item.product.id, item.quantity - 1)}>
+                          <Minus className="w-4 h-4" />
+                        </Button>
+                        <span className="font-medium w-8 text-center">{item.quantity}</span>
+                        <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => updateQuantity(item.product.id, item.quantity + 1)}>
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <Button size="icon" variant="destructive" className="h-8 w-8" onClick={() => removeFromCart(item.product.id)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+
+                <Separator className="my-2" />
+
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Subtotal:</span>
+                  <span className="text-lg font-semibold text-foreground">Rp {getSubtotal().toLocaleString('id-ID')}</span>
+                </div>
+
+                <div className="space-y-2 p-3 bg-muted/20 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <UserCheck className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-semibold text-foreground">Member</span>
+                  </div>
+                  <Select value={selectedMemberId} onValueChange={setSelectedMemberId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih member (opsional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Bukan member</SelectItem>
+                      {members.map((member) => (
+                        <SelectItem key={member.id} value={member.id}>
+                          {member.name} ({member.member_code}) - {member.points} poin
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedMemberId && selectedMemberId !== "none" && earnedPoints > 0 && (
+                    <div className="flex justify-between items-center pt-2 text-success">
+                      <span className="text-sm">Poin yang didapat:</span>
+                      <span className="font-semibold">+ {earnedPoints} poin</span>
+                    </div>
+                  )}
+                </div>
+
+                {selectedMemberId && selectedMemberId !== "none" && (
+                  <div className="space-y-2 p-3 bg-muted/20 rounded-lg border border-primary/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Gift className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-semibold text-foreground">Redeem Poin</span>
+                    </div>
+                    <Select value={selectedRedemptionId} onValueChange={setSelectedRedemptionId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih promo redeem (opsional)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Tidak redeem poin</SelectItem>
+                        {getAvailableRedemptions().map((rule) => (
+                          <SelectItem key={rule.id} value={rule.id}>
+                            {rule.name} - {rule.points_required} poin = {
+                              rule.reward_type === "discount_percentage"
+                                ? `Diskon ${rule.reward_value}%${rule.max_discount ? ` (max Rp ${rule.max_discount.toLocaleString('id-ID')})` : ''}`
+                                : `Rp ${rule.reward_value.toLocaleString('id-ID')}`
+                            }
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {getRedemptionDiscount() > 0 && (
+                      <div className="flex justify-between items-center pt-2 text-success">
+                        <span className="text-sm">Potongan Redeem:</span>
+                        <span className="font-semibold">- Rp {getRedemptionDiscount().toLocaleString('id-ID')}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="space-y-2 p-3 bg-muted/20 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Tag className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-semibold text-foreground">Diskon</span>
+                  </div>
+                  <Select value={selectedDiscountId} onValueChange={setSelectedDiscountId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih diskon" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Tidak ada diskon</SelectItem>
+                      {discounts.map((discount) => (
+                        <SelectItem key={discount.id} value={discount.id}>
+                          {discount.name} - {discount.discount_type === "percentage"
+                            ? `${discount.value}%`
+                            : `Rp ${discount.value.toLocaleString('id-ID')}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {getDiscountAmount() > 0 && (
+                    <div className="flex justify-between items-center pt-2 text-success">
+                      <span className="text-sm">Potongan:</span>
+                      <span className="font-semibold">- Rp {getDiscountAmount().toLocaleString('id-ID')}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-between items-center pt-2">
+                  <span className="text-lg font-bold text-foreground">Total:</span>
+                  <span className="text-2xl font-bold text-primary">Rp {getTotalAmount().toLocaleString('id-ID')}</span>
+                </div>
+
+                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Metode pembayaran" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold">Rp</span>
+                        Tunai
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="card">
+                      <div className="flex items-center gap-2">
+                        <CreditCard className="w-4 h-4" />
+                        Kartu
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {paymentMethod === 'cash' && (
+                  <>
+                    <div>
+                      <label className="text-sm font-medium text-foreground mb-2 block">Jumlah Dibayar</label>
+                      <Input
+                        type="text"
+                        placeholder="Masukkan jumlah"
+                        value={amountPaid ? Number(amountPaid).toLocaleString('id-ID') : ''}
+                        onChange={(e) => {
+                          const rawValue = e.target.value.replace(/[^0-9]/g, '');
+                          setAmountPaid(rawValue);
+                        }}
+                        className="text-lg"
+                      />
+                    </div>
+                    {amountPaid && Number(amountPaid) >= getTotalAmount() && (
+                      <div className="flex justify-between items-center p-3 bg-success/10 rounded-lg">
+                        <span className="text-sm font-semibold text-success">Kembalian:</span>
+                        <span className="text-xl font-bold text-success">Rp {getChange().toLocaleString('id-ID')}</span>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                <Button
+                  className="w-full bg-gradient-primary hover:bg-primary/90 text-primary-foreground font-semibold py-6 text-lg"
+                  onClick={async () => { const before = cart.length; await processSale(); if (before > 0) setMobileCartOpen(false); }}
+                  disabled={loading}
+                >
+                  {loading ? "Memproses..." : "Selesaikan Penjualan"}
+                </Button>
+              </div>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
     </div>
   );
 }
