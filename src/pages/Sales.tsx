@@ -704,8 +704,8 @@ export default function Sales() {
         </div>
       </div>
 
-      {/* Cart Section */}
-      <div className="space-y-4">
+      {/* Cart Section - Desktop only */}
+      <div className="hidden lg:block space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold text-foreground">Keranjang</h2>
           {cart.length > 0 && (
