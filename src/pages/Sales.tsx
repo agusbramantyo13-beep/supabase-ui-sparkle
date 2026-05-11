@@ -90,6 +90,20 @@ export default function Sales() {
   const [expandedSalesProducts, setExpandedSalesProducts] = useState<Set<string>>(new Set());
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [mobileCartOpen, setMobileCartOpen] = useState(false);
+
+  // Workaround for Radix Dialog leaving stale pointer-events:none on body
+  // after closing other modals (member/redemption dialogs etc.) which makes
+  // the Sheet appear as a blurry overlay with no interactive content on mobile.
+  useEffect(() => {
+    if (mobileCartOpen) {
+      const t = setTimeout(() => {
+        if (document.body.style.pointerEvents === "none") {
+          document.body.style.pointerEvents = "";
+        }
+      }, 50);
+      return () => clearTimeout(t);
+    }
+  }, [mobileCartOpen]);
   const { toast } = useToast();
   const { user } = useAuth();
   const { currentStoreId } = useStore();
