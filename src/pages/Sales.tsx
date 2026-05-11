@@ -90,6 +90,20 @@ export default function Sales() {
   const [expandedSalesProducts, setExpandedSalesProducts] = useState<Set<string>>(new Set());
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [mobileCartOpen, setMobileCartOpen] = useState(false);
+
+  // Workaround for Radix Dialog leaving stale pointer-events:none on body
+  // after closing other modals (member/redemption dialogs etc.) which makes
+  // the Sheet appear as a blurry overlay with no interactive content on mobile.
+  useEffect(() => {
+    if (mobileCartOpen) {
+      const t = setTimeout(() => {
+        if (document.body.style.pointerEvents === "none") {
+          document.body.style.pointerEvents = "";
+        }
+      }, 50);
+      return () => clearTimeout(t);
+    }
+  }, [mobileCartOpen]);
   const { toast } = useToast();
   const { user } = useAuth();
   const { currentStoreId } = useStore();
@@ -983,7 +997,10 @@ export default function Sales() {
 
       {/* Mobile cart sheet */}
       <Sheet open={mobileCartOpen} onOpenChange={setMobileCartOpen}>
-        <SheetContent side="bottom" className="h-[90vh] p-0 flex flex-col bg-background">
+        <SheetContent
+          side="bottom"
+          className="h-[90dvh] max-h-[90dvh] p-0 flex flex-col bg-background z-[60] data-[state=open]:animate-in data-[state=open]:slide-in-from-bottom data-[state=open]:duration-300"
+        >
           <SheetHeader className="px-4 pt-4 pb-2 border-b shrink-0">
             <SheetTitle className="flex items-center justify-between pr-8">
               <span>Keranjang</span>
