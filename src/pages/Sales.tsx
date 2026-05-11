@@ -983,7 +983,10 @@ export default function Sales() {
 
       {/* Mobile cart sheet */}
       <Sheet open={mobileCartOpen} onOpenChange={setMobileCartOpen}>
-        <SheetContent side="bottom" className="h-[90vh] p-0 flex flex-col bg-background">
+        <SheetContent
+          side="bottom"
+          className="h-[90dvh] max-h-[90dvh] p-0 flex flex-col bg-background z-[60] data-[state=open]:animate-in data-[state=open]:slide-in-from-bottom data-[state=open]:duration-300"
+        >
           <SheetHeader className="px-4 pt-4 pb-2 border-b shrink-0">
             <SheetTitle className="flex items-center justify-between pr-8">
               <span>Keranjang</span>
