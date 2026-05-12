@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Plus, Minus, Trash2, CreditCard, DollarSign, Receipt, Tag, UserCheck, Gift, ChevronDown, ChevronRight, ShoppingCart, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -958,7 +957,7 @@ export default function Sales() {
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 flex border-t border-border shadow-elegant">
         <button
           type="button"
-          onClick={() => setMobileCartOpen(true)}
+          onClick={() => setMobileCartOpen((open) => !open)}
           className="flex-1 flex items-center justify-center gap-2 bg-gradient-primary text-primary-foreground font-semibold py-4 text-lg active:opacity-90 transition-opacity"
         >
           <span>Rp {getTotalAmount().toLocaleString('id-ID')}</span>
@@ -968,7 +967,7 @@ export default function Sales() {
         </button>
         <button
           type="button"
-          onClick={() => setMobileCartOpen(true)}
+          onClick={() => setMobileCartOpen((open) => !open)}
           className="relative bg-primary text-primary-foreground px-6 flex items-center justify-center border-l border-primary-foreground/20 active:opacity-90 transition-opacity"
           aria-label="Buka keranjang"
         >
@@ -981,26 +980,38 @@ export default function Sales() {
         </button>
       </div>
 
-      {/* Mobile cart drawer */}
-      <Drawer open={mobileCartOpen} onOpenChange={setMobileCartOpen} shouldScaleBackground={false}>
-        <DrawerContent className="lg:hidden h-[85vh] max-h-[85vh] rounded-t-lg p-0">
-          <DrawerHeader className="shrink-0 border-b border-border px-4 py-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <DrawerTitle className="text-left text-lg text-foreground">Keranjang</DrawerTitle>
-                <p className="text-sm text-muted-foreground">{totalCartItems} item</p>
+      {/* Mobile cart panel - tanpa overlay agar aman di webview */}
+      {mobileCartOpen && (
+        <div className="lg:hidden fixed inset-x-0 bottom-0 z-[80] h-[85vh] max-h-[85vh] rounded-t-lg border border-border bg-background shadow-elegant">
+          <div className="flex h-full flex-col">
+            <div className="shrink-0 border-b border-border px-4 py-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-left text-lg font-semibold text-foreground">Keranjang</h2>
+                  <p className="text-sm text-muted-foreground">{totalCartItems} item</p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {cart.length > 0 && (
+                    <Button variant="outline" size="sm" onClick={clearCart}>
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Hapus Semua
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9"
+                    onClick={() => setMobileCartOpen(false)}
+                    aria-label="Tutup keranjang"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
-
-              {cart.length > 0 && (
-                <Button variant="outline" size="sm" onClick={clearCart}>
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Hapus Semua
-                </Button>
-              )}
             </div>
-          </DrawerHeader>
 
-          <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto p-4">
             {cart.length === 0 ? (
               <div className="py-12 flex items-center justify-center text-center">
                 <div>
@@ -1188,9 +1199,10 @@ export default function Sales() {
                 </Button>
               </div>
             )}
+            </div>
           </div>
-        </DrawerContent>
-      </Drawer>
+        </div>
+      )}
 
     </div>
   );
