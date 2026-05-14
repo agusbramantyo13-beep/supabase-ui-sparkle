@@ -41,6 +41,8 @@ export default function Members() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const isOwner = userRole === 'owner';
   
   const [formData, setFormData] = useState({
     name: "",
