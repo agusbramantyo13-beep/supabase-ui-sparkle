@@ -41,6 +41,8 @@ export default function Members() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const isOwner = userRole === 'owner';
   
   const [formData, setFormData] = useState({
     name: "",
@@ -59,6 +61,19 @@ export default function Members() {
   useEffect(() => {
     fetchMembers();
   }, []);
+
+  useEffect(() => {
+    const fetchRole = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle();
+      setUserRole((data?.role as string) || 'store_keeper');
+    };
+    fetchRole();
+  }, [user]);
 
   const fetchMembers = async () => {
     const { data, error } = await supabase
@@ -275,6 +290,7 @@ export default function Members() {
           <h1 className="text-3xl font-bold text-foreground">Member</h1>
           <p className="text-muted-foreground">Kelola akun dan informasi member</p>
         </div>
+        {isOwner && (
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
           <DialogTrigger asChild>
             <Button className="bg-gradient-primary hover:bg-primary/90" onClick={() => resetForm()}>
@@ -282,6 +298,7 @@ export default function Members() {
               Tambah Member
             </Button>
           </DialogTrigger>
+
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Tambah Member Baru</DialogTitle>
@@ -363,6 +380,7 @@ export default function Members() {
             </div>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <div className="flex items-center gap-4">
@@ -382,6 +400,7 @@ export default function Members() {
             <p className="text-muted-foreground mb-4">
               {searchTerm ? "Tidak ada member yang cocok dengan pencarian" : "Belum ada member yang ditambahkan"}
             </p>
+            {isOwner && (
             <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-gradient-primary hover:bg-primary/90" onClick={() => resetForm()}>
@@ -390,6 +409,7 @@ export default function Members() {
                 </Button>
               </DialogTrigger>
             </Dialog>
+            )}
           </CardContent>
         </Card>
       ) : (
@@ -440,6 +460,7 @@ export default function Members() {
                     <span className="text-foreground font-medium">{member.points} Poin</span>
                   </div>
                   
+                  {isOwner && (
                   <div className="pt-3 flex gap-2">
                     <Button
                       variant="outline"
@@ -460,6 +481,7 @@ export default function Members() {
                       Hapus
                     </Button>
                   </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
