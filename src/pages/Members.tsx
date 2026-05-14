@@ -298,7 +298,7 @@ export default function Members() {
               Tambah Member
             </Button>
           </DialogTrigger>
-<![CDATA[]]>
+
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Tambah Member Baru</DialogTitle>
