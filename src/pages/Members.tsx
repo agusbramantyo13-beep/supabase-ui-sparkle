@@ -380,6 +380,7 @@ export default function Members() {
             </div>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <div className="flex items-center gap-4">
