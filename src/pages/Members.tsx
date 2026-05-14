@@ -460,6 +460,7 @@ export default function Members() {
                     <span className="text-foreground font-medium">{member.points} Poin</span>
                   </div>
                   
+                  {isOwner && (
                   <div className="pt-3 flex gap-2">
                     <Button
                       variant="outline"
@@ -480,6 +481,7 @@ export default function Members() {
                       Hapus
                     </Button>
                   </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
