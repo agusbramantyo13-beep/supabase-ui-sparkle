@@ -182,6 +182,8 @@ export type Database = {
           discount_type: Database["public"]["Enums"]["discount_type"]
           ends_at: string | null
           id: string
+          min_purchase: number
+          min_quantity: number
           name: string
           starts_at: string | null
           store_id: string | null
@@ -196,6 +198,8 @@ export type Database = {
           discount_type: Database["public"]["Enums"]["discount_type"]
           ends_at?: string | null
           id?: string
+          min_purchase?: number
+          min_quantity?: number
           name: string
           starts_at?: string | null
           store_id?: string | null
@@ -210,6 +214,8 @@ export type Database = {
           discount_type?: Database["public"]["Enums"]["discount_type"]
           ends_at?: string | null
           id?: string
+          min_purchase?: number
+          min_quantity?: number
           name?: string
           starts_at?: string | null
           store_id?: string | null
