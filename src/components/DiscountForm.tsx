@@ -36,6 +36,8 @@ const formSchema = z.object({
     required_error: "Penerapan diskon harus dipilih",
   }),
   target_ids: z.array(z.string()).default([]),
+  min_quantity: z.string().optional(),
+  min_purchase: z.string().optional(),
   starts_at: z.string().optional(),
   ends_at: z.string().optional(),
   active: z.boolean().default(true),
@@ -77,6 +79,8 @@ export function DiscountForm({ discount, onSuccess, onCancel }: DiscountFormProp
       value: discount?.value?.toString() || "",
       applies_to: discount?.applies_to || "global",
       target_ids: initialTargetIds,
+      min_quantity: discount?.min_quantity ? String(discount.min_quantity) : "",
+      min_purchase: discount?.min_purchase ? String(discount.min_purchase) : "",
       starts_at: discount?.starts_at
         ? new Date(discount.starts_at).toISOString().slice(0, 16)
         : "",
@@ -136,6 +140,8 @@ export function DiscountForm({ discount, onSuccess, onCancel }: DiscountFormProp
         applies_to: values.applies_to,
         target_id:
           values.applies_to === "global" ? null : values.target_ids.join(","),
+        min_quantity: values.min_quantity ? parseInt(values.min_quantity, 10) || 0 : 0,
+        min_purchase: values.min_purchase ? parseFloat(values.min_purchase) || 0 : 0,
         starts_at: values.starts_at ? new Date(values.starts_at).toISOString() : null,
         ends_at: values.ends_at ? new Date(values.ends_at).toISOString() : null,
         active: values.active,
@@ -321,6 +327,54 @@ export function DiscountForm({ discount, onSuccess, onCancel }: DiscountFormProp
               </FormItem>
             )}
           />
+
+          <FormField
+            control={form.control}
+            name="min_quantity"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Minimal Jumlah Beli (Opsional)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="1"
+                    placeholder="Misal: 2 (beli 2 dapat diskon)"
+                    {...field}
+                  />
+                </FormControl>
+                <p className="text-xs text-muted-foreground">
+                  Kosongkan atau isi 0 jika tidak ada syarat jumlah
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="min_purchase"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Minimal Belanja (Rp, Opsional)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="1000"
+                    placeholder="Misal: 100000"
+                    {...field}
+                  />
+                </FormControl>
+                <p className="text-xs text-muted-foreground">
+                  Kosongkan atau isi 0 jika tidak ada syarat nominal
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+
 
           <FormField
             control={form.control}
