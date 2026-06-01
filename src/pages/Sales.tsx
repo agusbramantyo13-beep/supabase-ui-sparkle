@@ -128,9 +128,12 @@ export default function Sales() {
         id,
         name,
         price,
+        product_id,
         products!inner(
+          id,
           name,
-          categories(name)
+          category_id,
+          categories(id, name)
         )
       `)
       .eq('store_id', currentStoreId);
@@ -158,8 +161,10 @@ export default function Sales() {
       id: variant.id.toString(),
       name: variant.name,
       product_name: variant.products.name,
+      product_id: variant.products.id?.toString(),
       price: Number(variant.price) || 0,
       category_name: variant.products.categories?.name,
+      category_id: variant.products.categories?.id?.toString() ?? variant.products.category_id?.toString(),
       available_stock: inventoryMap.get(variant.id) || 0
     })) || [];
 
