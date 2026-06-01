@@ -16,6 +16,8 @@ interface ProductVariant {
   name: string;
   price: number;
   category_name?: string;
+  category_id?: string;
+  product_id?: string;
   available_stock?: number;
   product_name: string;
 }
