@@ -42,6 +42,8 @@ interface Discount {
   applies_to: string;
   target_id: string | null;
   active: boolean;
+  min_quantity?: number;
+  min_purchase?: number;
 }
 
 interface Member {
