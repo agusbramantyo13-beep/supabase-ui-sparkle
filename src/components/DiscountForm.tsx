@@ -140,6 +140,8 @@ export function DiscountForm({ discount, onSuccess, onCancel }: DiscountFormProp
         applies_to: values.applies_to,
         target_id:
           values.applies_to === "global" ? null : values.target_ids.join(","),
+        min_quantity: values.min_quantity ? parseInt(values.min_quantity, 10) || 0 : 0,
+        min_purchase: values.min_purchase ? parseFloat(values.min_purchase) || 0 : 0,
         starts_at: values.starts_at ? new Date(values.starts_at).toISOString() : null,
         ends_at: values.ends_at ? new Date(values.ends_at).toISOString() : null,
         active: values.active,
