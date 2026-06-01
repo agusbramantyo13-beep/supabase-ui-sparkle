@@ -16,6 +16,8 @@ interface ProductVariant {
   name: string;
   price: number;
   category_name?: string;
+  category_id?: string;
+  product_id?: string;
   available_stock?: number;
   product_name: string;
 }
@@ -126,9 +128,12 @@ export default function Sales() {
         id,
         name,
         price,
+        product_id,
         products!inner(
+          id,
           name,
-          categories(name)
+          category_id,
+          categories(id, name)
         )
       `)
       .eq('store_id', currentStoreId);
@@ -156,8 +161,10 @@ export default function Sales() {
       id: variant.id.toString(),
       name: variant.name,
       product_name: variant.products.name,
+      product_id: variant.products.id?.toString(),
       price: Number(variant.price) || 0,
       category_name: variant.products.categories?.name,
+      category_id: variant.products.categories?.id?.toString() ?? variant.products.category_id?.toString(),
       available_stock: inventoryMap.get(variant.id) || 0
     })) || [];
 
@@ -366,18 +373,35 @@ export default function Sales() {
 
   const getDiscountAmount = () => {
     const subtotal = getSubtotal();
-    
-    if (selectedDiscountId) {
-      const discount = discounts.find(d => d.id === selectedDiscountId);
-      if (!discount) return 0;
 
-      if (discount.discount_type === "percentage") {
-        return (subtotal * discount.value) / 100;
-      }
-      return discount.value;
+    if (!selectedDiscountId) return 0;
+    const discount = discounts.find(d => d.id === selectedDiscountId);
+    if (!discount) return 0;
+
+    // Determine the base subtotal the discount applies to
+    let baseAmount = subtotal;
+    if (discount.applies_to === 'product' || discount.applies_to === 'category') {
+      const targetIds = (discount.target_id || '')
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+      if (targetIds.length === 0) return 0;
+
+      baseAmount = cart.reduce((sum, item) => {
+        const matches = discount.applies_to === 'product'
+          ? targetIds.includes(item.product.product_id || '') || targetIds.includes(item.product.id)
+          : targetIds.includes(item.product.category_id || '');
+        return matches ? sum + item.subtotal : sum;
+      }, 0);
     }
 
-    return 0;
+    if (baseAmount <= 0) return 0;
+
+    if (discount.discount_type === "percentage") {
+      return (baseAmount * discount.value) / 100;
+    }
+    // Fixed nominal: cap at baseAmount so we don't over-discount
+    return Math.min(discount.value, baseAmount);
   };
 
   const getTotalAmount = () => {
