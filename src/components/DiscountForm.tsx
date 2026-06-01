@@ -36,6 +36,8 @@ const formSchema = z.object({
     required_error: "Penerapan diskon harus dipilih",
   }),
   target_ids: z.array(z.string()).default([]),
+  min_quantity: z.string().optional(),
+  min_purchase: z.string().optional(),
   starts_at: z.string().optional(),
   ends_at: z.string().optional(),
   active: z.boolean().default(true),
