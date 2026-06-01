@@ -380,8 +380,10 @@ export default function Sales() {
     const discount = discounts.find(d => d.id === selectedDiscountId);
     if (!discount) return 0;
 
-    // Determine the base subtotal the discount applies to
+    // Determine the base subtotal and matching qty
     let baseAmount = subtotal;
+    let matchingQty = cart.reduce((s, i) => s + i.quantity, 0);
+
     if (discount.applies_to === 'product' || discount.applies_to === 'category') {
       const targetIds = (discount.target_id || '')
         .split(',')
@@ -389,20 +391,26 @@ export default function Sales() {
         .filter(Boolean);
       if (targetIds.length === 0) return 0;
 
-      baseAmount = cart.reduce((sum, item) => {
-        const matches = discount.applies_to === 'product'
+      const matching = cart.filter(item =>
+        discount.applies_to === 'product'
           ? targetIds.includes(item.product.product_id || '') || targetIds.includes(item.product.id)
-          : targetIds.includes(item.product.category_id || '');
-        return matches ? sum + item.subtotal : sum;
-      }, 0);
+          : targetIds.includes(item.product.category_id || '')
+      );
+      baseAmount = matching.reduce((sum, item) => sum + item.subtotal, 0);
+      matchingQty = matching.reduce((sum, item) => sum + item.quantity, 0);
     }
+
+    // Enforce min quantity & min purchase conditions
+    const minQty = Number(discount.min_quantity) || 0;
+    const minPurchase = Number(discount.min_purchase) || 0;
+    if (minQty > 0 && matchingQty < minQty) return 0;
+    if (minPurchase > 0 && baseAmount < minPurchase) return 0;
 
     if (baseAmount <= 0) return 0;
 
     if (discount.discount_type === "percentage") {
       return (baseAmount * discount.value) / 100;
     }
-    // Fixed nominal: cap at baseAmount so we don't over-discount
     return Math.min(discount.value, baseAmount);
   };
 
