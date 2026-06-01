@@ -79,6 +79,8 @@ export function DiscountForm({ discount, onSuccess, onCancel }: DiscountFormProp
       value: discount?.value?.toString() || "",
       applies_to: discount?.applies_to || "global",
       target_ids: initialTargetIds,
+      min_quantity: discount?.min_quantity ? String(discount.min_quantity) : "",
+      min_purchase: discount?.min_purchase ? String(discount.min_purchase) : "",
       starts_at: discount?.starts_at
         ? new Date(discount.starts_at).toISOString().slice(0, 16)
         : "",
