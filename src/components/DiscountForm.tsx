@@ -330,6 +330,54 @@ export function DiscountForm({ discount, onSuccess, onCancel }: DiscountFormProp
 
           <FormField
             control={form.control}
+            name="min_quantity"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Minimal Jumlah Beli (Opsional)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="1"
+                    placeholder="Misal: 2 (beli 2 dapat diskon)"
+                    {...field}
+                  />
+                </FormControl>
+                <p className="text-xs text-muted-foreground">
+                  Kosongkan atau isi 0 jika tidak ada syarat jumlah
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="min_purchase"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Minimal Belanja (Rp, Opsional)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="1000"
+                    placeholder="Misal: 100000"
+                    {...field}
+                  />
+                </FormControl>
+                <p className="text-xs text-muted-foreground">
+                  Kosongkan atau isi 0 jika tidak ada syarat nominal
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+
+
+          <FormField
+            control={form.control}
             name="active"
             render={({ field }) => (
               <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 md:col-span-2">
