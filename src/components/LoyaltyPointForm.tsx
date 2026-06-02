@@ -31,6 +31,7 @@ const formSchema = z.object({
   points_earned: z.string().min(1, "Poin yang didapat harus diisi"),
   applies_to: z.enum(["global", "product"]),
   target_id: z.string().optional(),
+  is_multiple: z.boolean(),
   active: z.boolean(),
 });
 
@@ -46,6 +47,7 @@ interface LoyaltyPointRule {
   points_earned: number;
   applies_to: string;
   target_id: string | null;
+  is_multiple?: boolean;
   active: boolean;
 }
 
@@ -69,6 +71,7 @@ export function LoyaltyPointForm({ rule, onSuccess, onCancel }: LoyaltyPointForm
       points_earned: rule?.points_earned?.toString() || "",
       applies_to: (rule?.applies_to as "global" | "product") || "global",
       target_id: rule?.target_id || "",
+      is_multiple: rule?.is_multiple ?? false,
       active: rule?.active ?? true,
     },
   });
@@ -104,6 +107,7 @@ export function LoyaltyPointForm({ rule, onSuccess, onCancel }: LoyaltyPointForm
         points_earned: parseInt(values.points_earned),
         applies_to: values.applies_to,
         target_id: values.applies_to === "product" ? values.target_id : null,
+        is_multiple: values.is_multiple,
         active: values.active,
         store_id: currentStoreId,
       };
@@ -245,6 +249,27 @@ export function LoyaltyPointForm({ rule, onSuccess, onCancel }: LoyaltyPointForm
             )}
           />
         )}
+
+        <FormField
+          control={form.control}
+          name="is_multiple"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <FormLabel className="text-base">Berlaku Kelipatan</FormLabel>
+                <FormDescription>
+                  Jika aktif, poin diberikan kelipatan dari minimal belanja (contoh: min 100rb = 10 poin, belanja 300rb = 30 poin)
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
 
         <FormField
           control={form.control}
