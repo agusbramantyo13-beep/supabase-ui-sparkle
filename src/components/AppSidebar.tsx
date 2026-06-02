@@ -32,6 +32,7 @@ const allMenuItems = [
   { title: "Riwayat Transaksi", url: "/transaction-history", icon: Receipt, roles: ["owner", "store_keeper"] },
   { title: "Setoran Kas", url: "/cash-deposits", icon: Wallet, roles: ["owner", "store_keeper"] },
   { title: "Belanja Toko", url: "/store-expenses", icon: ShoppingBag, roles: ["owner", "store_keeper"] },
+  { title: "Penjualan Lain-lain", url: "/other-sales", icon: Coins, roles: ["owner", "store_keeper"] },
   { title: "Kehadiran", url: "/attendance", icon: UserCheck, roles: ["owner", "store_keeper"] },
   { title: "Laporan", url: "/reports", icon: BarChart3, roles: ["owner"] },
   { title: "Pengguna", url: "/users", icon: Users, roles: ["owner"] },
