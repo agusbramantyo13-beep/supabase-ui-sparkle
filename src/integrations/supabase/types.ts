@@ -285,6 +285,7 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           id: string
+          is_multiple: boolean
           min_purchase: number
           name: string
           points_earned: number
@@ -298,6 +299,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           id?: string
+          is_multiple?: boolean
           min_purchase?: number
           name: string
           points_earned?: number
@@ -311,6 +313,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           id?: string
+          is_multiple?: boolean
           min_purchase?: number
           name?: string
           points_earned?: number

@@ -1,0 +1,1 @@
+ALTER TABLE public.loyalty_point_rules ADD COLUMN IF NOT EXISTS is_multiple boolean NOT NULL DEFAULT false;
