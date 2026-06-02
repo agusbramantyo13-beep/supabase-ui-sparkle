@@ -291,7 +291,12 @@ export default function Sales() {
     );
     
     globalRules.forEach(rule => {
-      totalPoints += rule.points_earned;
+      if (rule.is_multiple && rule.min_purchase > 0) {
+        const multiplier = Math.floor(total / rule.min_purchase);
+        totalPoints += rule.points_earned * multiplier;
+      } else {
+        totalPoints += rule.points_earned;
+      }
     });
 
     // Check product-specific rules
@@ -303,7 +308,12 @@ export default function Sales() {
       );
       
       productRules.forEach(rule => {
-        totalPoints += rule.points_earned;
+        if (rule.is_multiple && rule.min_purchase > 0) {
+          const multiplier = Math.floor(item.subtotal / rule.min_purchase);
+          totalPoints += rule.points_earned * multiplier;
+        } else {
+          totalPoints += rule.points_earned;
+        }
       });
     });
 
