@@ -107,6 +107,7 @@ export function LoyaltyPointForm({ rule, onSuccess, onCancel }: LoyaltyPointForm
         points_earned: parseInt(values.points_earned),
         applies_to: values.applies_to,
         target_id: values.applies_to === "product" ? values.target_id : null,
+        is_multiple: values.is_multiple,
         active: values.active,
         store_id: currentStoreId,
       };
