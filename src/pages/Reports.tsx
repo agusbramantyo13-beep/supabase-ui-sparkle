@@ -88,7 +88,18 @@ export default function Reports() {
         totalProfit = profitData?.reduce((sum, profit) => sum + Number(profit.profit || 0), 0) || 0;
       }
 
-      const totalSales = salesData?.reduce((sum, sale) => sum + Number(sale.total || 0), 0) || 0;
+      // Fetch other sales (lain-lain) in the range
+      const { data: otherSalesData } = await supabase
+        .from('other_sales')
+        .select('amount, sale_date')
+        .eq('store_id', currentStoreId)
+        .gte('sale_date', startDate.toISOString().split('T')[0])
+        .lte('sale_date', endDate.toISOString().split('T')[0]);
+
+      const otherSalesTotal = otherSalesData?.reduce((sum, r: any) => sum + Number(r.amount || 0), 0) || 0;
+
+      const productSalesTotal = salesData?.reduce((sum, sale) => sum + Number(sale.total || 0), 0) || 0;
+      const totalSales = productSalesTotal + otherSalesTotal;
       const totalTransactions = salesData?.length || 0;
       const averageOrderValue = totalTransactions > 0 ? totalSales / totalTransactions : 0;
 

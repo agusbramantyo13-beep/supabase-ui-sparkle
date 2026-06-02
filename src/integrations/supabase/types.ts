@@ -482,6 +482,39 @@ export type Database = {
           },
         ]
       }
+      other_sales: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string
+          id: string
+          sale_date: string
+          store_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          description: string
+          id?: string
+          sale_date?: string
+          store_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string
+          id?: string
+          sale_date?: string
+          store_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       point_redemption_rules: {
         Row: {
           active: boolean | null
