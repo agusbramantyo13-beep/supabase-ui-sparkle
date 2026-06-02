@@ -71,6 +71,7 @@ export function LoyaltyPointForm({ rule, onSuccess, onCancel }: LoyaltyPointForm
       points_earned: rule?.points_earned?.toString() || "",
       applies_to: (rule?.applies_to as "global" | "product") || "global",
       target_id: rule?.target_id || "",
+      is_multiple: rule?.is_multiple ?? false,
       active: rule?.active ?? true,
     },
   });
