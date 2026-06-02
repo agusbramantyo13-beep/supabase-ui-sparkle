@@ -31,6 +31,7 @@ const formSchema = z.object({
   points_earned: z.string().min(1, "Poin yang didapat harus diisi"),
   applies_to: z.enum(["global", "product"]),
   target_id: z.string().optional(),
+  is_multiple: z.boolean(),
   active: z.boolean(),
 });
 
