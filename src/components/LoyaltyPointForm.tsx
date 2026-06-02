@@ -252,6 +252,27 @@ export function LoyaltyPointForm({ rule, onSuccess, onCancel }: LoyaltyPointForm
 
         <FormField
           control={form.control}
+          name="is_multiple"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <FormLabel className="text-base">Berlaku Kelipatan</FormLabel>
+                <FormDescription>
+                  Jika aktif, poin diberikan kelipatan dari minimal belanja (contoh: min 100rb = 10 poin, belanja 300rb = 30 poin)
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
           name="active"
           render={({ field }) => (
             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
