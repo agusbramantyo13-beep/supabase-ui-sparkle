@@ -47,6 +47,7 @@ interface LoyaltyPointRule {
   points_earned: number;
   applies_to: string;
   target_id: string | null;
+  is_multiple?: boolean;
   active: boolean;
 }
 
