@@ -28,6 +28,7 @@ import PurchaseReport from "./pages/PurchaseReport";
 import StoreSelection from "./pages/StoreSelection";
 import CashDeposits from "./pages/CashDeposits";
 import StoreExpenses from "./pages/StoreExpenses";
+import OtherSales from "./pages/OtherSales";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
