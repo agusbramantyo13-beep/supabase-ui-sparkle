@@ -146,6 +146,11 @@ const App = () => (
                                     <StoreExpenses />
                                   </RoleBasedRoute>
                                 } />
+                                <Route path="/other-sales" element={
+                                  <RoleBasedRoute allowedRoles={["owner", "store_keeper"]}>
+                                    <OtherSales />
+                                  </RoleBasedRoute>
+                                } />
                                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                                 <Route path="*" element={<NotFound />} />
                               </Routes>
