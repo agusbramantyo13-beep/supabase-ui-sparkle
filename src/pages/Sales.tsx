@@ -32,6 +32,18 @@ interface CartItem {
   product: ProductVariant;
   quantity: number;
   subtotal: number;
+  isFree?: boolean;
+  bundleName?: string;
+}
+
+interface BundlePromo {
+  id: string;
+  name: string;
+  active: boolean;
+  starts_at: string | null;
+  ends_at: string | null;
+  bundle_promo_buy_items: { variant_id: number; quantity: number }[];
+  bundle_promo_free_items: { variant_id: number; quantity: number }[];
 }
 
 interface Discount {
