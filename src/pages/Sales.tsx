@@ -106,6 +106,7 @@ export default function Sales() {
   const [expandedSalesProducts, setExpandedSalesProducts] = useState<Set<string>>(new Set());
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [mobileCartOpen, setMobileCartOpen] = useState(false);
+  const [bundlePromos, setBundlePromos] = useState<BundlePromo[]>([]);
   const mobileCartSectionRef = useRef<HTMLDivElement | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
