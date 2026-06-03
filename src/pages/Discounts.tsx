@@ -148,6 +148,41 @@ export default function Discounts() {
     }
   };
 
+  const fetchBundles = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("bundle_promos")
+        .select("*, bundle_promo_buy_items(variant_id, quantity), bundle_promo_free_items(variant_id, quantity)")
+        .eq("store_id", currentStoreId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      setBundles(data || []);
+    } catch (error) {
+      console.error("Error fetching bundles:", error);
+    }
+  };
+
+  const handleDeleteBundle = async () => {
+    if (!deleteBundleId) return;
+    try {
+      const { error } = await supabase.from("bundle_promos").delete().eq("id", deleteBundleId);
+      if (error) throw error;
+      toast({ title: "Berhasil", description: "Promo bundling dihapus" });
+      fetchBundles();
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Gagal", description: "Gagal menghapus promo", variant: "destructive" });
+    } finally {
+      setDeleteBundleId(null);
+    }
+  };
+
+  const handleBundleFormSuccess = () => {
+    setShowBundleForm(false);
+    setEditingBundle(null);
+    fetchBundles();
+  };
+
   const handleDelete = async () => {
     if (!deleteId) return;
 
