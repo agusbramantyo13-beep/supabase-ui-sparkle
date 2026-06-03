@@ -2,13 +2,14 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, Calendar, Gift, Coins } from "lucide-react";
+import { Plus, Pencil, Trash2, Calendar, Gift, Coins, Package } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useStore } from "@/contexts/StoreContext";
 import { DiscountForm } from "@/components/DiscountForm";
 import { LoyaltyPointForm } from "@/components/LoyaltyPointForm";
 import { PointRedemptionForm } from "@/components/PointRedemptionForm";
+import { BundlePromoForm } from "@/components/BundlePromoForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
@@ -61,16 +62,20 @@ export default function Discounts() {
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [loyaltyRules, setLoyaltyRules] = useState<LoyaltyPointRule[]>([]);
   const [redemptionRules, setRedemptionRules] = useState<PointRedemptionRule[]>([]);
+  const [bundles, setBundles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [showLoyaltyForm, setShowLoyaltyForm] = useState(false);
   const [showRedemptionForm, setShowRedemptionForm] = useState(false);
+  const [showBundleForm, setShowBundleForm] = useState(false);
   const [editingDiscount, setEditingDiscount] = useState<Discount | null>(null);
   const [editingLoyaltyRule, setEditingLoyaltyRule] = useState<LoyaltyPointRule | null>(null);
   const [editingRedemptionRule, setEditingRedemptionRule] = useState<PointRedemptionRule | null>(null);
+  const [editingBundle, setEditingBundle] = useState<any | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteLoyaltyId, setDeleteLoyaltyId] = useState<string | null>(null);
   const [deleteRedemptionId, setDeleteRedemptionId] = useState<string | null>(null);
+  const [deleteBundleId, setDeleteBundleId] = useState<string | null>(null);
   const { toast } = useToast();
   const { currentStoreId } = useStore();
 
@@ -78,6 +83,7 @@ export default function Discounts() {
     fetchDiscounts();
     fetchLoyaltyRules();
     fetchRedemptionRules();
+    fetchBundles();
   }, []);
 
   const fetchDiscounts = async () => {
@@ -140,6 +146,41 @@ export default function Discounts() {
         variant: "destructive",
       });
     }
+  };
+
+  const fetchBundles = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("bundle_promos")
+        .select("*, bundle_promo_buy_items(variant_id, quantity), bundle_promo_free_items(variant_id, quantity)")
+        .eq("store_id", currentStoreId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      setBundles(data || []);
+    } catch (error) {
+      console.error("Error fetching bundles:", error);
+    }
+  };
+
+  const handleDeleteBundle = async () => {
+    if (!deleteBundleId) return;
+    try {
+      const { error } = await supabase.from("bundle_promos").delete().eq("id", deleteBundleId);
+      if (error) throw error;
+      toast({ title: "Berhasil", description: "Promo bundling dihapus" });
+      fetchBundles();
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Gagal", description: "Gagal menghapus promo", variant: "destructive" });
+    } finally {
+      setDeleteBundleId(null);
+    }
+  };
+
+  const handleBundleFormSuccess = () => {
+    setShowBundleForm(false);
+    setEditingBundle(null);
+    fetchBundles();
   };
 
   const handleDelete = async () => {
@@ -285,7 +326,7 @@ export default function Discounts() {
       </div>
 
       <Tabs defaultValue="discounts" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="discounts">Diskon Produk</TabsTrigger>
           <TabsTrigger value="loyalty">
             <Gift className="w-4 h-4 mr-2" />
@@ -294,6 +335,10 @@ export default function Discounts() {
           <TabsTrigger value="redemption">
             <Coins className="w-4 h-4 mr-2" />
             Redeem Point
+          </TabsTrigger>
+          <TabsTrigger value="bundling">
+            <Package className="w-4 h-4 mr-2" />
+            Bundling
           </TabsTrigger>
         </TabsList>
 
@@ -628,6 +673,105 @@ export default function Discounts() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="bundling" className="space-y-4">
+          <div className="flex justify-end">
+            <Button
+              onClick={() => {
+                setEditingBundle(null);
+                setShowBundleForm(true);
+              }}
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Tambah Promo Bundling
+            </Button>
+          </div>
+
+          {showBundleForm && (
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  {editingBundle ? "Edit Promo Bundling" : "Tambah Promo Bundling"}
+                </CardTitle>
+                <CardDescription>
+                  Tentukan item yang harus dibeli dan item gratis yang didapat
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <BundlePromoForm
+                  bundle={editingBundle}
+                  onSuccess={handleBundleFormSuccess}
+                  onCancel={() => {
+                    setShowBundleForm(false);
+                    setEditingBundle(null);
+                  }}
+                />
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Daftar Promo Bundling</CardTitle>
+              <CardDescription>Total {bundles.length} promo bundling terdaftar</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {bundles.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Belum ada promo bundling.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {bundles.map((b) => (
+                    <div
+                      key={b.id}
+                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold">{b.name}</h3>
+                          <Badge variant={b.active ? "default" : "secondary"}>
+                            {b.active ? "Aktif" : "Nonaktif"}
+                          </Badge>
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Beli {b.bundle_promo_buy_items?.length || 0} item → Gratis{" "}
+                          {b.bundle_promo_free_items?.length || 0} item
+                        </div>
+                        {b.starts_at && (
+                          <div className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {formatDate(b.starts_at)} - {formatDate(b.ends_at)}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingBundle(b);
+                            setShowBundleForm(true);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setDeleteBundleId(b.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
@@ -671,6 +815,21 @@ export default function Discounts() {
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteRedemption}>Hapus</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!deleteBundleId} onOpenChange={() => setDeleteBundleId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Promo Bundling</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus promo bundling ini? Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteBundle}>Hapus</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

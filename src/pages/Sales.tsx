@@ -32,6 +32,18 @@ interface CartItem {
   product: ProductVariant;
   quantity: number;
   subtotal: number;
+  isFree?: boolean;
+  bundleName?: string;
+}
+
+interface BundlePromo {
+  id: string;
+  name: string;
+  active: boolean;
+  starts_at: string | null;
+  ends_at: string | null;
+  bundle_promo_buy_items: { variant_id: number; quantity: number }[];
+  bundle_promo_free_items: { variant_id: number; quantity: number }[];
 }
 
 interface Discount {
@@ -94,6 +106,7 @@ export default function Sales() {
   const [expandedSalesProducts, setExpandedSalesProducts] = useState<Set<string>>(new Set());
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [mobileCartOpen, setMobileCartOpen] = useState(false);
+  const [bundlePromos, setBundlePromos] = useState<BundlePromo[]>([]);
   const mobileCartSectionRef = useRef<HTMLDivElement | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -105,11 +118,22 @@ export default function Sales() {
     fetchMembers();
     fetchLoyaltyRules();
     fetchRedemptionRules();
+    fetchBundlePromos();
   }, []);
 
   useEffect(() => {
     calculateEarnedPoints();
   }, [selectedMemberId, cart]);
+
+  useEffect(() => {
+    syncBundleFreeItems();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    bundlePromos,
+    products,
+    // Re-run when paid items change
+    cart.filter((c) => !c.isFree).map((c) => `${c.product.id}:${c.quantity}`).join("|"),
+  ]);
 
   useEffect(() => {
     if (mobileCartOpen) {
@@ -276,6 +300,90 @@ export default function Sales() {
     return discount;
   };
 
+  const fetchBundlePromos = async () => {
+    const { data, error } = await supabase
+      .from("bundle_promos")
+      .select(
+        "id, name, active, starts_at, ends_at, bundle_promo_buy_items(variant_id, quantity), bundle_promo_free_items(variant_id, quantity)"
+      )
+      .eq("store_id", currentStoreId);
+    if (!error) setBundlePromos((data as any) || []);
+  };
+
+  const syncBundleFreeItems = () => {
+    const now = new Date();
+    const paidItems = cart.filter((c) => !c.isFree);
+    const paidQtyMap = new Map<string, number>();
+    paidItems.forEach((i) => paidQtyMap.set(i.product.id, (paidQtyMap.get(i.product.id) || 0) + i.quantity));
+
+    // Aggregate target free quantities per variant id
+    const targetFreeMap = new Map<string, { qty: number; bundleName: string }>();
+
+    bundlePromos.forEach((bundle) => {
+      if (!bundle.active) return;
+      if (bundle.starts_at && new Date(bundle.starts_at) > now) return;
+      if (bundle.ends_at && new Date(bundle.ends_at) < now) return;
+
+      const buys = bundle.bundle_promo_buy_items || [];
+      const frees = bundle.bundle_promo_free_items || [];
+      if (buys.length === 0 || frees.length === 0) return;
+
+      // How many full bundles can be applied
+      let applies = Infinity;
+      for (const b of buys) {
+        const have = paidQtyMap.get(String(b.variant_id)) || 0;
+        const can = Math.floor(have / (b.quantity || 1));
+        if (can < applies) applies = can;
+      }
+      if (!isFinite(applies) || applies <= 0) return;
+
+      frees.forEach((f) => {
+        const key = String(f.variant_id);
+        const totalQty = (f.quantity || 1) * applies;
+        const prev = targetFreeMap.get(key);
+        targetFreeMap.set(key, {
+          qty: (prev?.qty || 0) + totalQty,
+          bundleName: prev?.bundleName || bundle.name,
+        });
+      });
+    });
+
+    // Reconcile cart's free items with targetFreeMap
+    const currentFreeMap = new Map<string, number>();
+    cart.filter((c) => c.isFree).forEach((c) => {
+      currentFreeMap.set(c.product.id, (currentFreeMap.get(c.product.id) || 0) + c.quantity);
+    });
+
+    let changed = false;
+    const allKeys = new Set([...targetFreeMap.keys(), ...currentFreeMap.keys()]);
+    for (const k of allKeys) {
+      if ((targetFreeMap.get(k)?.qty || 0) !== (currentFreeMap.get(k) || 0)) {
+        changed = true;
+        break;
+      }
+    }
+    if (!changed) return;
+
+    // Rebuild cart: keep non-free items, append free items based on target
+    const nonFree = cart.filter((c) => !c.isFree);
+    const newFreeItems: CartItem[] = [];
+    targetFreeMap.forEach((info, variantId) => {
+      const product = products.find((p) => p.id === variantId);
+      if (!product) return;
+      const cappedQty = Math.min(info.qty, product.available_stock || 0);
+      if (cappedQty <= 0) return;
+      const freeProduct: ProductVariant = { ...product, price: 0 };
+      newFreeItems.push({
+        product: freeProduct,
+        quantity: cappedQty,
+        subtotal: 0,
+        isFree: true,
+        bundleName: info.bundleName,
+      });
+    });
+    setCart([...nonFree, ...newFreeItems]);
+  };
+
   const calculateEarnedPoints = () => {
     if (!selectedMemberId || cart.length === 0) {
       setEarnedPoints(0);
@@ -321,12 +429,15 @@ export default function Sales() {
   };
 
   const addToCart = (product: ProductVariant) => {
-    const existingItem = cart.find(item => item.product.id === product.id);
+    const existingItem = cart.find(item => item.product.id === product.id && !item.isFree);
     const currentQuantity = existingItem ? existingItem.quantity : 0;
+    const freeQty = cart
+      .filter(i => i.product.id === product.id && i.isFree)
+      .reduce((s, i) => s + i.quantity, 0);
     const availableStock = product.available_stock || 0;
-    
-    // Check stock availability
-    if (currentQuantity >= availableStock) {
+
+    // Check stock availability (account for reserved free items)
+    if (currentQuantity + freeQty >= availableStock) {
       toast({
         title: "Stok Tidak Cukup",
         description: `Stok tersedia: ${availableStock}`,
@@ -334,7 +445,7 @@ export default function Sales() {
       });
       return;
     }
-    
+
     if (existingItem) {
       updateQuantity(product.id, existingItem.quantity + 1);
     } else {
@@ -352,11 +463,14 @@ export default function Sales() {
       return;
     }
 
-    const item = cart.find(i => i.product.id === productId);
+    const item = cart.find(i => i.product.id === productId && !i.isFree);
     const availableStock = item?.product.available_stock || 0;
+    const freeQty = cart
+      .filter(i => i.product.id === productId && i.isFree)
+      .reduce((s, i) => s + i.quantity, 0);
 
     // Check stock availability
-    if (newQuantity > availableStock) {
+    if (newQuantity + freeQty > availableStock) {
       toast({
         title: "Stok Tidak Cukup",
         description: `Stok tersedia: ${availableStock}`,
@@ -365,16 +479,18 @@ export default function Sales() {
       return;
     }
 
-    setCart(cart.map(item => 
-      item.product.id === productId 
+    setCart(cart.map(item =>
+      item.product.id === productId && !item.isFree
         ? { ...item, quantity: newQuantity, subtotal: item.product.price * newQuantity }
         : item
     ));
   };
 
   const removeFromCart = (productId: string) => {
-    setCart(cart.filter(item => item.product.id !== productId));
+    // Only remove paid (non-free) entry; free items will re-sync via effect
+    setCart(cart.filter(item => !(item.product.id === productId && !item.isFree)));
   };
+
 
   const clearCart = () => {
     setCart([]);
@@ -797,31 +913,44 @@ export default function Sales() {
                 </div>
               ) : (
                 <div className="space-y-3 pb-2">
-                  {cart.map((item) => (
-                    <div key={item.product.id} className="p-3 bg-muted/20 rounded-lg space-y-2">
+                  {cart.map((item, idx) => (
+                    <div key={`${item.isFree ? 'free' : 'paid'}-${item.product.id}-${idx}`} className={`p-3 rounded-lg space-y-2 ${item.isFree ? 'bg-success/10 border border-success/30' : 'bg-muted/20'}`}>
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-foreground text-sm break-words">{item.product.product_name} - {item.product.name}</h4>
-                          <p className="text-xs text-muted-foreground">Rp {item.product.price.toLocaleString('id-ID')} /pcs</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="font-medium text-foreground text-sm break-words">{item.product.product_name} - {item.product.name}</h4>
+                            {item.isFree && <Badge variant="default" className="bg-success text-success-foreground text-[10px]">GRATIS</Badge>}
+                          </div>
+                          {item.isFree ? (
+                            <p className="text-xs text-success">Promo: {item.bundleName}</p>
+                          ) : (
+                            <p className="text-xs text-muted-foreground">Rp {item.product.price.toLocaleString('id-ID')} /pcs</p>
+                          )}
                         </div>
                         <p className="font-semibold text-foreground text-sm whitespace-nowrap">Rp {item.subtotal.toLocaleString('id-ID')}</p>
                       </div>
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1">
-                          <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => updateQuantity(item.product.id, item.quantity - 1)}>
-                            <Minus className="w-4 h-4" />
-                          </Button>
-                          <span className="font-medium w-8 text-center">{item.quantity}</span>
-                          <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => updateQuantity(item.product.id, item.quantity + 1)}>
-                            <Plus className="w-4 h-4" />
+                      {!item.isFree && (
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1">
+                            <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => updateQuantity(item.product.id, item.quantity - 1)}>
+                              <Minus className="w-4 h-4" />
+                            </Button>
+                            <span className="font-medium w-8 text-center">{item.quantity}</span>
+                            <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => updateQuantity(item.product.id, item.quantity + 1)}>
+                              <Plus className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          <Button size="icon" variant="destructive" className="h-8 w-8" onClick={() => removeFromCart(item.product.id)}>
+                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
-                        <Button size="icon" variant="destructive" className="h-8 w-8" onClick={() => removeFromCart(item.product.id)}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+                      )}
+                      {item.isFree && (
+                        <div className="text-xs text-muted-foreground">Qty: {item.quantity}</div>
+                      )}
                     </div>
                   ))}
+
 
                   <Separator className="my-2" />
 
@@ -1004,50 +1133,62 @@ export default function Sales() {
             ) : (
               <>
                 <div className="flex-1 space-y-3 overflow-y-auto max-h-[50vh] lg:max-h-none">
-                  {cart.map((item) => (
-                    <div key={item.product.id} className="p-3 bg-muted/20 rounded-lg space-y-2">
+                  {cart.map((item, idx) => (
+                    <div key={`${item.isFree ? 'free' : 'paid'}-${item.product.id}-${idx}`} className={`p-3 rounded-lg space-y-2 ${item.isFree ? 'bg-success/10 border border-success/30' : 'bg-muted/20'}`}>
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-foreground text-sm sm:text-base break-words">{item.product.product_name} - {item.product.name}</h4>
-                          <p className="text-xs sm:text-sm text-muted-foreground">Rp {item.product.price.toLocaleString('id-ID')} /pcs</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="font-medium text-foreground text-sm sm:text-base break-words">{item.product.product_name} - {item.product.name}</h4>
+                            {item.isFree && <Badge variant="default" className="bg-success text-success-foreground text-[10px]">GRATIS</Badge>}
+                          </div>
+                          {item.isFree ? (
+                            <p className="text-xs sm:text-sm text-success">Promo: {item.bundleName}</p>
+                          ) : (
+                            <p className="text-xs sm:text-sm text-muted-foreground">Rp {item.product.price.toLocaleString('id-ID')} /pcs</p>
+                          )}
                         </div>
                         <p className="font-semibold text-foreground text-sm sm:text-base whitespace-nowrap">Rp {item.subtotal.toLocaleString('id-ID')}</p>
                       </div>
 
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1">
+                      {!item.isFree ? (
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1">
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              className="h-8 w-8"
+                              onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                            >
+                              <Minus className="w-4 h-4" />
+                            </Button>
+
+                            <span className="font-medium w-8 text-center">{item.quantity}</span>
+
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              className="h-8 w-8"
+                              onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                            >
+                              <Plus className="w-4 h-4" />
+                            </Button>
+                          </div>
+
                           <Button
                             size="icon"
-                            variant="outline"
+                            variant="destructive"
                             className="h-8 w-8"
-                            onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                            onClick={() => removeFromCart(item.product.id)}
                           >
-                            <Minus className="w-4 h-4" />
-                          </Button>
-
-                          <span className="font-medium w-8 text-center">{item.quantity}</span>
-
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            className="h-8 w-8"
-                            onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                          >
-                            <Plus className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
-
-                        <Button
-                          size="icon"
-                          variant="destructive"
-                          className="h-8 w-8"
-                          onClick={() => removeFromCart(item.product.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+                      ) : (
+                        <div className="text-xs text-muted-foreground">Qty: {item.quantity}</div>
+                      )}
                     </div>
                   ))}
+
                 </div>
 
                 <Separator className="my-4" />
