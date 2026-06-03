@@ -429,12 +429,15 @@ export default function Sales() {
   };
 
   const addToCart = (product: ProductVariant) => {
-    const existingItem = cart.find(item => item.product.id === product.id);
+    const existingItem = cart.find(item => item.product.id === product.id && !item.isFree);
     const currentQuantity = existingItem ? existingItem.quantity : 0;
+    const freeQty = cart
+      .filter(i => i.product.id === product.id && i.isFree)
+      .reduce((s, i) => s + i.quantity, 0);
     const availableStock = product.available_stock || 0;
-    
-    // Check stock availability
-    if (currentQuantity >= availableStock) {
+
+    // Check stock availability (account for reserved free items)
+    if (currentQuantity + freeQty >= availableStock) {
       toast({
         title: "Stok Tidak Cukup",
         description: `Stok tersedia: ${availableStock}`,
@@ -442,7 +445,7 @@ export default function Sales() {
       });
       return;
     }
-    
+
     if (existingItem) {
       updateQuantity(product.id, existingItem.quantity + 1);
     } else {
@@ -460,11 +463,14 @@ export default function Sales() {
       return;
     }
 
-    const item = cart.find(i => i.product.id === productId);
+    const item = cart.find(i => i.product.id === productId && !i.isFree);
     const availableStock = item?.product.available_stock || 0;
+    const freeQty = cart
+      .filter(i => i.product.id === productId && i.isFree)
+      .reduce((s, i) => s + i.quantity, 0);
 
     // Check stock availability
-    if (newQuantity > availableStock) {
+    if (newQuantity + freeQty > availableStock) {
       toast({
         title: "Stok Tidak Cukup",
         description: `Stok tersedia: ${availableStock}`,
@@ -473,16 +479,18 @@ export default function Sales() {
       return;
     }
 
-    setCart(cart.map(item => 
-      item.product.id === productId 
+    setCart(cart.map(item =>
+      item.product.id === productId && !item.isFree
         ? { ...item, quantity: newQuantity, subtotal: item.product.price * newQuantity }
         : item
     ));
   };
 
   const removeFromCart = (productId: string) => {
-    setCart(cart.filter(item => item.product.id !== productId));
+    // Only remove paid (non-free) entry; free items will re-sync via effect
+    setCart(cart.filter(item => !(item.product.id === productId && !item.isFree)));
   };
+
 
   const clearCart = () => {
     setCart([]);
