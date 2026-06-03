@@ -673,6 +673,105 @@ export default function Discounts() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="bundling" className="space-y-4">
+          <div className="flex justify-end">
+            <Button
+              onClick={() => {
+                setEditingBundle(null);
+                setShowBundleForm(true);
+              }}
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Tambah Promo Bundling
+            </Button>
+          </div>
+
+          {showBundleForm && (
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  {editingBundle ? "Edit Promo Bundling" : "Tambah Promo Bundling"}
+                </CardTitle>
+                <CardDescription>
+                  Tentukan item yang harus dibeli dan item gratis yang didapat
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <BundlePromoForm
+                  bundle={editingBundle}
+                  onSuccess={handleBundleFormSuccess}
+                  onCancel={() => {
+                    setShowBundleForm(false);
+                    setEditingBundle(null);
+                  }}
+                />
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Daftar Promo Bundling</CardTitle>
+              <CardDescription>Total {bundles.length} promo bundling terdaftar</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {bundles.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Belum ada promo bundling.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {bundles.map((b) => (
+                    <div
+                      key={b.id}
+                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold">{b.name}</h3>
+                          <Badge variant={b.active ? "default" : "secondary"}>
+                            {b.active ? "Aktif" : "Nonaktif"}
+                          </Badge>
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Beli {b.bundle_promo_buy_items?.length || 0} item → Gratis{" "}
+                          {b.bundle_promo_free_items?.length || 0} item
+                        </div>
+                        {b.starts_at && (
+                          <div className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {formatDate(b.starts_at)} - {formatDate(b.ends_at)}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingBundle(b);
+                            setShowBundleForm(true);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setDeleteBundleId(b.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
