@@ -2,13 +2,14 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, Calendar, Gift, Coins } from "lucide-react";
+import { Plus, Pencil, Trash2, Calendar, Gift, Coins, Package } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useStore } from "@/contexts/StoreContext";
 import { DiscountForm } from "@/components/DiscountForm";
 import { LoyaltyPointForm } from "@/components/LoyaltyPointForm";
 import { PointRedemptionForm } from "@/components/PointRedemptionForm";
+import { BundlePromoForm } from "@/components/BundlePromoForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
