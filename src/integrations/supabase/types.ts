@@ -88,6 +88,106 @@ export type Database = {
         }
         Relationships: []
       }
+      bundle_promo_buy_items: {
+        Row: {
+          bundle_id: string
+          created_at: string | null
+          id: string
+          quantity: number
+          variant_id: number
+        }
+        Insert: {
+          bundle_id: string
+          created_at?: string | null
+          id?: string
+          quantity?: number
+          variant_id: number
+        }
+        Update: {
+          bundle_id?: string
+          created_at?: string | null
+          id?: string
+          quantity?: number
+          variant_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bundle_promo_buy_items_bundle_id_fkey"
+            columns: ["bundle_id"]
+            isOneToOne: false
+            referencedRelation: "bundle_promos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bundle_promo_free_items: {
+        Row: {
+          bundle_id: string
+          created_at: string | null
+          id: string
+          quantity: number
+          variant_id: number
+        }
+        Insert: {
+          bundle_id: string
+          created_at?: string | null
+          id?: string
+          quantity?: number
+          variant_id: number
+        }
+        Update: {
+          bundle_id?: string
+          created_at?: string | null
+          id?: string
+          quantity?: number
+          variant_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bundle_promo_free_items_bundle_id_fkey"
+            columns: ["bundle_id"]
+            isOneToOne: false
+            referencedRelation: "bundle_promos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bundle_promos: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          created_by: string | null
+          ends_at: string | null
+          id: string
+          name: string
+          starts_at: string | null
+          store_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          name: string
+          starts_at?: string | null
+          store_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          name?: string
+          starts_at?: string | null
+          store_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       cash_deposits: {
         Row: {
           amount: number
