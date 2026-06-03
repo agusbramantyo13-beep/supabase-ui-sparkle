@@ -62,16 +62,20 @@ export default function Discounts() {
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [loyaltyRules, setLoyaltyRules] = useState<LoyaltyPointRule[]>([]);
   const [redemptionRules, setRedemptionRules] = useState<PointRedemptionRule[]>([]);
+  const [bundles, setBundles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [showLoyaltyForm, setShowLoyaltyForm] = useState(false);
   const [showRedemptionForm, setShowRedemptionForm] = useState(false);
+  const [showBundleForm, setShowBundleForm] = useState(false);
   const [editingDiscount, setEditingDiscount] = useState<Discount | null>(null);
   const [editingLoyaltyRule, setEditingLoyaltyRule] = useState<LoyaltyPointRule | null>(null);
   const [editingRedemptionRule, setEditingRedemptionRule] = useState<PointRedemptionRule | null>(null);
+  const [editingBundle, setEditingBundle] = useState<any | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteLoyaltyId, setDeleteLoyaltyId] = useState<string | null>(null);
   const [deleteRedemptionId, setDeleteRedemptionId] = useState<string | null>(null);
+  const [deleteBundleId, setDeleteBundleId] = useState<string | null>(null);
   const { toast } = useToast();
   const { currentStoreId } = useStore();
 
@@ -79,6 +83,7 @@ export default function Discounts() {
     fetchDiscounts();
     fetchLoyaltyRules();
     fetchRedemptionRules();
+    fetchBundles();
   }, []);
 
   const fetchDiscounts = async () => {
