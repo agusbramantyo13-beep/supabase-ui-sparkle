@@ -326,7 +326,7 @@ export default function Discounts() {
       </div>
 
       <Tabs defaultValue="discounts" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="discounts">Diskon Produk</TabsTrigger>
           <TabsTrigger value="loyalty">
             <Gift className="w-4 h-4 mr-2" />
@@ -335,6 +335,10 @@ export default function Discounts() {
           <TabsTrigger value="redemption">
             <Coins className="w-4 h-4 mr-2" />
             Redeem Point
+          </TabsTrigger>
+          <TabsTrigger value="bundling">
+            <Package className="w-4 h-4 mr-2" />
+            Bundling
           </TabsTrigger>
         </TabsList>
 
