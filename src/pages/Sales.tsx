@@ -300,6 +300,90 @@ export default function Sales() {
     return discount;
   };
 
+  const fetchBundlePromos = async () => {
+    const { data, error } = await supabase
+      .from("bundle_promos")
+      .select(
+        "id, name, active, starts_at, ends_at, bundle_promo_buy_items(variant_id, quantity), bundle_promo_free_items(variant_id, quantity)"
+      )
+      .eq("store_id", currentStoreId);
+    if (!error) setBundlePromos((data as any) || []);
+  };
+
+  const syncBundleFreeItems = () => {
+    const now = new Date();
+    const paidItems = cart.filter((c) => !c.isFree);
+    const paidQtyMap = new Map<string, number>();
+    paidItems.forEach((i) => paidQtyMap.set(i.product.id, (paidQtyMap.get(i.product.id) || 0) + i.quantity));
+
+    // Aggregate target free quantities per variant id
+    const targetFreeMap = new Map<string, { qty: number; bundleName: string }>();
+
+    bundlePromos.forEach((bundle) => {
+      if (!bundle.active) return;
+      if (bundle.starts_at && new Date(bundle.starts_at) > now) return;
+      if (bundle.ends_at && new Date(bundle.ends_at) < now) return;
+
+      const buys = bundle.bundle_promo_buy_items || [];
+      const frees = bundle.bundle_promo_free_items || [];
+      if (buys.length === 0 || frees.length === 0) return;
+
+      // How many full bundles can be applied
+      let applies = Infinity;
+      for (const b of buys) {
+        const have = paidQtyMap.get(String(b.variant_id)) || 0;
+        const can = Math.floor(have / (b.quantity || 1));
+        if (can < applies) applies = can;
+      }
+      if (!isFinite(applies) || applies <= 0) return;
+
+      frees.forEach((f) => {
+        const key = String(f.variant_id);
+        const totalQty = (f.quantity || 1) * applies;
+        const prev = targetFreeMap.get(key);
+        targetFreeMap.set(key, {
+          qty: (prev?.qty || 0) + totalQty,
+          bundleName: prev?.bundleName || bundle.name,
+        });
+      });
+    });
+
+    // Reconcile cart's free items with targetFreeMap
+    const currentFreeMap = new Map<string, number>();
+    cart.filter((c) => c.isFree).forEach((c) => {
+      currentFreeMap.set(c.product.id, (currentFreeMap.get(c.product.id) || 0) + c.quantity);
+    });
+
+    let changed = false;
+    const allKeys = new Set([...targetFreeMap.keys(), ...currentFreeMap.keys()]);
+    for (const k of allKeys) {
+      if ((targetFreeMap.get(k)?.qty || 0) !== (currentFreeMap.get(k) || 0)) {
+        changed = true;
+        break;
+      }
+    }
+    if (!changed) return;
+
+    // Rebuild cart: keep non-free items, append free items based on target
+    const nonFree = cart.filter((c) => !c.isFree);
+    const newFreeItems: CartItem[] = [];
+    targetFreeMap.forEach((info, variantId) => {
+      const product = products.find((p) => p.id === variantId);
+      if (!product) return;
+      const cappedQty = Math.min(info.qty, product.available_stock || 0);
+      if (cappedQty <= 0) return;
+      const freeProduct: ProductVariant = { ...product, price: 0 };
+      newFreeItems.push({
+        product: freeProduct,
+        quantity: cappedQty,
+        subtotal: 0,
+        isFree: true,
+        bundleName: info.bundleName,
+      });
+    });
+    setCart([...nonFree, ...newFreeItems]);
+  };
+
   const calculateEarnedPoints = () => {
     if (!selectedMemberId || cart.length === 0) {
       setEarnedPoints(0);
