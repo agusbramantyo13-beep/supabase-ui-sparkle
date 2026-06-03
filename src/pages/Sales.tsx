@@ -118,11 +118,22 @@ export default function Sales() {
     fetchMembers();
     fetchLoyaltyRules();
     fetchRedemptionRules();
+    fetchBundlePromos();
   }, []);
 
   useEffect(() => {
     calculateEarnedPoints();
   }, [selectedMemberId, cart]);
+
+  useEffect(() => {
+    syncBundleFreeItems();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    bundlePromos,
+    products,
+    // Re-run when paid items change
+    cart.filter((c) => !c.isFree).map((c) => `${c.product.id}:${c.quantity}`).join("|"),
+  ]);
 
   useEffect(() => {
     if (mobileCartOpen) {
