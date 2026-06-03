@@ -1133,50 +1133,62 @@ export default function Sales() {
             ) : (
               <>
                 <div className="flex-1 space-y-3 overflow-y-auto max-h-[50vh] lg:max-h-none">
-                  {cart.map((item) => (
-                    <div key={item.product.id} className="p-3 bg-muted/20 rounded-lg space-y-2">
+                  {cart.map((item, idx) => (
+                    <div key={`${item.isFree ? 'free' : 'paid'}-${item.product.id}-${idx}`} className={`p-3 rounded-lg space-y-2 ${item.isFree ? 'bg-success/10 border border-success/30' : 'bg-muted/20'}`}>
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-foreground text-sm sm:text-base break-words">{item.product.product_name} - {item.product.name}</h4>
-                          <p className="text-xs sm:text-sm text-muted-foreground">Rp {item.product.price.toLocaleString('id-ID')} /pcs</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="font-medium text-foreground text-sm sm:text-base break-words">{item.product.product_name} - {item.product.name}</h4>
+                            {item.isFree && <Badge variant="default" className="bg-success text-success-foreground text-[10px]">GRATIS</Badge>}
+                          </div>
+                          {item.isFree ? (
+                            <p className="text-xs sm:text-sm text-success">Promo: {item.bundleName}</p>
+                          ) : (
+                            <p className="text-xs sm:text-sm text-muted-foreground">Rp {item.product.price.toLocaleString('id-ID')} /pcs</p>
+                          )}
                         </div>
                         <p className="font-semibold text-foreground text-sm sm:text-base whitespace-nowrap">Rp {item.subtotal.toLocaleString('id-ID')}</p>
                       </div>
 
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1">
+                      {!item.isFree ? (
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1">
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              className="h-8 w-8"
+                              onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                            >
+                              <Minus className="w-4 h-4" />
+                            </Button>
+
+                            <span className="font-medium w-8 text-center">{item.quantity}</span>
+
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              className="h-8 w-8"
+                              onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                            >
+                              <Plus className="w-4 h-4" />
+                            </Button>
+                          </div>
+
                           <Button
                             size="icon"
-                            variant="outline"
+                            variant="destructive"
                             className="h-8 w-8"
-                            onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                            onClick={() => removeFromCart(item.product.id)}
                           >
-                            <Minus className="w-4 h-4" />
-                          </Button>
-
-                          <span className="font-medium w-8 text-center">{item.quantity}</span>
-
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            className="h-8 w-8"
-                            onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                          >
-                            <Plus className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
-
-                        <Button
-                          size="icon"
-                          variant="destructive"
-                          className="h-8 w-8"
-                          onClick={() => removeFromCart(item.product.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+                      ) : (
+                        <div className="text-xs text-muted-foreground">Qty: {item.quantity}</div>
+                      )}
                     </div>
                   ))}
+
                 </div>
 
                 <Separator className="my-4" />
