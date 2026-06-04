@@ -290,7 +290,6 @@ export default function Members() {
           <h1 className="text-3xl font-bold text-foreground">Member</h1>
           <p className="text-muted-foreground">Kelola akun dan informasi member</p>
         </div>
-        {isOwner && (
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
           <DialogTrigger asChild>
             <Button className="bg-gradient-primary hover:bg-primary/90" onClick={() => resetForm()}>
