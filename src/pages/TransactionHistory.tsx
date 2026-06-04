@@ -1,13 +1,18 @@
 import { useState, useEffect } from "react";
-import { Receipt, Calendar, Undo2, ShoppingBag } from "lucide-react";
+import { Receipt, Calendar as CalendarIcon, Undo2, ShoppingBag, Eye } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useStore } from "@/contexts/StoreContext";
-import { format } from "date-fns";
+import { format, startOfDay, endOfDay } from "date-fns";
+import { id as idLocale } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import SalesReturnDialog from "@/components/SalesReturnDialog";
 
 interface Transaction {
@@ -16,46 +21,58 @@ interface Transaction {
   total: number;
   created_at: string;
   payment_method: string | null;
+  payment_details: any;
   user_name: string | null;
   status: string | null;
   member_name: string | null;
+  member_code: string | null;
+  subtotal?: number;
+  discount_total?: number;
+  tax_total?: number;
   type: "sale" | "expense";
   description?: string | null;
 }
+
+interface SaleItem {
+  id: string;
+  quantity: number;
+  unit_price: number;
+  discount: number;
+  total: number;
+  product_snapshot: any;
+}
+
+const formatRp = (n: number) => `Rp ${Math.abs(Number(n || 0)).toLocaleString('id-ID')}`;
 
 export default function TransactionHistory() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const { currentStoreId } = useStore();
-  const [days, setDays] = useState("7");
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailTx, setDetailTx] = useState<Transaction | null>(null);
+  const [detailItems, setDetailItems] = useState<SaleItem[]>([]);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   useEffect(() => {
     fetchTransactions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [days, currentStoreId]);
+  }, [selectedDate, currentStoreId]);
 
   const fetchTransactions = async () => {
     if (!currentStoreId) return;
     setLoading(true);
     try {
-      const endDate = new Date();
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - parseInt(days));
+      const startDate = startOfDay(selectedDate);
+      const endDate = endOfDay(selectedDate);
 
-      // Fetch sales
       const { data: salesData, error: salesError } = await supabase
         .from('sales')
         .select(`
-          id, 
-          receipt_number, 
-          total, 
-          created_at, 
-          payment_method,
-          user_id,
-          status,
-          member_id,
+          id, receipt_number, total, subtotal, discount_total, tax_total,
+          created_at, payment_method, payment_details, user_id, status, member_id,
           profiles:user_id(name, email),
           members:member_id(name, member_code)
         `)
@@ -66,7 +83,6 @@ export default function TransactionHistory() {
 
       if (salesError) throw salesError;
 
-      // Fetch approved store expenses (Belanja Toko)
       const { data: expensesData, error: expErr } = await supabase
         .from('store_expenses')
         .select('id, amount, description, approved_at, submitted_at, submitted_by')
@@ -77,7 +93,6 @@ export default function TransactionHistory() {
 
       if (expErr) throw expErr;
 
-      // Get profile names for expenses
       const expUserIds = Array.from(
         new Set((expensesData || []).map((e: any) => e.submitted_by).filter(Boolean))
       );
@@ -96,11 +111,16 @@ export default function TransactionHistory() {
         id: sale.id,
         receipt_number: sale.receipt_number,
         total: Number(sale.total || 0),
+        subtotal: Number(sale.subtotal || 0),
+        discount_total: Number(sale.discount_total || 0),
+        tax_total: Number(sale.tax_total || 0),
         created_at: sale.created_at,
         payment_method: sale.payment_method,
+        payment_details: sale.payment_details,
         user_name: (sale.profiles as any)?.name || (sale.profiles as any)?.email || 'Unknown',
         status: sale.status,
         member_name: (sale.members as any)?.name || null,
+        member_code: (sale.members as any)?.member_code || null,
         type: 'sale',
       }));
 
@@ -110,9 +130,11 @@ export default function TransactionHistory() {
         total: -Number(e.amount || 0),
         created_at: e.approved_at || e.submitted_at,
         payment_method: 'cash',
+        payment_details: null,
         user_name: e.submitted_by ? expProfileMap[e.submitted_by] || 'Pengguna' : '-',
         status: 'expense',
         member_name: null,
+        member_code: null,
         type: 'expense',
         description: e.description,
       }));
@@ -129,15 +151,34 @@ export default function TransactionHistory() {
     }
   };
 
-  const getTotalAmount = () => {
-    return transactions
+  const getTotalAmount = () =>
+    transactions
       .filter(t => t.status !== 'returned')
-      .reduce((sum, transaction) => sum + Number(transaction.total || 0), 0);
-  };
+      .reduce((sum, t) => sum + Number(t.total || 0), 0);
 
   const handleReturnClick = (transaction: Transaction) => {
     setSelectedTransaction(transaction);
     setReturnDialogOpen(true);
+  };
+
+  const openDetail = async (tx: Transaction) => {
+    setDetailTx(tx);
+    setDetailOpen(true);
+    setDetailItems([]);
+    if (tx.type !== 'sale') return;
+    setDetailLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('sale_items')
+        .select('id, quantity, unit_price, discount, total, product_snapshot')
+        .eq('sale_id', tx.id);
+      if (error) throw error;
+      setDetailItems((data || []) as any);
+    } catch (e) {
+      console.error('Error fetching sale items:', e);
+    } finally {
+      setDetailLoading(false);
+    }
   };
 
   if (loading) {
@@ -155,30 +196,40 @@ export default function TransactionHistory() {
     );
   }
 
+  const pd = detailTx?.payment_details || {};
+  const cashAmount = Number(pd.cash ?? pd.cash_amount ?? pd.cashAmount ?? 0);
+  const cardAmount = Number(pd.card ?? pd.card_amount ?? pd.cardAmount ?? 0);
+  const changeAmount = Number(pd.change ?? pd.change_amount ?? 0);
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Riwayat Transaksi</h1>
           <p className="text-muted-foreground">Penjualan dan pengeluaran belanja toko</p>
         </div>
-        <Select value={days} onValueChange={setDays}>
-          <SelectTrigger className="w-32">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="1">Hari Ini</SelectItem>
-            <SelectItem value="2">2 hari</SelectItem>
-            <SelectItem value="3">3 hari</SelectItem>
-            <SelectItem value="4">4 hari</SelectItem>
-            <SelectItem value="5">5 hari</SelectItem>
-            <SelectItem value="6">6 hari</SelectItem>
-            <SelectItem value="7">7 hari</SelectItem>
-          </SelectContent>
-        </Select>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn("w-[240px] justify-start text-left font-normal")}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {format(selectedDate, "EEEE, dd MMMM yyyy", { locale: idLocale })}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="end">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={(d) => d && setSelectedDate(d)}
+              initialFocus
+              className={cn("p-3 pointer-events-auto")}
+            />
+          </PopoverContent>
+        </Popover>
       </div>
 
-      {/* Summary Card */}
       <Card className="bg-gradient-card border-border/50">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
@@ -196,11 +247,10 @@ export default function TransactionHistory() {
         </CardContent>
       </Card>
 
-      {/* Transactions Table */}
       <Card className="bg-gradient-card border-border/50">
         <CardHeader>
           <CardTitle className="text-foreground flex items-center gap-2">
-            <Calendar className="w-5 h-5" />
+            <CalendarIcon className="w-5 h-5" />
             Daftar Transaksi
           </CardTitle>
         </CardHeader>
@@ -224,8 +274,8 @@ export default function TransactionHistory() {
                   {transactions.map((transaction) => {
                     const isExpense = transaction.type === 'expense';
                     return (
-                      <TableRow 
-                        key={`${transaction.type}-${transaction.id}`} 
+                      <TableRow
+                        key={`${transaction.type}-${transaction.id}`}
                         className={`border-border/50 ${transaction.status === 'returned' ? 'opacity-60' : ''}`}
                       >
                         <TableCell className="font-medium text-foreground">
@@ -241,17 +291,11 @@ export default function TransactionHistory() {
                             transaction.receipt_number || '-'
                           )}
                         </TableCell>
-                        <TableCell className="text-foreground">
-                          {transaction.user_name || '-'}
-                        </TableCell>
-                        <TableCell className="text-foreground">
-                          {transaction.member_name || '---'}
-                        </TableCell>
-                        <TableCell className="text-foreground capitalize">
-                          {transaction.payment_method || '-'}
-                        </TableCell>
+                        <TableCell className="text-foreground">{transaction.user_name || '-'}</TableCell>
+                        <TableCell className="text-foreground">{transaction.member_name || '---'}</TableCell>
+                        <TableCell className="text-foreground capitalize">{transaction.payment_method || '-'}</TableCell>
                         <TableCell className={`text-right font-semibold ${isExpense ? 'text-destructive' : 'text-foreground'}`}>
-                          {isExpense ? '- ' : ''}Rp {Math.abs(Number(transaction.total || 0)).toLocaleString('id-ID')}
+                          {isExpense ? '- ' : ''}{formatRp(transaction.total)}
                         </TableCell>
                         <TableCell>
                           {isExpense ? (
@@ -263,17 +307,29 @@ export default function TransactionHistory() {
                           )}
                         </TableCell>
                         <TableCell className="text-right">
-                          {!isExpense && transaction.status !== 'returned' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleReturnClick(transaction)}
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                            >
-                              <Undo2 className="h-4 w-4 mr-1" />
-                              Retur
-                            </Button>
-                          )}
+                          <div className="flex justify-end gap-1">
+                            {!isExpense && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openDetail(transaction)}
+                              >
+                                <Eye className="h-4 w-4 mr-1" />
+                                Nota
+                              </Button>
+                            )}
+                            {!isExpense && transaction.status !== 'returned' && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleReturnClick(transaction)}
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              >
+                                <Undo2 className="h-4 w-4 mr-1" />
+                                Retur
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
@@ -284,7 +340,7 @@ export default function TransactionHistory() {
           ) : (
             <div className="text-center py-12">
               <Receipt className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Tidak ada transaksi untuk periode yang dipilih</p>
+              <p className="text-muted-foreground">Tidak ada transaksi pada tanggal yang dipilih</p>
             </div>
           )}
         </CardContent>
@@ -304,6 +360,136 @@ export default function TransactionHistory() {
           onSuccess={fetchTransactions}
         />
       )}
+
+      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detail Nota</DialogTitle>
+          </DialogHeader>
+          {detailTx && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-muted-foreground">No. Struk</p>
+                  <p className="font-medium text-foreground">{detailTx.receipt_number || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Tanggal & Waktu</p>
+                  <p className="font-medium text-foreground">
+                    {format(new Date(detailTx.created_at), 'dd/MM/yyyy HH:mm')}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Kasir</p>
+                  <p className="font-medium text-foreground">{detailTx.user_name || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Member</p>
+                  <p className="font-medium text-foreground">
+                    {detailTx.member_name
+                      ? `${detailTx.member_name}${detailTx.member_code ? ` (${detailTx.member_code})` : ''}`
+                      : '---'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Metode Pembayaran</p>
+                  <p className="font-medium text-foreground capitalize">{detailTx.payment_method || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Status</p>
+                  <p className="font-medium text-foreground">
+                    {detailTx.status === 'returned' ? 'Diretur' : 'Selesai'}
+                  </p>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div>
+                <p className="font-semibold text-foreground mb-2">Item</p>
+                {detailLoading ? (
+                  <p className="text-sm text-muted-foreground">Memuat...</p>
+                ) : detailItems.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Tidak ada item</p>
+                ) : (
+                  <div className="rounded-md border border-border/50">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="hover:bg-transparent">
+                          <TableHead>Produk</TableHead>
+                          <TableHead className="text-center">Qty</TableHead>
+                          <TableHead className="text-right">Harga</TableHead>
+                          <TableHead className="text-right">Diskon</TableHead>
+                          <TableHead className="text-right">Total</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {detailItems.map((it) => {
+                          const snap = it.product_snapshot || {};
+                          const name = snap.product_name || snap.name || 'Produk';
+                          const variant = snap.variant_name ? ` - ${snap.variant_name}` : '';
+                          return (
+                            <TableRow key={it.id}>
+                              <TableCell className="text-foreground">{name}{variant}</TableCell>
+                              <TableCell className="text-center">{Number(it.quantity)}</TableCell>
+                              <TableCell className="text-right">{formatRp(it.unit_price)}</TableCell>
+                              <TableCell className="text-right">{formatRp(it.discount)}</TableCell>
+                              <TableCell className="text-right font-medium">{formatRp(it.total)}</TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </div>
+
+              <Separator />
+
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Subtotal</span>
+                  <span className="text-foreground">{formatRp(detailTx.subtotal || 0)}</span>
+                </div>
+                {(detailTx.discount_total || 0) > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Diskon</span>
+                    <span className="text-foreground">- {formatRp(detailTx.discount_total || 0)}</span>
+                  </div>
+                )}
+                {(detailTx.tax_total || 0) > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Pajak</span>
+                    <span className="text-foreground">{formatRp(detailTx.tax_total || 0)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-bold text-base pt-1">
+                  <span className="text-foreground">Total</span>
+                  <span className="text-foreground">{formatRp(detailTx.total)}</span>
+                </div>
+                {cashAmount > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Tunai</span>
+                    <span className="text-foreground">{formatRp(cashAmount)}</span>
+                  </div>
+                )}
+                {cardAmount > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Kartu / Non-Tunai</span>
+                    <span className="text-foreground">{formatRp(cardAmount)}</span>
+                  </div>
+                )}
+                {changeAmount > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Kembalian</span>
+                    <span className="text-foreground">{formatRp(changeAmount)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
