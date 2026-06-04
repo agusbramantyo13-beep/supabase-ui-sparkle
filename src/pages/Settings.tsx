@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { useBluetoothPrinter } from "@/contexts/BluetoothPrinterContext";
 
 export default function Settings() {
   const [loading, setLoading] = useState(false);
@@ -91,7 +92,7 @@ export default function Settings() {
     receiptCustomText: "",
   });
 
-  const [bluetoothDevice, setBluetoothDevice] = useState<any>(null);
+  const btPrinter = useBluetoothPrinter();
 
   const handleSave = async () => {
     setLoading(true);
@@ -116,50 +117,49 @@ export default function Settings() {
 
   const handleConnectPrinter = async () => {
     try {
-      // @ts-ignore - Web Bluetooth API
-      if (!navigator.bluetooth) {
+      if (!btPrinter.supported) {
         toast({
           title: "Tidak Didukung",
-          description: "Browser Anda tidak mendukung Bluetooth API. Gunakan Chrome atau Edge.",
-          variant: "destructive"
+          description:
+            "Web Bluetooth tidak tersedia. Buka aplikasi ini di Chrome (Android/Desktop) lewat HTTPS. Pada WebView/wrapper, pastikan wrapper mendukung Web Bluetooth (mis. Bubblewrap/TWA Chrome).",
+          variant: "destructive",
         });
         return;
       }
-
-      // @ts-ignore
-      const device = await navigator.bluetooth.requestDevice({
-        filters: [{ services: ['000018f0-0000-1000-8000-00805f9b34fb'] }],
-        optionalServices: ['battery_service']
-      });
-
-      setBluetoothDevice(device);
-      handleSettingChange('printerConnected', true);
-      
+      await btPrinter.connect();
       toast({
         title: "Berhasil",
-        description: `Printer ${device.name} terhubung`,
+        description: `Printer ${btPrinter.deviceName || ""} terhubung`,
       });
-    } catch (error) {
-      console.error('Bluetooth error:', error);
+    } catch (error: any) {
+      console.error("Bluetooth error:", error);
       toast({
         title: "Gagal",
-        description: "Gagal menghubungkan printer",
-        variant: "destructive"
+        description: error?.message || "Gagal menghubungkan printer",
+        variant: "destructive",
       });
     }
   };
 
   const handleDisconnectPrinter = () => {
-    if (bluetoothDevice?.gatt?.connected) {
-      bluetoothDevice.gatt.disconnect();
-    }
-    setBluetoothDevice(null);
-    handleSettingChange('printerConnected', false);
-    
+    btPrinter.disconnect();
     toast({
       title: "Terputus",
       description: "Printer telah diputus",
     });
+  };
+
+  const handleTestPrint = async () => {
+    try {
+      await btPrinter.printTest(settings.storeName);
+      toast({ title: "Berhasil", description: "Tes cetak terkirim" });
+    } catch (e: any) {
+      toast({
+        title: "Gagal Cetak",
+        description: e?.message || "Tidak bisa mengirim ke printer",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -357,30 +357,41 @@ export default function Settings() {
                   <Bluetooth className="w-8 h-8 text-primary" />
                   <div>
                     <h4 className="font-medium">
-                      {settings.printerConnected 
-                        ? (bluetoothDevice?.name || "Printer Terhubung") 
-                        : "Tidak Ada Printer"}
+                      {btPrinter.connected
+                        ? (btPrinter.deviceName || "Printer Terhubung")
+                        : (btPrinter.deviceName ? `${btPrinter.deviceName} (belum terhubung)` : "Tidak Ada Printer")}
                     </h4>
                     <p className="text-sm text-muted-foreground">
-                      {settings.printerConnected ? "Status: Terhubung" : "Status: Tidak Terhubung"}
+                      {btPrinter.connected ? "Status: Terhubung" : "Status: Tidak Terhubung"}
                     </p>
                   </div>
                 </div>
-                {settings.printerConnected ? (
-                  <Button variant="destructive" onClick={handleDisconnectPrinter}>
-                    Putuskan
-                  </Button>
-                ) : (
-                  <Button onClick={handleConnectPrinter}>
-                    <Bluetooth className="w-4 h-4 mr-2" />
-                    Hubungkan
-                  </Button>
-                )}
+                <div className="flex gap-2">
+                  {btPrinter.connected && (
+                    <Button variant="outline" onClick={handleTestPrint}>
+                      <Printer className="w-4 h-4 mr-2" />
+                      Tes Cetak
+                    </Button>
+                  )}
+                  {btPrinter.connected ? (
+                    <Button variant="destructive" onClick={handleDisconnectPrinter}>
+                      Putuskan
+                    </Button>
+                  ) : (
+                    <Button onClick={handleConnectPrinter}>
+                      <Bluetooth className="w-4 h-4 mr-2" />
+                      Hubungkan
+                    </Button>
+                  )}
+                </div>
               </div>
               
-              <p className="text-sm text-muted-foreground">
-                Catatan: Fitur Bluetooth hanya bekerja di browser Chrome atau Edge dengan HTTPS
-              </p>
+              <div className="text-sm text-muted-foreground space-y-1">
+                <p>• Fitur ini menggunakan Web Bluetooth — butuh Chrome (Android/Desktop) atau Edge, dengan HTTPS.</p>
+                <p>• Aktifkan Bluetooth & izin Lokasi di HP, lalu nyalakan printer thermal Anda.</p>
+                <p>• Jika aplikasi dibuka dalam wrapper/WebView, pastikan wrapper-nya berbasis Chrome Custom Tabs / TWA agar Web Bluetooth aktif. WebView Android standar tidak mendukung Web Bluetooth.</p>
+                <p>• Mendukung printer ESC/POS umum (Xprinter, RPP02N, Goojprt, dll.) dengan kertas 58mm.</p>
+              </div>
             </CardContent>
           </Card>
 
