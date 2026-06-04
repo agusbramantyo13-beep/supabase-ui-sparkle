@@ -290,7 +290,6 @@ export default function Members() {
           <h1 className="text-3xl font-bold text-foreground">Member</h1>
           <p className="text-muted-foreground">Kelola akun dan informasi member</p>
         </div>
-        {isOwner && (
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
           <DialogTrigger asChild>
             <Button className="bg-gradient-primary hover:bg-primary/90" onClick={() => resetForm()}>
@@ -380,7 +379,6 @@ export default function Members() {
             </div>
           </DialogContent>
         </Dialog>
-        )}
       </div>
 
       <div className="flex items-center gap-4">
@@ -400,7 +398,6 @@ export default function Members() {
             <p className="text-muted-foreground mb-4">
               {searchTerm ? "Tidak ada member yang cocok dengan pencarian" : "Belum ada member yang ditambahkan"}
             </p>
-            {isOwner && (
             <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-gradient-primary hover:bg-primary/90" onClick={() => resetForm()}>
@@ -409,7 +406,6 @@ export default function Members() {
                 </Button>
               </DialogTrigger>
             </Dialog>
-            )}
           </CardContent>
         </Card>
       ) : (
