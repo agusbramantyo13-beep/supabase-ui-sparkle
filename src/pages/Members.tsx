@@ -398,7 +398,6 @@ export default function Members() {
             <p className="text-muted-foreground mb-4">
               {searchTerm ? "Tidak ada member yang cocok dengan pencarian" : "Belum ada member yang ditambahkan"}
             </p>
-            {isOwner && (
             <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-gradient-primary hover:bg-primary/90" onClick={() => resetForm()}>
@@ -407,7 +406,6 @@ export default function Members() {
                 </Button>
               </DialogTrigger>
             </Dialog>
-            )}
           </CardContent>
         </Card>
       ) : (
