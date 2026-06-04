@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Receipt, Calendar as CalendarIcon, Undo2, ShoppingBag, Eye } from "lucide-react";
+import { Receipt, Calendar as CalendarIcon, Undo2, ShoppingBag, Eye, Printer } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,8 @@ import { format, startOfDay, endOfDay } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import SalesReturnDialog from "@/components/SalesReturnDialog";
+import { useBluetoothPrinter } from "@/contexts/BluetoothPrinterContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface Transaction {
   id: string;
