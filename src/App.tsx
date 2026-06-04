@@ -166,6 +166,7 @@ const App = () => (
               />
             </Routes>
           </BrowserRouter>
+          </BluetoothPrinterProvider>
         </StoreProvider>
       </AuthProvider>
     </TooltipProvider>
