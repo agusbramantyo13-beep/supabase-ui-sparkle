@@ -49,7 +49,9 @@ const formatRp = (n: number) => `Rp ${Math.abs(Number(n || 0)).toLocaleString('i
 export default function TransactionHistory() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const { currentStoreId } = useStore();
+  const { currentStoreId, currentStore } = useStore();
+  const btPrinter = useBluetoothPrinter();
+  const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
