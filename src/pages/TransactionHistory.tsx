@@ -205,6 +205,64 @@ export default function TransactionHistory() {
   const cardAmount = Number(pd.card ?? pd.card_amount ?? pd.cardAmount ?? 0);
   const changeAmount = Number(pd.change ?? pd.change_amount ?? 0);
 
+  const handlePrintReceipt = async () => {
+    if (!detailTx) return;
+    try {
+      if (!btPrinter.connected) {
+        try {
+          await btPrinter.connect();
+        } catch (e: any) {
+          toast({
+            title: "Printer Belum Terhubung",
+            description:
+              e?.message ||
+              "Hubungkan printer Bluetooth dulu di menu Pengaturan > Printer.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+      await btPrinter.printReceipt({
+        storeName: currentStore?.name || "Toko",
+        storeAddress: (currentStore as any)?.address || undefined,
+        storePhone: (currentStore as any)?.phone || undefined,
+        receiptNumber: detailTx.receipt_number || undefined,
+        dateTime: format(new Date(detailTx.created_at), "dd/MM/yyyy HH:mm"),
+        cashier: detailTx.user_name || undefined,
+        member: detailTx.member_name
+          ? `${detailTx.member_name}${detailTx.member_code ? ` (${detailTx.member_code})` : ""}`
+          : undefined,
+        paymentMethod: detailTx.payment_method || undefined,
+        items: detailItems.map((it) => {
+          const snap = it.product_snapshot || {};
+          const name = (snap.product_name || snap.name || "Produk") +
+            (snap.variant_name ? ` - ${snap.variant_name}` : "");
+          return {
+            name,
+            qty: Number(it.quantity),
+            price: Number(it.unit_price),
+            total: Number(it.total),
+          };
+        }),
+        subtotal: Number(detailTx.subtotal || 0),
+        discount: Number(detailTx.discount_total || 0),
+        tax: Number(detailTx.tax_total || 0),
+        total: Number(detailTx.total || 0),
+        cash: cashAmount,
+        card: cardAmount,
+        change: changeAmount,
+        storeFooter: "Terima kasih atas kunjungan Anda!",
+      });
+      toast({ title: "Berhasil", description: "Nota dikirim ke printer" });
+    } catch (e: any) {
+      toast({
+        title: "Gagal Cetak",
+        description: e?.message || "Tidak bisa mengirim ke printer",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -368,7 +426,15 @@ export default function TransactionHistory() {
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Detail Nota</DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle>Detail Nota</DialogTitle>
+              {detailTx?.type !== "expense" && (
+                <Button size="sm" variant="outline" onClick={handlePrintReceipt} className="mr-8">
+                  <Printer className="w-4 h-4 mr-2" />
+                  Cetak Nota
+                </Button>
+              )}
+            </div>
           </DialogHeader>
           {detailTx && (
             <div className="space-y-4">
