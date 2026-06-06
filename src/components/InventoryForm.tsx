@@ -24,6 +24,7 @@ interface InventoryFormProps {
 
 export function InventoryForm({ open, onOpenChange, onSuccess, type }: InventoryFormProps) {
   const [variants, setVariants] = useState<ProductVariant[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [formData, setFormData] = useState({
     variant_id: "",
     quantity: "",
@@ -32,6 +33,11 @@ export function InventoryForm({ open, onOpenChange, onSuccess, type }: Inventory
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { currentStoreId } = useStore();
+
+  const filteredVariants = variants.filter(v =>
+    v.product_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    v.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   useEffect(() => {
     if (open) {
@@ -45,6 +51,7 @@ export function InventoryForm({ open, onOpenChange, onSuccess, type }: Inventory
       quantity: "",
       reason: ""
     });
+    setSearchQuery("");
   }, [open]);
 
   const fetchVariants = async () => {
@@ -201,19 +208,34 @@ export function InventoryForm({ open, onOpenChange, onSuccess, type }: Inventory
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="variant">Varian Produk *</Label>
-            <Select 
-              value={formData.variant_id} 
+            <Select
+              value={formData.variant_id}
               onValueChange={(value) => setFormData({ ...formData, variant_id: value })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Pilih varian produk" />
               </SelectTrigger>
-              <SelectContent>
-                {variants.map((variant) => (
-                  <SelectItem key={variant.id} value={variant.id}>
-                    {variant.product_name} - {variant.name}
-                  </SelectItem>
-                ))}
+              <SelectContent className="max-h-72">
+                <div className="sticky top-0 bg-popover z-10 p-2 border-b">
+                  <Input
+                    placeholder="Cari produk..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="h-8 text-sm"
+                    autoComplete="off"
+                  />
+                </div>
+                {filteredVariants.length > 0 ? (
+                  filteredVariants.map((variant) => (
+                    <SelectItem key={variant.id} value={variant.id}>
+                      {variant.product_name} - {variant.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <div className="px-2 py-3 text-sm text-muted-foreground text-center">
+                    Tidak ada produk ditemukan
+                  </div>
+                )}
               </SelectContent>
             </Select>
           </div>
