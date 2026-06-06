@@ -24,6 +24,7 @@ interface InventoryFormProps {
 
 export function InventoryForm({ open, onOpenChange, onSuccess, type }: InventoryFormProps) {
   const [variants, setVariants] = useState<ProductVariant[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [formData, setFormData] = useState({
     variant_id: "",
     quantity: "",
@@ -32,6 +33,11 @@ export function InventoryForm({ open, onOpenChange, onSuccess, type }: Inventory
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { currentStoreId } = useStore();
+
+  const filteredVariants = variants.filter(v =>
+    v.product_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    v.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   useEffect(() => {
     if (open) {
