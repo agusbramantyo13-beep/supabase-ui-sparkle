@@ -208,19 +208,34 @@ export function InventoryForm({ open, onOpenChange, onSuccess, type }: Inventory
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="variant">Varian Produk *</Label>
-            <Select 
-              value={formData.variant_id} 
+            <Select
+              value={formData.variant_id}
               onValueChange={(value) => setFormData({ ...formData, variant_id: value })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Pilih varian produk" />
               </SelectTrigger>
-              <SelectContent>
-                {variants.map((variant) => (
-                  <SelectItem key={variant.id} value={variant.id}>
-                    {variant.product_name} - {variant.name}
-                  </SelectItem>
-                ))}
+              <SelectContent className="max-h-72">
+                <div className="sticky top-0 bg-popover z-10 p-2 border-b">
+                  <Input
+                    placeholder="Cari produk..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="h-8 text-sm"
+                    autoComplete="off"
+                  />
+                </div>
+                {filteredVariants.length > 0 ? (
+                  filteredVariants.map((variant) => (
+                    <SelectItem key={variant.id} value={variant.id}>
+                      {variant.product_name} - {variant.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <div className="px-2 py-3 text-sm text-muted-foreground text-center">
+                    Tidak ada produk ditemukan
+                  </div>
+                )}
               </SelectContent>
             </Select>
           </div>
