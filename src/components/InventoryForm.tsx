@@ -51,6 +51,7 @@ export function InventoryForm({ open, onOpenChange, onSuccess, type }: Inventory
       quantity: "",
       reason: ""
     });
+    setSearchQuery("");
   }, [open]);
 
   const fetchVariants = async () => {
