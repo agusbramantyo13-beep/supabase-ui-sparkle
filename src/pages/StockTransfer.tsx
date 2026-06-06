@@ -364,19 +364,11 @@ export default function StockTransfer() {
                     {items.map((item, idx) => (
                       <TableRow key={idx}>
                         <TableCell>
-                          <Select
-                            value={item.variant_id ? String(item.variant_id) : ""}
-                            onValueChange={(v) => updateItem(idx, Number(v))}
-                          >
-                            <SelectTrigger><SelectValue placeholder="Pilih produk" /></SelectTrigger>
-                            <SelectContent>
-                              {variants.map((v: any) => (
-                                <SelectItem key={v.id} value={String(v.id)}>
-                                  {v.products?.name} - {v.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <VariantPicker
+                            variants={variants}
+                            value={item.variant_id}
+                            onChange={(v) => updateItem(idx, v)}
+                          />
                         </TableCell>
                         <TableCell>
                           <Input
