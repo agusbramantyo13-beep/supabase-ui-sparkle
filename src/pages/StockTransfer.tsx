@@ -453,3 +453,67 @@ export default function StockTransfer() {
     </div>
   );
 }
+
+function VariantPicker({
+  variants,
+  value,
+  onChange,
+}: {
+  variants: any[];
+  value: number;
+  onChange: (id: number) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const selected = variants.find((v) => v.id === value);
+  const filtered = variants.filter((v) => {
+    const q = search.toLowerCase().trim();
+    if (!q) return true;
+    const label = `${v.products?.name || ""} ${v.name || ""}`.toLowerCase();
+    return label.includes(q);
+  });
+
+  return (
+    <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) setSearch(""); }}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+          <span className="truncate">
+            {selected ? `${selected.products?.name || "-"} - ${selected.name}` : "Pilih produk"}
+          </span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="p-0 w-[--radix-popover-trigger-width] max-w-[90vw]" align="start">
+        <div className="p-2 border-b sticky top-0 bg-popover">
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              autoFocus
+              placeholder="Cari produk atau varian..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-8 h-9"
+            />
+          </div>
+        </div>
+        <div className="max-h-64 overflow-y-auto py-1">
+          {filtered.length === 0 ? (
+            <p className="text-sm text-muted-foreground px-3 py-4 text-center">Tidak ada hasil</p>
+          ) : (
+            filtered.map((v: any) => (
+              <button
+                key={v.id}
+                type="button"
+                onClick={() => { onChange(v.id); setOpen(false); setSearch(""); }}
+                className="w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+              >
+                {v.products?.name || "-"} - {v.name}
+              </button>
+            ))
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
