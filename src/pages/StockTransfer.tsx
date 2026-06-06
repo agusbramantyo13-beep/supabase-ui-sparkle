@@ -11,8 +11,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Printer, Eye, ArrowRightLeft } from "lucide-react";
+import { Plus, Trash2, Printer, Eye, ArrowRightLeft, ChevronsUpDown, Search } from "lucide-react";
 import { format } from "date-fns";
 
 interface TransferItem {
