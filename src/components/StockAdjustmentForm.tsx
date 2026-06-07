@@ -24,6 +24,8 @@ interface AdjustmentItem {
   old_quantity: number;
   new_quantity: number;
   unit_value: number;
+  open: boolean;
+  search: string;
 }
 
 interface StockAdjustmentFormProps {
@@ -35,7 +37,7 @@ interface StockAdjustmentFormProps {
 export function StockAdjustmentForm({ open, onOpenChange, onSuccess }: StockAdjustmentFormProps) {
   const [variants, setVariants] = useState<ProductVariant[]>([]);
   const [items, setItems] = useState<AdjustmentItem[]>([
-    { variant_id: "", old_quantity: 0, new_quantity: 0, unit_value: 0 }
+    { variant_id: "", old_quantity: 0, new_quantity: 0, unit_value: 0, open: false, search: "" }
   ]);
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
@@ -50,7 +52,7 @@ export function StockAdjustmentForm({ open, onOpenChange, onSuccess }: StockAdju
 
   useEffect(() => {
     if (open) {
-      setItems([{ variant_id: "", old_quantity: 0, new_quantity: 0, unit_value: 0 }]);
+      setItems([{ variant_id: "", old_quantity: 0, new_quantity: 0, unit_value: 0, open: false, search: "" }]);
       setNote("");
     }
   }, [open]);
@@ -91,7 +93,6 @@ export function StockAdjustmentForm({ open, onOpenChange, onSuccess }: StockAdju
     const variant = variants.find(v => v.id === variantId);
     if (!variant) return;
 
-    // Fetch current inventory
     const { data: inventory } = await supabase
       .from('inventory')
       .select('quantity')
@@ -102,10 +103,13 @@ export function StockAdjustmentForm({ open, onOpenChange, onSuccess }: StockAdju
 
     const newItems = [...items];
     newItems[index] = {
+      ...newItems[index],
       variant_id: variantId,
       old_quantity: currentQty,
       new_quantity: currentQty,
-      unit_value: variant.cost_price
+      unit_value: variant.cost_price,
+      open: false,
+      search: ""
     };
     setItems(newItems);
   };
@@ -116,8 +120,14 @@ export function StockAdjustmentForm({ open, onOpenChange, onSuccess }: StockAdju
     setItems(newItems);
   };
 
+  const updateItemField = (index: number, field: keyof AdjustmentItem, value: any) => {
+    const newItems = [...items];
+    newItems[index] = { ...newItems[index], [field]: value };
+    setItems(newItems);
+  };
+
   const addItem = () => {
-    setItems([...items, { variant_id: "", old_quantity: 0, new_quantity: 0, unit_value: 0 }]);
+    setItems([...items, { variant_id: "", old_quantity: 0, new_quantity: 0, unit_value: 0, open: false, search: "" }]);
   };
 
   const removeItem = (index: number) => {
@@ -137,7 +147,6 @@ export function StockAdjustmentForm({ open, onOpenChange, onSuccess }: StockAdju
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate all items
     const validItems = items.filter(item => item.variant_id && item.new_quantity >= 0);
     if (validItems.length === 0) {
       toast({
@@ -153,7 +162,6 @@ export function StockAdjustmentForm({ open, onOpenChange, onSuccess }: StockAdju
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Create adjustment session
       const { data: session, error: sessionError } = await supabase
         .from('stock_adjustment_sessions')
         .insert({
@@ -168,12 +176,10 @@ export function StockAdjustmentForm({ open, onOpenChange, onSuccess }: StockAdju
 
       if (sessionError) throw sessionError;
 
-      // Process each item
       for (const item of validItems) {
         const qtyDiff = item.new_quantity - item.old_quantity;
         const valueDiff = qtyDiff * item.unit_value;
 
-        // Create adjustment item record
         const { error: itemError } = await supabase
           .from('stock_adjustment_items')
           .insert({
@@ -188,7 +194,6 @@ export function StockAdjustmentForm({ open, onOpenChange, onSuccess }: StockAdju
 
         if (itemError) throw itemError;
 
-        // Update inventory
         const { data: currentInventory } = await supabase
           .from('inventory')
           .select('id')
@@ -212,7 +217,6 @@ export function StockAdjustmentForm({ open, onOpenChange, onSuccess }: StockAdju
           if (invError) throw invError;
         }
 
-        // Create stock movement record
         const { error: movementError } = await supabase
           .from('stock_movements')
           .insert({
@@ -253,91 +257,134 @@ export function StockAdjustmentForm({ open, onOpenChange, onSuccess }: StockAdju
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-4">
-            {items.map((item, index) => (
-              <div key={index} className="border rounded-lg p-4 space-y-3 bg-muted/50">
-                <div className="flex justify-between items-center">
-                  <Label className="font-semibold">Item #{index + 1}</Label>
-                  {items.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeItem(index)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
+            {items.map((item, index) => {
+              const selectedVariant = variants.find(v => v.id === item.variant_id);
+              const filtered = variants.filter(v =>
+                v.product_name.toLowerCase().includes(item.search.toLowerCase()) ||
+                v.name.toLowerCase().includes(item.search.toLowerCase())
+              );
+
+              return (
+                <div key={index} className="border rounded-lg p-4 space-y-3 bg-muted/50">
+                  <div className="flex justify-between items-center">
+                    <Label className="font-semibold">Item #{index + 1}</Label>
+                    {items.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeItem(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <Label>Produk Varian *</Label>
+                      <Popover open={item.open} onOpenChange={(open) => updateItemField(index, 'open', open)}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={item.open}
+                            className="w-full justify-between"
+                          >
+                            {selectedVariant
+                              ? `${selectedVariant.product_name} - ${selectedVariant.name}`
+                              : "Pilih produk varian"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                          <div className="p-2 border-b">
+                            <div className="relative">
+                              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                placeholder="Cari produk..."
+                                value={item.search}
+                                onChange={(e) => updateItemField(index, 'search', e.target.value)}
+                                className="pl-8 h-9"
+                                autoComplete="off"
+                              />
+                            </div>
+                          </div>
+                          <div className="max-h-60 overflow-y-auto">
+                            {filtered.length > 0 ? (
+                              filtered.map((variant) => (
+                                <button
+                                  key={variant.id}
+                                  type="button"
+                                  onClick={() => handleVariantChange(index, variant.id)}
+                                  className={cn(
+                                    "w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground",
+                                    item.variant_id === variant.id && "bg-accent text-accent-foreground"
+                                  )}
+                                >
+                                  {variant.product_name} - {variant.name}
+                                </button>
+                              ))
+                            ) : (
+                              <div className="px-3 py-3 text-sm text-muted-foreground text-center">
+                                Tidak ada produk ditemukan
+                              </div>
+                            )}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+
+                    <div>
+                      <Label>Stok Lama</Label>
+                      <Input
+                        type="number"
+                        value={item.old_quantity}
+                        disabled
+                        className="bg-muted"
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Stok Baru *</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={item.new_quantity}
+                        onChange={(e) => handleNewQuantityChange(index, e.target.value)}
+                        placeholder="Masukkan stok baru"
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Nilai Satuan</Label>
+                      <Input
+                        type="number"
+                        value={item.unit_value}
+                        disabled
+                        className="bg-muted"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="p-2 bg-background rounded border">
+                      <span className="text-muted-foreground">Selisih Qty:</span>
+                      <span className={`ml-2 font-semibold ${(item.new_quantity - item.old_quantity) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {(item.new_quantity - item.old_quantity) >= 0 ? '+' : ''}{(item.new_quantity - item.old_quantity).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="p-2 bg-background rounded border">
+                      <span className="text-muted-foreground">Selisih Nilai:</span>
+                      <span className={`ml-2 font-semibold ${((item.new_quantity - item.old_quantity) * item.unit_value) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {((item.new_quantity - item.old_quantity) * item.unit_value) >= 0 ? '+' : ''}Rp {((item.new_quantity - item.old_quantity) * item.unit_value).toLocaleString('id-ID')}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <Label>Produk Varian *</Label>
-                    <Select
-                      value={item.variant_id}
-                      onValueChange={(value) => handleVariantChange(index, value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih produk varian" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {variants.map((variant) => (
-                          <SelectItem key={variant.id} value={variant.id}>
-                            {variant.product_name} - {variant.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label>Stok Lama</Label>
-                    <Input
-                      type="number"
-                      value={item.old_quantity}
-                      disabled
-                      className="bg-muted"
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Stok Baru *</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={item.new_quantity}
-                      onChange={(e) => handleNewQuantityChange(index, e.target.value)}
-                      placeholder="Masukkan stok baru"
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Nilai Satuan</Label>
-                    <Input
-                      type="number"
-                      value={item.unit_value}
-                      disabled
-                      className="bg-muted"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div className="p-2 bg-background rounded border">
-                    <span className="text-muted-foreground">Selisih Qty:</span>
-                    <span className={`ml-2 font-semibold ${(item.new_quantity - item.old_quantity) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {(item.new_quantity - item.old_quantity) >= 0 ? '+' : ''}{(item.new_quantity - item.old_quantity).toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="p-2 bg-background rounded border">
-                    <span className="text-muted-foreground">Selisih Nilai:</span>
-                    <span className={`ml-2 font-semibold ${((item.new_quantity - item.old_quantity) * item.unit_value) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {((item.new_quantity - item.old_quantity) * item.unit_value) >= 0 ? '+' : ''}Rp {((item.new_quantity - item.old_quantity) * item.unit_value).toLocaleString('id-ID')}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <Button
