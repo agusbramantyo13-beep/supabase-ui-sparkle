@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { LogIn, UserPlus, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +27,17 @@ export default function Auth() {
   const [isRecovery, setIsRecovery] = useState(false);
 
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const nextParam = searchParams.get("next");
+  const isSafeNext = (n: string | null): n is string =>
+    !!n && n.startsWith("/") && !n.startsWith("//");
+  const redirectAfterAuth = () => {
+    if (isSafeNext(nextParam)) {
+      window.location.href = nextParam;
+    } else {
+      navigate("/");
+    }
+  };
   const { toast } = useToast();
 
   useEffect(() => {
@@ -35,8 +46,7 @@ export default function Auth() {
       if (event === "PASSWORD_RECOVERY") {
         setIsRecovery(true);
       } else if (event === "SIGNED_IN" && !isRecovery) {
-        // Only redirect if not in recovery mode
-        navigate("/");
+        redirectAfterAuth();
       }
     });
 
@@ -51,7 +61,7 @@ export default function Auth() {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session && !isRecovery) {
-        navigate("/");
+        redirectAfterAuth();
       }
     };
     checkUser();
@@ -76,7 +86,7 @@ export default function Auth() {
         description: "Berhasil masuk!",
       });
 
-      navigate("/");
+      redirectAfterAuth();
     } catch (error: any) {
       toast({
         title: "Gagal",

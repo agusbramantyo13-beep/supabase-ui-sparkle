@@ -1,0 +1,132 @@
+{
+  "version": 1,
+  "sdk_version": "0.20.0",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://crorfyfrferxdejhhomk.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "kenzho-apps-mcp",
+      "version": "0.1.0",
+      "title": "KENZHO Apps MCP"
+    },
+    "tools": [
+      {
+        "name": "list_products",
+        "title": "List products",
+        "description": "List products in the signed-in user's accessible stores. Optionally filter by name/SKU search text.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "search": {
+              "type": "string",
+              "description": "Case-insensitive name or SKU search."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "description": "Max rows (default 50)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_inventory",
+        "title": "List inventory",
+        "description": "List current inventory rows for accessible stores. Optionally filter low stock.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "lowStockOnly": {
+              "type": "boolean",
+              "description": "Only return rows where stock <= 5."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "sales_summary",
+        "title": "Sales summary",
+        "description": "Return total sales and transaction count for the signed-in user's stores between two ISO dates (inclusive).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "from": {
+              "type": "string",
+              "description": "Start date, ISO 8601 (e.g. 2026-01-01)."
+            },
+            "to": {
+              "type": "string",
+              "description": "End date, ISO 8601 (e.g. 2026-01-31)."
+            }
+          },
+          "required": [
+            "from",
+            "to"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_members",
+        "title": "List members",
+        "description": "List loyalty members visible to the signed-in user. Optionally search by name or phone.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "search": {
+              "type": "string"
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
