@@ -31,6 +31,7 @@ import CashDeposits from "./pages/CashDeposits";
 import StoreExpenses from "./pages/StoreExpenses";
 import OtherSales from "./pages/OtherSales";
 import Auth from "./pages/Auth";
+import OAuthConsent from "./pages/OAuthConsent";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/auth" element={<Auth />} />
+              <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
               <Route path="/select-store" element={
                 <ProtectedRoute>
                   <StoreSelection />
