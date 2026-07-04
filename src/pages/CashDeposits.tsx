@@ -142,19 +142,37 @@ export default function CashDeposits() {
 
       if (salesErr) throw salesErr;
 
-      const totalSales = (salesData || []).reduce(
+      // Load other sales (Penjualan Lain-lain) — treated as cash income
+      const { data: otherSalesData, error: otherErr } = await supabase
+        .from("other_sales")
+        .select("amount, sale_date, created_at")
+        .eq("store_id", currentStore.id);
+
+      if (otherErr) throw otherErr;
+
+      const salesSum = (salesData || []).reduce(
         (s: number, r: any) => s + Number(r.total || 0),
         0
       );
-      setTotalCashSales(totalSales);
+      const otherSalesSum = (otherSalesData || []).reduce(
+        (s: number, r: any) => s + Number(r.amount || 0),
+        0
+      );
+      setTotalCashSales(salesSum + otherSalesSum);
 
-      // Today's cash sales
+      // Today's cash sales (regular sales + other sales)
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const todaySales = (salesData || [])
         .filter((s: any) => new Date(s.created_at) >= today)
         .reduce((s: number, r: any) => s + Number(r.total || 0), 0);
-      setTodayCashSales(todaySales);
+      const todayOtherSales = (otherSalesData || [])
+        .filter((s: any) => {
+          const d = s.sale_date ? new Date(s.sale_date) : new Date(s.created_at);
+          return d >= today;
+        })
+        .reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
+      setTodayCashSales(todaySales + todayOtherSales);
 
       // Load approved store expenses (Belanja Toko) - reduce from undeposited cash
       const { data: expensesData } = await supabase
