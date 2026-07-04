@@ -46,8 +46,7 @@ export default function Auth() {
       if (event === "PASSWORD_RECOVERY") {
         setIsRecovery(true);
       } else if (event === "SIGNED_IN" && !isRecovery) {
-        // Only redirect if not in recovery mode
-        navigate("/");
+        redirectAfterAuth();
       }
     });
 
@@ -62,7 +61,7 @@ export default function Auth() {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session && !isRecovery) {
-        navigate("/");
+        redirectAfterAuth();
       }
     };
     checkUser();
@@ -87,7 +86,7 @@ export default function Auth() {
         description: "Berhasil masuk!",
       });
 
-      navigate("/");
+      redirectAfterAuth();
     } catch (error: any) {
       toast({
         title: "Gagal",
