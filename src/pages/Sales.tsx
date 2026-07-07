@@ -577,6 +577,9 @@ export default function Sales() {
       const paid = Number(amountPaid) || 0;
       const change = getChange();
 
+      const splitCashNum = Number(splitCash) || 0;
+      const splitCardNum = Number(splitCard) || 0;
+
       if (paymentMethod === 'cash' && paid < total) {
         toast({
           title: "Gagal",
@@ -585,6 +588,27 @@ export default function Sales() {
         });
         setLoading(false);
         return;
+      }
+
+      if (paymentMethod === 'split') {
+        if (splitCashNum <= 0 || splitCardNum <= 0) {
+          toast({
+            title: "Gagal",
+            description: "Isi jumlah tunai dan kartu untuk pembayaran split",
+            variant: "destructive"
+          });
+          setLoading(false);
+          return;
+        }
+        if (splitCashNum + splitCardNum < total) {
+          toast({
+            title: "Gagal",
+            description: "Total tunai + kartu kurang dari total belanja",
+            variant: "destructive"
+          });
+          setLoading(false);
+          return;
+        }
       }
 
       const receiptNumber = `RCP-${Date.now()}`;
@@ -600,8 +624,10 @@ export default function Sales() {
           payment_method: paymentMethod,
           receipt_number: receiptNumber,
           payment_details: {
-            amount_paid: paid,
+            amount_paid: paymentMethod === 'split' ? (splitCashNum + splitCardNum) : paid,
             change: change,
+            cash_amount: paymentMethod === 'split' ? splitCashNum : (paymentMethod === 'cash' ? total : 0),
+            card_amount: paymentMethod === 'split' ? splitCardNum : (paymentMethod === 'card' ? total : 0),
             member_id: selectedMemberId || null,
             member_name: selectedMember?.name || null
           },
