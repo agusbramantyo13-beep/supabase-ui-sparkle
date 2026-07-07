@@ -746,6 +746,8 @@ export default function Sales() {
 
       clearCart();
       setAmountPaid("");
+      setSplitCash("");
+      setSplitCard("");
       setSelectedDiscountId("");
       setSelectedMemberId("");
       setSelectedRedemptionId("");
