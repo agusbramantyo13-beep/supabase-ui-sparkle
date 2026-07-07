@@ -1,4 +1,4 @@
-import { Input } from "@/components/ui/input";
+import { CurrencyKeypadInput } from "@/components/CurrencyKeypadInput";
 
 interface Props {
   total: number;
@@ -16,9 +16,8 @@ export function SplitPaymentInputs({ total, splitCash, splitCard, setSplitCash, 
   const change = paid - total;
 
   const handleCashChange = (raw: string) => {
-    const v = raw.replace(/[^0-9]/g, "");
-    setSplitCash(v);
-    const c = Number(v) || 0;
+    setSplitCash(raw);
+    const c = Number(raw) || 0;
     if (c < total) {
       setSplitCard(String(total - c));
     } else {
@@ -26,30 +25,25 @@ export function SplitPaymentInputs({ total, splitCash, splitCard, setSplitCash, 
     }
   };
 
-  const handleCardChange = (raw: string) => {
-    setSplitCard(raw.replace(/[^0-9]/g, ""));
-  };
-
   return (
     <div className="space-y-3 p-3 border border-border rounded-lg bg-muted/30">
       <div>
         <label className="text-sm font-medium text-foreground mb-2 block">Jumlah Tunai</label>
-        <Input
-          type="text"
-          placeholder="Contoh: 40.000"
-          value={splitCash ? Number(splitCash).toLocaleString("id-ID") : ""}
-          onChange={(e) => handleCashChange(e.target.value)}
-          className="text-lg"
+        <CurrencyKeypadInput
+          value={splitCash}
+          onChange={handleCashChange}
+          placeholder="0"
+          label="Jumlah Tunai"
+          targetAmount={total}
         />
       </div>
       <div>
         <label className="text-sm font-medium text-foreground mb-2 block">Jumlah Kartu</label>
-        <Input
-          type="text"
-          placeholder="Sisa otomatis, bisa diubah"
-          value={splitCard ? Number(splitCard).toLocaleString("id-ID") : ""}
-          onChange={(e) => handleCardChange(e.target.value)}
-          className="text-lg"
+        <CurrencyKeypadInput
+          value={splitCard}
+          onChange={setSplitCard}
+          placeholder="0"
+          label="Jumlah Kartu"
         />
       </div>
       <div className="flex justify-between text-sm pt-1">

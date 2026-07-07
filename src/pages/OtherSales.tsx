@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyKeypadInput } from "@/components/CurrencyKeypadInput";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -239,14 +240,13 @@ export default function OtherSales() {
               </div>
               <div>
                 <Label>Nominal Diterima (Rp) *</Label>
-                <Input
-                  inputMode="numeric"
-                  placeholder="0"
+                <CurrencyKeypadInput
                   value={amountInput}
-                  onChange={(e) =>
-                    setAmountInput(formatPriceInput(e.target.value))
-                  }
+                  onChange={setAmountInput}
+                  label="Nominal Diterima"
+                  placeholder="0"
                 />
+
               </div>
             </div>
             <DialogFooter>
