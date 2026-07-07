@@ -239,14 +239,13 @@ export default function OtherSales() {
               </div>
               <div>
                 <Label>Nominal Diterima (Rp) *</Label>
-                <Input
-                  inputMode="numeric"
-                  placeholder="0"
+                <CurrencyKeypadInput
                   value={amountInput}
-                  onChange={(e) =>
-                    setAmountInput(formatPriceInput(e.target.value))
-                  }
+                  onChange={setAmountInput}
+                  label="Nominal Diterima"
+                  placeholder="0"
                 />
+
               </div>
             </div>
             <DialogFooter>
