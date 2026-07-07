@@ -299,12 +299,13 @@ export default function StoreExpenses() {
             <div className="space-y-4">
               <div>
                 <Label>Nominal Belanja (Rp)</Label>
-                <Input
-                  inputMode="numeric"
-                  placeholder="0"
+                <CurrencyKeypadInput
                   value={amountInput}
-                  onChange={(e) => setAmountInput(formatPriceInput(e.target.value))}
+                  onChange={setAmountInput}
+                  label="Nominal Belanja"
+                  placeholder="0"
                 />
+
               </div>
               <div>
                 <Label>Keterangan Belanja *</Label>
