@@ -353,12 +353,13 @@ export default function CashDeposits() {
             <div className="space-y-4">
               <div>
                 <Label>Nominal Setoran (Rp)</Label>
-                <Input
-                  inputMode="numeric"
-                  placeholder="0"
+                <CurrencyKeypadInput
                   value={amountInput}
-                  onChange={(e) => setAmountInput(formatPriceInput(e.target.value))}
+                  onChange={setAmountInput}
+                  label="Nominal Setoran"
+                  placeholder="0"
                 />
+
               </div>
               <div>
                 <Label>Catatan (opsional)</Label>
