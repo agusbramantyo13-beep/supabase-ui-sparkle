@@ -1377,6 +1377,12 @@ export default function Sales() {
                           Kartu
                         </div>
                       </SelectItem>
+                      <SelectItem value="split">
+                        <div className="flex items-center gap-2">
+                          <CreditCard className="w-4 h-4" />
+                          Split (Tunai + Kartu)
+                        </div>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
 
@@ -1403,6 +1409,16 @@ export default function Sales() {
                         </div>
                       )}
                     </>
+                  )}
+
+                  {paymentMethod === 'split' && (
+                    <SplitPaymentInputs
+                      total={getTotalAmount()}
+                      splitCash={splitCash}
+                      splitCard={splitCard}
+                      setSplitCash={setSplitCash}
+                      setSplitCard={setSplitCard}
+                    />
                   )}
 
                   <Button 
