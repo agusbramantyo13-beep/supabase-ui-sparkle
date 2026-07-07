@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStore } from "@/contexts/StoreContext";
+import { SplitPaymentInputs } from "@/components/SplitPaymentInputs";
 
 interface ProductVariant {
   id: string;
@@ -94,6 +95,8 @@ export default function Sales() {
   const [searchTerm, setSearchTerm] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<string>("cash");
   const [amountPaid, setAmountPaid] = useState<string>("");
+  const [splitCash, setSplitCash] = useState<string>("");
+  const [splitCard, setSplitCard] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [selectedDiscountId, setSelectedDiscountId] = useState<string>("");
@@ -546,8 +549,12 @@ export default function Sales() {
   };
 
   const getChange = () => {
-    const paid = Number(amountPaid) || 0;
     const total = getTotalAmount();
+    if (paymentMethod === 'split') {
+      const paid = (Number(splitCash) || 0) + (Number(splitCard) || 0);
+      return paid - total;
+    }
+    const paid = Number(amountPaid) || 0;
     return paid - total;
   };
 
@@ -571,6 +578,9 @@ export default function Sales() {
       const paid = Number(amountPaid) || 0;
       const change = getChange();
 
+      const splitCashNum = Number(splitCash) || 0;
+      const splitCardNum = Number(splitCard) || 0;
+
       if (paymentMethod === 'cash' && paid < total) {
         toast({
           title: "Gagal",
@@ -579,6 +589,27 @@ export default function Sales() {
         });
         setLoading(false);
         return;
+      }
+
+      if (paymentMethod === 'split') {
+        if (splitCashNum <= 0 || splitCardNum <= 0) {
+          toast({
+            title: "Gagal",
+            description: "Isi jumlah tunai dan kartu untuk pembayaran split",
+            variant: "destructive"
+          });
+          setLoading(false);
+          return;
+        }
+        if (splitCashNum + splitCardNum < total) {
+          toast({
+            title: "Gagal",
+            description: "Total tunai + kartu kurang dari total belanja",
+            variant: "destructive"
+          });
+          setLoading(false);
+          return;
+        }
       }
 
       const receiptNumber = `RCP-${Date.now()}`;
@@ -594,8 +625,10 @@ export default function Sales() {
           payment_method: paymentMethod,
           receipt_number: receiptNumber,
           payment_details: {
-            amount_paid: paid,
+            amount_paid: paymentMethod === 'split' ? (splitCashNum + splitCardNum) : paid,
             change: change,
+            cash_amount: paymentMethod === 'split' ? splitCashNum : (paymentMethod === 'cash' ? total : 0),
+            card_amount: paymentMethod === 'split' ? splitCardNum : (paymentMethod === 'card' ? total : 0),
             member_id: selectedMemberId || null,
             member_name: selectedMember?.name || null
           },
@@ -714,6 +747,8 @@ export default function Sales() {
 
       clearCart();
       setAmountPaid("");
+      setSplitCash("");
+      setSplitCard("");
       setSelectedDiscountId("");
       setSelectedMemberId("");
       setSelectedRedemptionId("");
@@ -1067,6 +1102,12 @@ export default function Sales() {
                           Kartu
                         </div>
                       </SelectItem>
+                      <SelectItem value="split">
+                        <div className="flex items-center gap-2">
+                          <CreditCard className="w-4 h-4" />
+                          Split (Tunai + Kartu)
+                        </div>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
 
@@ -1092,6 +1133,16 @@ export default function Sales() {
                         </div>
                       )}
                     </>
+                  )}
+
+                  {paymentMethod === 'split' && (
+                    <SplitPaymentInputs
+                      total={getTotalAmount()}
+                      splitCash={splitCash}
+                      splitCard={splitCard}
+                      setSplitCash={setSplitCash}
+                      setSplitCard={setSplitCard}
+                    />
                   )}
 
                   <Button
@@ -1327,6 +1378,12 @@ export default function Sales() {
                           Kartu
                         </div>
                       </SelectItem>
+                      <SelectItem value="split">
+                        <div className="flex items-center gap-2">
+                          <CreditCard className="w-4 h-4" />
+                          Split (Tunai + Kartu)
+                        </div>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
 
@@ -1353,6 +1410,16 @@ export default function Sales() {
                         </div>
                       )}
                     </>
+                  )}
+
+                  {paymentMethod === 'split' && (
+                    <SplitPaymentInputs
+                      total={getTotalAmount()}
+                      splitCash={splitCash}
+                      splitCard={splitCard}
+                      setSplitCash={setSplitCash}
+                      setSplitCard={setSplitCard}
+                    />
                   )}
 
                   <Button 
