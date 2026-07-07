@@ -1115,15 +1115,12 @@ export default function Sales() {
                     <>
                       <div>
                         <label className="text-sm font-medium text-foreground mb-2 block">Jumlah Dibayar</label>
-                        <Input
-                          type="text"
-                          placeholder="Masukkan jumlah"
-                          value={amountPaid ? Number(amountPaid).toLocaleString('id-ID') : ''}
-                          onChange={(e) => {
-                            const rawValue = e.target.value.replace(/[^0-9]/g, '');
-                            setAmountPaid(rawValue);
-                          }}
-                          className="text-lg"
+                        <CurrencyKeypadInput
+                          value={amountPaid}
+                          onChange={setAmountPaid}
+                          label="Jumlah Dibayar"
+                          placeholder="0"
+                          targetAmount={getTotalAmount()}
                         />
                       </div>
                       {amountPaid && Number(amountPaid) >= getTotalAmount() && (
