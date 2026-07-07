@@ -132,15 +132,24 @@ export default function CashDeposits() {
       setTotalApproved(approved);
       setTotalPending(pending);
 
-      // Load all cash sales for the store
+      // Load all cash-bearing sales for the store (cash + split payments)
       const { data: salesData, error: salesErr } = await supabase
         .from("sales")
-        .select("total, payment_method, created_at, status")
+        .select("total, payment_method, payment_details, created_at, status")
         .eq("store_id", currentStore.id)
-        .eq("payment_method", "cash")
+        .in("payment_method", ["cash", "split"])
         .neq("status", "returned");
 
       if (salesErr) throw salesErr;
+
+      // Extract cash portion — full total for 'cash', payment_details.cash_amount for 'split'
+      const cashPortion = (r: any): number => {
+        if (r.payment_method === "split") {
+          const d = r.payment_details || {};
+          return Number(d.cash_amount || 0);
+        }
+        return Number(r.total || 0);
+      };
 
       // Load other sales (Penjualan Lain-lain) — treated as cash income
       const { data: otherSalesData, error: otherErr } = await supabase
@@ -151,7 +160,7 @@ export default function CashDeposits() {
       if (otherErr) throw otherErr;
 
       const salesSum = (salesData || []).reduce(
-        (s: number, r: any) => s + Number(r.total || 0),
+        (s: number, r: any) => s + cashPortion(r),
         0
       );
       const otherSalesSum = (otherSalesData || []).reduce(
@@ -165,7 +174,7 @@ export default function CashDeposits() {
       today.setHours(0, 0, 0, 0);
       const todaySales = (salesData || [])
         .filter((s: any) => new Date(s.created_at) >= today)
-        .reduce((s: number, r: any) => s + Number(r.total || 0), 0);
+        .reduce((s: number, r: any) => s + cashPortion(r), 0);
       const todayOtherSales = (otherSalesData || [])
         .filter((s: any) => {
           const d = s.sale_date ? new Date(s.sale_date) : new Date(s.created_at);
