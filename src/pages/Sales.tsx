@@ -548,8 +548,12 @@ export default function Sales() {
   };
 
   const getChange = () => {
-    const paid = Number(amountPaid) || 0;
     const total = getTotalAmount();
+    if (paymentMethod === 'split') {
+      const paid = (Number(splitCash) || 0) + (Number(splitCard) || 0);
+      return paid - total;
+    }
+    const paid = Number(amountPaid) || 0;
     return paid - total;
   };
 
