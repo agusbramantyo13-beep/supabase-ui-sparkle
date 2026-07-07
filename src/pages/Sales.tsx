@@ -94,6 +94,8 @@ export default function Sales() {
   const [searchTerm, setSearchTerm] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<string>("cash");
   const [amountPaid, setAmountPaid] = useState<string>("");
+  const [splitCash, setSplitCash] = useState<string>("");
+  const [splitCard, setSplitCard] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [selectedDiscountId, setSelectedDiscountId] = useState<string>("");
