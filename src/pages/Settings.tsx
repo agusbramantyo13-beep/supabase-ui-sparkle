@@ -13,6 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { useBluetoothPrinter } from "@/contexts/BluetoothPrinterContext";
 
+const RECEIPT_SETTINGS_KEY = "receipt_design_settings";
+
 export default function Settings() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
