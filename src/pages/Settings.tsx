@@ -628,6 +628,27 @@ export default function Settings() {
                   </div>
                 </div>
               </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="flex flex-col sm:flex-row gap-3 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={handleTestPrintReceipt}
+                  disabled={!btPrinter.connected}
+                >
+                  <Printer className="w-4 h-4 mr-2" />
+                  Tes Print Struk
+                </Button>
+                <Button
+                  onClick={handleSaveReceiptDesign}
+                  className="bg-gradient-primary hover:bg-primary/90"
+                >
+                  Simpan Perubahan
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
