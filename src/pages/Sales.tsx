@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStore } from "@/contexts/StoreContext";
 import { SplitPaymentInputs } from "@/components/SplitPaymentInputs";
+import { MemberCombobox } from "@/components/MemberCombobox";
 import { CurrencyKeypadInput } from "@/components/CurrencyKeypadInput";
 
 interface ProductVariant {
