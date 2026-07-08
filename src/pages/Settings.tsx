@@ -13,6 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { useBluetoothPrinter } from "@/contexts/BluetoothPrinterContext";
 
+const RECEIPT_SETTINGS_KEY = "receipt_design_settings";
+
 export default function Settings() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -93,6 +95,90 @@ export default function Settings() {
   });
 
   const btPrinter = useBluetoothPrinter();
+
+  // Load saved receipt design settings from localStorage on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(RECEIPT_SETTINGS_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        setSettings(prev => ({ ...prev, ...saved }));
+      }
+    } catch (e) {
+      console.error("Failed to load receipt settings", e);
+    }
+  }, []);
+
+  const handleSaveReceiptDesign = () => {
+    try {
+      const payload = {
+        receiptLogo: settings.receiptLogo,
+        receiptPhone: settings.receiptPhone,
+        receiptWhatsapp: settings.receiptWhatsapp,
+        receiptInstagram: settings.receiptInstagram,
+        receiptCustomText: settings.receiptCustomText,
+        receiptFooter: settings.receiptFooter,
+      };
+      localStorage.setItem(RECEIPT_SETTINGS_KEY, JSON.stringify(payload));
+      toast({
+        title: "Berhasil",
+        description: "Desain struk nota tersimpan",
+      });
+    } catch (e: any) {
+      toast({
+        title: "Gagal",
+        description: e?.message || "Tidak bisa menyimpan desain struk",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleTestPrintReceipt = async () => {
+    try {
+      if (!btPrinter.connected) {
+        toast({
+          title: "Printer Belum Terhubung",
+          description: "Hubungkan printer Bluetooth terlebih dahulu di tab Printer.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const footerParts: string[] = [];
+      if (settings.receiptWhatsapp) footerParts.push(`WA: ${settings.receiptWhatsapp}`);
+      if (settings.receiptInstagram) footerParts.push(`IG: ${settings.receiptInstagram}`);
+      const combinedFooter = [
+        settings.receiptFooter,
+        settings.receiptCustomText,
+        footerParts.join(" | "),
+      ].filter(Boolean).join("\n");
+
+      await btPrinter.printReceipt({
+        storeName: settings.storeName,
+        storeAddress: settings.storeAddress,
+        storePhone: settings.receiptPhone || settings.storePhone,
+        storeFooter: combinedFooter || "Terima kasih!",
+        receiptNumber: "TEST-0001",
+        dateTime: new Date().toLocaleString("id-ID"),
+        cashier: "Tes",
+        paymentMethod: "Tunai",
+        items: [
+          { name: "Produk Contoh A", qty: 1, price: 10000, total: 10000 },
+          { name: "Produk Contoh B", qty: 2, price: 15000, total: 30000 },
+        ],
+        subtotal: 40000,
+        total: 40000,
+        cash: 50000,
+        change: 10000,
+      });
+      toast({ title: "Berhasil", description: "Tes cetak struk terkirim" });
+    } catch (e: any) {
+      toast({
+        title: "Gagal Cetak",
+        description: e?.message || "Tidak bisa mengirim ke printer",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleSave = async () => {
     setLoading(true);
@@ -541,6 +627,26 @@ export default function Settings() {
                     )}
                   </div>
                 </div>
+              </div>
+
+
+              <Separator />
+
+              <div className="flex flex-col sm:flex-row gap-3 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={handleTestPrintReceipt}
+                  disabled={!btPrinter.connected}
+                >
+                  <Printer className="w-4 h-4 mr-2" />
+                  Tes Print Struk
+                </Button>
+                <Button
+                  onClick={handleSaveReceiptDesign}
+                  className="bg-gradient-primary hover:bg-primary/90"
+                >
+                  Simpan Perubahan
+                </Button>
               </div>
             </CardContent>
           </Card>
