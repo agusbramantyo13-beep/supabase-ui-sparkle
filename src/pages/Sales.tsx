@@ -1249,19 +1249,11 @@ export default function Sales() {
                       <span className="text-sm font-semibold text-foreground">Member</span>
                     </div>
 
-                    <Select value={selectedMemberId} onValueChange={setSelectedMemberId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih member (opsional)" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Bukan member</SelectItem>
-                        {members.map((member) => (
-                          <SelectItem key={member.id} value={member.id}>
-                            {member.name} ({member.member_code}) - {member.points} poin
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <MemberCombobox
+                      members={members}
+                      value={selectedMemberId}
+                      onChange={setSelectedMemberId}
+                    />
 
                     {selectedMemberId && selectedMemberId !== "none" && earnedPoints > 0 && (
                       <div className="flex justify-between items-center pt-2 text-success">
