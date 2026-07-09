@@ -390,7 +390,7 @@ function renderItem(it: ReceiptItem): Uint8Array[] {
   return out;
 }
 
-function buildReceiptBytes(data: ReceiptData): Uint8Array {
+function buildReceiptBytes(data: ReceiptData, logoBytes?: Uint8Array | null): Uint8Array {
   const parts: Uint8Array[] = [];
 
   // --- header ---
@@ -398,7 +398,13 @@ function buildReceiptBytes(data: ReceiptData): Uint8Array {
   parts.push(cmd.codepage());
   parts.push(cmd.lineSpacingTight());
 
+  // Logo (printed BEFORE the store name, centered).
+  if (logoBytes && logoBytes.length) {
+    parts.push(logoBytes);
+  }
+
   parts.push(cmd.alignCenter());
+
   parts.push(cmd.boldOn());
   parts.push(cmd.doubleSize());
   wrap(data.storeName, Math.floor(WIDTH / 2)).forEach((l) =>
