@@ -478,8 +478,19 @@ function buildReceiptBytes(data: ReceiptData, logoBytes?: Uint8Array | null): Ui
 }
 
 export async function printReceipt(data: ReceiptData) {
-  await writeChunks(buildReceiptBytes(data));
+  let logoBytes: Uint8Array | null = null;
+  const logoSrc = resolveLogoSource(data.logo);
+  if (logoSrc) {
+    try {
+      logoBytes = await buildLogoCommand(logoSrc);
+    } catch (err) {
+      // Non-fatal: keep printing text if the image can't be rasterized.
+      console.warn("[bluetoothPrinter] gagal mencetak logo:", err);
+    }
+  }
+  await writeChunks(buildReceiptBytes(data, logoBytes));
 }
+
 
 // Test print uses the SAME ESC/POS layout as a real receipt so the user
 // sees exactly how a live sale will look on 58mm paper.
