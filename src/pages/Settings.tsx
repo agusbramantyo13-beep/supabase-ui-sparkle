@@ -154,6 +154,8 @@ export default function Settings() {
 
       await btPrinter.printReceipt({
         storeName: settings.storeName,
+        logo: settings.receiptLogo || undefined,
+
         storeAddress: settings.storeAddress,
         storePhone: settings.receiptPhone || settings.storePhone,
         storeFooter: combinedFooter || "Terima kasih!",

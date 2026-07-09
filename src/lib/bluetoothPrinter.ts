@@ -248,7 +248,132 @@ export type ReceiptData = {
   cash?: number;
   card?: number;
   change?: number;
+  /** Optional logo as data URL / http URL. If omitted, will try to read
+   *  the saved receipt design settings from localStorage. */
+  logo?: string;
 };
+
+// ============================================================
+// Logo → ESC/POS raster (GS v 0)
+// ============================================================
+// 58mm printers (Iware C-58BT, Xprinter, Goojprt, etc.) have 384 dots per
+// line. We render slightly narrower so the logo has a visual margin.
+const LOGO_MAX_DOTS = 360;
+const RECEIPT_SETTINGS_KEY = "receipt_design_settings";
+
+function resolveLogoSource(explicit?: string): string | null {
+  if (explicit) return explicit;
+  try {
+    const raw = localStorage.getItem(RECEIPT_SETTINGS_KEY);
+    if (!raw) return null;
+    const saved = JSON.parse(raw);
+    return saved?.receiptLogo || null;
+  } catch {
+    return null;
+  }
+}
+
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("Gagal memuat gambar logo"));
+    img.src = src;
+  });
+}
+
+/**
+ * Convert an image to an ESC/POS raster bit-image command (GS v 0).
+ * - Resizes to fit within LOGO_MAX_DOTS keeping aspect ratio.
+ * - Width is padded to a multiple of 8 pixels (1 byte per 8 dots).
+ * - Uses a simple luminance threshold + Floyd–Steinberg-lite dithering
+ *   so photo-ish logos still look ok on 1-bit thermal paper.
+ * - Chunks the raster into bands of 128 rows so slow printers don't drop.
+ */
+async function buildLogoCommand(src: string): Promise<Uint8Array | null> {
+  if (typeof document === "undefined") return null;
+  const img = await loadImage(src);
+  const nativeW = img.naturalWidth || img.width;
+  const nativeH = img.naturalHeight || img.height;
+  if (!nativeW || !nativeH) return null;
+
+  const scale = Math.min(1, LOGO_MAX_DOTS / nativeW);
+  const targetW = Math.max(8, Math.floor((nativeW * scale) / 8) * 8);
+  const targetH = Math.max(1, Math.round(nativeH * scale * (targetW / (nativeW * scale))));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = targetW;
+  canvas.height = targetH;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  ctx.imageSmoothingEnabled = true;
+  (ctx as any).imageSmoothingQuality = "high";
+  // white background so transparent PNGs don't come out solid black
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, targetW, targetH);
+  ctx.drawImage(img, 0, 0, targetW, targetH);
+
+  const { data } = ctx.getImageData(0, 0, targetW, targetH);
+  // Convert to grayscale buffer for dithering.
+  const gray = new Float32Array(targetW * targetH);
+  for (let i = 0, p = 0; i < data.length; i += 4, p++) {
+    const a = data[i + 3] / 255;
+    const r = data[i] * a + 255 * (1 - a);
+    const g = data[i + 1] * a + 255 * (1 - a);
+    const b = data[i + 2] * a + 255 * (1 - a);
+    gray[p] = 0.299 * r + 0.587 * g + 0.114 * b;
+  }
+  // Floyd–Steinberg dithering
+  for (let y = 0; y < targetH; y++) {
+    for (let x = 0; x < targetW; x++) {
+      const idx = y * targetW + x;
+      const old = gray[idx];
+      const nw = old < 128 ? 0 : 255;
+      gray[idx] = nw;
+      const err = old - nw;
+      if (x + 1 < targetW) gray[idx + 1] += (err * 7) / 16;
+      if (y + 1 < targetH) {
+        if (x > 0) gray[idx + targetW - 1] += (err * 3) / 16;
+        gray[idx + targetW] += (err * 5) / 16;
+        if (x + 1 < targetW) gray[idx + targetW + 1] += (err * 1) / 16;
+      }
+    }
+  }
+
+  const bytesPerRow = targetW / 8;
+  const parts: Uint8Array[] = [];
+  // Center the logo on the paper.
+  parts.push(cmd.alignCenter());
+
+  // Chunk into bands so we don't send a giant single command over BLE.
+  const BAND = 128;
+  for (let y0 = 0; y0 < targetH; y0 += BAND) {
+    const bandH = Math.min(BAND, targetH - y0);
+    const raster = new Uint8Array(bytesPerRow * bandH);
+    for (let y = 0; y < bandH; y++) {
+      for (let x = 0; x < targetW; x++) {
+        if (gray[(y0 + y) * targetW + x] < 128) {
+          const byteIdx = y * bytesPerRow + (x >> 3);
+          raster[byteIdx] |= 0x80 >> (x & 7);
+        }
+      }
+    }
+    // GS v 0 m xL xH yL yH  ...data
+    const header = new Uint8Array([
+      GS, 0x76, 0x30, 0x00,
+      bytesPerRow & 0xff, (bytesPerRow >> 8) & 0xff,
+      bandH & 0xff, (bandH >> 8) & 0xff,
+    ]);
+    parts.push(header);
+    parts.push(raster);
+  }
+
+  parts.push(enc("\n"));
+  parts.push(cmd.alignLeft());
+  return concat(...parts);
+}
+
 
 const formatRp = (n: number) =>
   "Rp" + Math.round(Math.abs(n || 0)).toLocaleString("id-ID");
@@ -265,7 +390,7 @@ function renderItem(it: ReceiptItem): Uint8Array[] {
   return out;
 }
 
-function buildReceiptBytes(data: ReceiptData): Uint8Array {
+function buildReceiptBytes(data: ReceiptData, logoBytes?: Uint8Array | null): Uint8Array {
   const parts: Uint8Array[] = [];
 
   // --- header ---
@@ -273,7 +398,13 @@ function buildReceiptBytes(data: ReceiptData): Uint8Array {
   parts.push(cmd.codepage());
   parts.push(cmd.lineSpacingTight());
 
+  // Logo (printed BEFORE the store name, centered).
+  if (logoBytes && logoBytes.length) {
+    parts.push(logoBytes);
+  }
+
   parts.push(cmd.alignCenter());
+
   parts.push(cmd.boldOn());
   parts.push(cmd.doubleSize());
   wrap(data.storeName, Math.floor(WIDTH / 2)).forEach((l) =>
@@ -347,8 +478,19 @@ function buildReceiptBytes(data: ReceiptData): Uint8Array {
 }
 
 export async function printReceipt(data: ReceiptData) {
-  await writeChunks(buildReceiptBytes(data));
+  let logoBytes: Uint8Array | null = null;
+  const logoSrc = resolveLogoSource(data.logo);
+  if (logoSrc) {
+    try {
+      logoBytes = await buildLogoCommand(logoSrc);
+    } catch (err) {
+      // Non-fatal: keep printing text if the image can't be rasterized.
+      console.warn("[bluetoothPrinter] gagal mencetak logo:", err);
+    }
+  }
+  await writeChunks(buildReceiptBytes(data, logoBytes));
 }
+
 
 // Test print uses the SAME ESC/POS layout as a real receipt so the user
 // sees exactly how a live sale will look on 58mm paper.
