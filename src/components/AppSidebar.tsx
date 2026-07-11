@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { LayoutDashboard, Package, ShoppingCart, Warehouse, Users, BarChart3, Settings, LogOut, UserCheck, Receipt, Tag, ClipboardList, FileText, Store, ChevronsUpDown, ArrowRightLeft, Wallet, ShoppingBag, Coins } from "lucide-react"
+import { LayoutDashboard, Package, ShoppingCart, Warehouse, Users, BarChart3, Settings, LogOut, UserCheck, Receipt, Tag, ClipboardList, FileText, Store, ChevronsUpDown, ArrowRightLeft, Wallet, ShoppingBag, Coins, History } from "lucide-react"
 import { NavLink, useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 import { useStore } from "@/contexts/StoreContext"
@@ -27,6 +27,7 @@ const allMenuItems = [
   { title: "Laporan Pembelian", url: "/purchase-report", icon: FileText, roles: ["owner"] },
   { title: "Mutasi Stok", url: "/stock-transfer", icon: ArrowRightLeft, roles: ["owner"] },
   { title: "Audit Penyesuaian", url: "/stock-adjustment-report", icon: ClipboardList, roles: ["owner"] },
+  { title: "Riwayat Stok", url: "/stock-history", icon: History, roles: ["owner"] },
   { title: "Member", url: "/members", icon: UserCheck, roles: ["owner", "store_keeper"] },
   { title: "Diskon", url: "/discounts", icon: Tag, roles: ["owner"] },
   { title: "Riwayat Transaksi", url: "/transaction-history", icon: Receipt, roles: ["owner", "store_keeper"] },
