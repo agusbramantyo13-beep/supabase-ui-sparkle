@@ -194,40 +194,12 @@ export function StockAdjustmentForm({ open, onOpenChange, onSuccess }: StockAdju
 
         if (itemError) throw itemError;
 
-        const { data: currentInventory } = await supabase
-          .from('inventory')
-          .select('id')
-          .eq('variant_id', parseInt(item.variant_id))
-          .maybeSingle();
-
-        if (currentInventory) {
-          const { error: invError } = await supabase
-            .from('inventory')
-            .update({ quantity: item.new_quantity })
-            .eq('id', currentInventory.id);
-          if (invError) throw invError;
-        } else {
-          const { error: invError } = await supabase
-            .from('inventory')
-            .insert({
-              variant_id: parseInt(item.variant_id),
-              quantity: item.new_quantity,
-              store_id: currentStoreId
-            });
-          if (invError) throw invError;
-        }
-
-        const { error: movementError } = await supabase
-          .from('stock_movements')
-          .insert({
-            variant_id: parseInt(item.variant_id),
-            movement: qtyDiff >= 0 ? 'in' : 'out',
-            quantity: Math.abs(qtyDiff),
-            created_by: user?.id,
-            store_id: currentStoreId
-          });
-
-        if (movementError) throw movementError;
+        await applyInventoryChange({
+          variantId: parseInt(item.variant_id),
+          newQuantity: item.new_quantity,
+          type: 'stock_adjustment',
+          notes: note || null,
+        });
       }
 
       toast({
