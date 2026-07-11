@@ -13,6 +13,7 @@ import { useStore } from "@/contexts/StoreContext";
 import { SplitPaymentInputs } from "@/components/SplitPaymentInputs";
 import { MemberCombobox } from "@/components/MemberCombobox";
 import { CurrencyKeypadInput } from "@/components/CurrencyKeypadInput";
+import { applyInventoryChange } from "@/lib/stockHistory";
 
 interface ProductVariant {
   id: string;

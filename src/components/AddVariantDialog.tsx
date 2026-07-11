@@ -7,6 +7,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useStore } from "@/contexts/StoreContext";
+import { applyInventoryChange } from "@/lib/stockHistory";
 
 const formatPriceInput = (value: string): string => {
   const num = value.replace(/\D/g, "");

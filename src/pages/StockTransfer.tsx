@@ -15,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Printer, Eye, ArrowRightLeft, ChevronsUpDown, Search } from "lucide-react";
 import { format } from "date-fns";
+import { applyInventoryChange } from "@/lib/stockHistory";
 
 interface TransferItem {
   variant_id: number;

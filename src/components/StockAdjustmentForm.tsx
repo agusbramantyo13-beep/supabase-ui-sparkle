@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useStore } from "@/contexts/StoreContext";
 import { Plus, Trash2, ChevronsUpDown, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { applyInventoryChange } from "@/lib/stockHistory";
 
 interface ProductVariant {
   id: string;
