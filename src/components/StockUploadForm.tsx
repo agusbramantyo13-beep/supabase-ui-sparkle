@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
 import * as XLSX from 'xlsx'
 import { useStore } from "@/contexts/StoreContext"
+import { applyInventoryChange } from "@/lib/stockHistory"
 
 interface StockUploadFormProps {
   open: boolean
@@ -242,35 +243,22 @@ export function StockUploadForm({ open, onOpenChange, onSuccess }: StockUploadFo
 
           if (!variantId) { errorCount++; continue }
 
-          // Update or create inventory
+          // Update or create inventory via helper (records stock history)
           const { data: existingInv } = await supabase
             .from('inventory')
-            .select('id, quantity')
+            .select('quantity')
             .eq('variant_id', variantId)
             .eq('store_id', currentStoreId)
             .maybeSingle()
 
-          if (existingInv) {
-            await supabase
-              .from('inventory')
-              .update({ quantity: existingInv.quantity + row.quantity })
-              .eq('id', existingInv.id)
-          } else {
-            await supabase
-              .from('inventory')
-              .insert({ variant_id: variantId, quantity: row.quantity, store_id: currentStoreId })
-          }
-
-          // Record stock movement
-          if (row.quantity > 0) {
-            await supabase.from('stock_movements').insert({
-              variant_id: variantId,
-              quantity: row.quantity,
-              movement: 'in',
-              created_by: user?.id,
-              store_id: currentStoreId
-            })
-          }
+          const currentQty = existingInv?.quantity || 0
+          const isInitial = !existingInv
+          await applyInventoryChange({
+            variantId,
+            newQuantity: currentQty + row.quantity,
+            type: isInitial ? 'initial_stock' : 'product_added',
+            notes: 'Upload stok dari Excel',
+          })
 
           successCount++
         } catch {

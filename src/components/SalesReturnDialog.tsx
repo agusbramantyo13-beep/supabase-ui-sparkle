@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertTriangle, Loader2 } from "lucide-react";
+import { applyInventoryChange } from "@/lib/stockHistory";
 
 interface SalesReturnDialogProps {
   open: boolean;
@@ -104,33 +105,18 @@ export default function SalesReturnDialog({
       // Restore inventory for each item
       for (const item of saleItems || []) {
         if (item.variant_id) {
-          // Get current inventory
           const { data: inventoryData } = await supabase
             .from("inventory")
-            .select("id, quantity")
+            .select("quantity")
             .eq("variant_id", item.variant_id)
             .maybeSingle();
 
-          if (inventoryData) {
-            const newQuantity = inventoryData.quantity + Number(item.quantity);
-            await supabase
-              .from("inventory")
-              .update({ quantity: newQuantity })
-              .eq("id", inventoryData.id);
-          } else {
-            // Create inventory record if doesn't exist
-            await supabase.from("inventory").insert({
-              variant_id: item.variant_id,
-              quantity: Number(item.quantity),
-            });
-          }
-
-          // Record stock movement (in - return)
-          await supabase.from("stock_movements").insert({
-            variant_id: item.variant_id,
-            quantity: Number(item.quantity),
-            movement: "in",
-            created_by: signInData.user.id,
+          const currentQty = inventoryData?.quantity || 0;
+          await applyInventoryChange({
+            variantId: item.variant_id,
+            newQuantity: currentQty + Number(item.quantity),
+            type: "product_return",
+            notes: `Retur penjualan #${saleId}`,
           });
         }
       }

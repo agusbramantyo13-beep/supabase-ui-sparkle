@@ -12,6 +12,7 @@ import { useStore } from "@/contexts/StoreContext";
 import { Plus, Trash2, Check, ChevronsUpDown } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { applyInventoryChange } from "@/lib/stockHistory";
 
 interface ProductVariant {
   id: string;
@@ -300,27 +301,13 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
           .eq('variant_id', parseInt(item.variant_id))
           .maybeSingle();
 
-        if (currentInventory) {
-          // Update existing inventory
-          const newQuantity = currentInventory.quantity + item.quantity;
-          const { error: inventoryError } = await supabase
-            .from('inventory')
-            .update({ quantity: newQuantity })
-            .eq('id', currentInventory.id);
-
-          if (inventoryError) throw inventoryError;
-        } else {
-          // Insert new inventory record
-          const { error: inventoryError } = await supabase
-            .from('inventory')
-            .insert({
-              variant_id: parseInt(item.variant_id),
-              quantity: item.quantity,
-              store_id: currentStoreId
-            });
-
-          if (inventoryError) throw inventoryError;
-        }
+        const currentQty = currentInventory?.quantity || 0;
+        await applyInventoryChange({
+          variantId: parseInt(item.variant_id),
+          newQuantity: currentQty + item.quantity,
+          type: 'product_added',
+          notes: 'Pembelian stok',
+        });
 
         // Update variant prices if changed
         const { error: variantError } = await supabase

@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertTriangle, Loader2 } from "lucide-react";
+import { applyInventoryChange } from "@/lib/stockHistory";
 
 interface PurchaseReturnDialogProps {
   open: boolean;
@@ -104,28 +105,20 @@ export default function PurchaseReturnDialog({
       // Reduce inventory for each item
       for (const item of purchaseItems || []) {
         if (item.variant_id) {
-          // Get current inventory
           const { data: inventoryData } = await supabase
             .from("inventory")
-            .select("id, quantity")
+            .select("quantity")
             .eq("variant_id", item.variant_id)
             .maybeSingle();
 
           if (inventoryData) {
-            const newQuantity = Math.max(0, inventoryData.quantity - item.quantity);
-            await supabase
-              .from("inventory")
-              .update({ quantity: newQuantity })
-              .eq("id", inventoryData.id);
+            await applyInventoryChange({
+              variantId: item.variant_id,
+              newQuantity: Math.max(0, inventoryData.quantity - item.quantity),
+              type: "product_return",
+              notes: `Retur pembelian #${sessionId}`,
+            });
           }
-
-          // Record stock movement (out)
-          await supabase.from("stock_movements").insert({
-            variant_id: item.variant_id,
-            quantity: item.quantity,
-            movement: "out",
-            created_by: signInData.user.id,
-          });
         }
       }
 

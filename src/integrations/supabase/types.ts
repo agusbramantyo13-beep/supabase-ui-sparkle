@@ -1130,6 +1130,57 @@ export type Database = {
           },
         ]
       }
+      stock_history: {
+        Row: {
+          created_at: string
+          id: number
+          movement_type: Database["public"]["Enums"]["stock_history_type"]
+          notes: string | null
+          product_id: number | null
+          product_name: string
+          qty_after: number
+          qty_before: number
+          qty_change: number
+          store_id: string
+          user_id: string | null
+          user_name: string | null
+          variant_id: number | null
+          variant_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          movement_type: Database["public"]["Enums"]["stock_history_type"]
+          notes?: string | null
+          product_id?: number | null
+          product_name: string
+          qty_after?: number
+          qty_before?: number
+          qty_change?: number
+          store_id: string
+          user_id?: string | null
+          user_name?: string | null
+          variant_id?: number | null
+          variant_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          movement_type?: Database["public"]["Enums"]["stock_history_type"]
+          notes?: string | null
+          product_id?: number | null
+          product_name?: string
+          qty_after?: number
+          qty_before?: number
+          qty_change?: number
+          store_id?: string
+          user_id?: string | null
+          user_name?: string | null
+          variant_id?: number | null
+          variant_name?: string | null
+        }
+        Relationships: []
+      }
       stock_movements: {
         Row: {
           created_at: string | null
@@ -1562,6 +1613,15 @@ export type Database = {
       }
     }
     Functions: {
+      apply_inventory_change: {
+        Args: {
+          p_new_qty: number
+          p_notes?: string
+          p_type: Database["public"]["Enums"]["stock_history_type"]
+          p_variant_id: number
+        }
+        Returns: undefined
+      }
       generate_member_code: { Args: never; Returns: string }
       get_user_store_ids: { Args: { _user_id: string }; Returns: string[] }
       is_store_owner: {
@@ -1574,6 +1634,14 @@ export type Database = {
       applies_to: "global" | "product" | "variant" | "category"
       discount_type: "percentage" | "fixed"
       movement_type: "in" | "out"
+      stock_history_type:
+        | "product_added"
+        | "product_reduced"
+        | "sale"
+        | "stock_adjustment"
+        | "stock_opname"
+        | "product_return"
+        | "initial_stock"
       user_role: "owner" | "store_keeper"
     }
     CompositeTypes: {
@@ -1705,6 +1773,15 @@ export const Constants = {
       applies_to: ["global", "product", "variant", "category"],
       discount_type: ["percentage", "fixed"],
       movement_type: ["in", "out"],
+      stock_history_type: [
+        "product_added",
+        "product_reduced",
+        "sale",
+        "stock_adjustment",
+        "stock_opname",
+        "product_return",
+        "initial_stock",
+      ],
       user_role: ["owner", "store_keeper"],
     },
   },

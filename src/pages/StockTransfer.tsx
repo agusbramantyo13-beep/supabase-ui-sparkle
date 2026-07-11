@@ -15,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Printer, Eye, ArrowRightLeft, ChevronsUpDown, Search } from "lucide-react";
 import { format } from "date-fns";
+import { applyInventoryChange } from "@/lib/stockHistory";
 
 interface TransferItem {
   variant_id: number;
@@ -159,31 +160,26 @@ export default function StockTransfer() {
       const { error: itemsError } = await supabase.from("stock_transfer_items").insert(transferItems);
       if (itemsError) throw itemsError;
 
-      // Decrease stock from source store
+      // Decrease stock from source, increase in destination
       for (const item of items) {
         const { data: inv } = await supabase
           .from("inventory")
-          .select("id, quantity")
+          .select("quantity")
           .eq("variant_id", item.variant_id)
           .eq("store_id", currentStore!.id)
           .maybeSingle();
 
         if (inv) {
-          await supabase
-            .from("inventory")
-            .update({ quantity: Math.max(0, inv.quantity - item.quantity) })
-            .eq("id", inv.id);
+          await applyInventoryChange({
+            variantId: item.variant_id,
+            newQuantity: Math.max(0, inv.quantity - item.quantity),
+            type: "product_reduced",
+            notes: `Mutasi keluar ke toko ${toStoreId}`,
+          });
         }
 
-        await supabase.from("stock_movements").insert({
-          variant_id: item.variant_id,
-          movement: "out" as const,
-          quantity: item.quantity,
-          store_id: currentStore!.id,
-          created_by: user?.id,
-        });
-
-        // Increase stock in destination store
+        // For destination: helper checks store_id from variant; transfer must use dest store's variant.
+        // Use raw update to remain consistent with existing behavior when dest variant lives in another store.
         const { data: destInv } = await supabase
           .from("inventory")
           .select("id, quantity")

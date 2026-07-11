@@ -7,6 +7,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useStore } from "@/contexts/StoreContext";
+import { applyInventoryChange } from "@/lib/stockHistory";
 
 const formatPriceInput = (value: string): string => {
   const num = value.replace(/\D/g, "");
@@ -88,9 +89,12 @@ export function AddVariantDialog({ open, onOpenChange, onSuccess, productId, pro
         if (variantError) throw variantError;
 
         if (v.initial_quantity && parseInt(v.initial_quantity) > 0) {
-          await supabase
-            .from('inventory')
-            .insert({ variant_id: variantData.id, quantity: parseInt(v.initial_quantity), store_id: currentStoreId });
+          await applyInventoryChange({
+            variantId: variantData.id,
+            newQuantity: parseInt(v.initial_quantity),
+            type: 'initial_stock',
+            notes: 'Stok awal varian baru',
+          });
         }
       }
 

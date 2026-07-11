@@ -7,6 +7,7 @@ import { Plus, Check, ChevronsUpDown, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useStore } from "@/contexts/StoreContext";
+import { applyInventoryChange } from "@/lib/stockHistory";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -209,9 +210,12 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
           if (variantError) throw variantError;
 
           if (v.initial_quantity && parseInt(v.initial_quantity) > 0) {
-            await supabase
-              .from('inventory')
-              .insert({ variant_id: variantData.id, quantity: parseInt(v.initial_quantity), store_id: currentStoreId });
+            await applyInventoryChange({
+              variantId: variantData.id,
+              newQuantity: parseInt(v.initial_quantity),
+              type: 'initial_stock',
+              notes: 'Stok awal produk baru',
+            });
           }
         }
 

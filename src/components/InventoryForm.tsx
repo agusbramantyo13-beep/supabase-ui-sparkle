@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useStore } from "@/contexts/StoreContext";
+import { applyInventoryChange } from "@/lib/stockHistory";
 
 interface ProductVariant {
   id: string;
@@ -134,51 +135,29 @@ export function InventoryForm({ open, onOpenChange, onSuccess, type }: Inventory
 
       const currentQty = currentInventory?.quantity || 0;
       let newQuantity = currentQty;
+      let historyType: 'product_added' | 'product_reduced' | 'stock_adjustment' = 'stock_adjustment';
 
       switch (type) {
         case 'add':
           newQuantity = currentQty + quantity;
+          historyType = 'product_added';
           break;
         case 'remove':
           newQuantity = Math.max(0, currentQty - quantity);
+          historyType = 'product_reduced';
           break;
         case 'adjust':
           newQuantity = quantity;
+          historyType = 'stock_adjustment';
           break;
       }
 
-      if (currentInventory) {
-        const { error: inventoryError } = await supabase
-          .from('inventory')
-          .update({ quantity: newQuantity })
-          .eq('id', currentInventory.id);
-        if (inventoryError) throw inventoryError;
-      } else {
-        const { error: inventoryError } = await supabase
-          .from('inventory')
-          .insert({
-            variant_id: parseInt(formData.variant_id),
-            quantity: newQuantity,
-            store_id: currentStoreId
-          });
-        if (inventoryError) throw inventoryError;
-      }
-
-      const actualQuantityChange = type === 'remove' ? -quantity : 
-                                  type === 'adjust' ? (newQuantity - currentQty) : 
-                                  quantity;
-
-      const { error: movementError } = await supabase
-        .from('stock_movements')
-        .insert({
-          variant_id: parseInt(formData.variant_id),
-          movement: getMovementType(),
-          quantity: Math.abs(actualQuantityChange),
-          created_by: null,
-          store_id: currentStoreId
-        });
-
-      if (movementError) throw movementError;
+      await applyInventoryChange({
+        variantId: parseInt(formData.variant_id),
+        newQuantity,
+        type: historyType,
+        notes: formData.reason || null,
+      });
 
       toast({
         title: "Berhasil",

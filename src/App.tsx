@@ -24,6 +24,7 @@ import Settings from "./pages/Settings";
 import Members from "./pages/Members";
 import Discounts from "./pages/Discounts";
 import StockAdjustmentReport from "./pages/StockAdjustmentReport";
+import StockHistory from "./pages/StockHistory";
 import StockTransfer from "./pages/StockTransfer";
 import PurchaseReport from "./pages/PurchaseReport";
 import StoreSelection from "./pages/StoreSelection";
@@ -128,6 +129,11 @@ const App = () => (
                                 <Route path="/stock-adjustment-report" element={
                                   <RoleBasedRoute allowedRoles={["owner"]}>
                                     <StockAdjustmentReport />
+                                  </RoleBasedRoute>
+                                } />
+                                <Route path="/stock-history" element={
+                                  <RoleBasedRoute allowedRoles={["owner"]}>
+                                    <StockHistory />
                                   </RoleBasedRoute>
                                 } />
                                 <Route path="/purchase-report" element={
