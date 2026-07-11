@@ -665,11 +665,9 @@ export default function Sales() {
 
       if (itemsError) throw itemsError;
 
-      // Reduce inventory stock
+      // Reduce inventory stock (records sale history)
       for (const item of cart) {
         const variantId = Number(item.product.id);
-        
-        // Get current inventory
         const { data: currentInventory } = await supabase
           .from('inventory')
           .select('quantity')
@@ -677,15 +675,14 @@ export default function Sales() {
           .maybeSingle();
 
         if (currentInventory) {
-          const newQuantity = currentInventory.quantity - item.quantity;
-          
-          // Update inventory
-          const { error: invError } = await supabase
-            .from('inventory')
-            .update({ quantity: newQuantity })
-            .eq('variant_id', variantId);
-
-          if (invError) {
+          try {
+            await applyInventoryChange({
+              variantId,
+              newQuantity: currentInventory.quantity - item.quantity,
+              type: 'sale',
+              notes: `Penjualan ${item.quantity}x`,
+            });
+          } catch (invError) {
             console.error("Error updating inventory:", invError);
           }
         }
