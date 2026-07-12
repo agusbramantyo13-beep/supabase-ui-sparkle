@@ -69,7 +69,7 @@ export function MemberCombobox({
             return itemValue.toLowerCase().includes(q) ? 1 : 0;
           }}
         >
-          <CommandInput placeholder="Cari nama atau kode member..." />
+          <CommandInput placeholder="Cari nama, kode, atau nomor HP member..." />
           <CommandList>
             <CommandEmpty>Tidak ada member ditemukan.</CommandEmpty>
             <CommandGroup>
@@ -92,7 +92,7 @@ export function MemberCombobox({
               {members.map((member) => (
                 <CommandItem
                   key={member.id}
-                  value={`${member.name} ${member.member_code}`}
+                  value={`${member.name} ${member.member_code} ${member.phone || ""}`}
                   onSelect={() => {
                     onChange(member.id);
                     setOpen(false);
@@ -101,9 +101,11 @@ export function MemberCombobox({
                   <div className="flex flex-col">
                     <span className="font-medium">{member.name}</span>
                     <span className="text-xs text-muted-foreground">
-                      {member.member_code} · {member.points} poin
+                      {member.member_code}
+                      {member.phone ? ` · ${member.phone}` : ""} · {member.points} poin
                     </span>
                   </div>
+
                   <Check
                     className={cn(
                       "ml-auto h-4 w-4",
