@@ -385,12 +385,13 @@ export default function Members() {
 
       <div className="flex items-center gap-4">
         <Input
-          placeholder="Cari member berdasarkan nama, email, atau kode member..."
+          placeholder="Cari member berdasarkan nama, email, nomor HP, atau kode member..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-sm"
         />
       </div>
+
 
       {filteredMembers.length === 0 ? (
         <Card className="bg-gradient-card">
