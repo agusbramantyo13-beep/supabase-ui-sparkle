@@ -261,8 +261,10 @@ export default function Members() {
   const filteredMembers = members.filter(member =>
     member.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     member.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    member.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     member.member_code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
 
   if (loading) {
     return (
@@ -383,12 +385,13 @@ export default function Members() {
 
       <div className="flex items-center gap-4">
         <Input
-          placeholder="Cari member berdasarkan nama, email, atau kode member..."
+          placeholder="Cari member berdasarkan nama, email, nomor HP, atau kode member..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-sm"
         />
       </div>
+
 
       {filteredMembers.length === 0 ? (
         <Card className="bg-gradient-card">

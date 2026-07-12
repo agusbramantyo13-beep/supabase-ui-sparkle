@@ -66,9 +66,11 @@ interface Member {
   id: string;
   name: string;
   member_code: string;
+  phone?: string | null;
   points: number;
   total_purchases?: number;
 }
+
 
 interface LoyaltyPointRule {
   id: string;
@@ -222,7 +224,7 @@ export default function Sales() {
   const fetchMembers = async () => {
     const { data, error } = await supabase
       .from('members')
-      .select('id, name, member_code, points')
+      .select('id, name, member_code, phone, points')
       .eq('status', 'active')
       .eq('store_id', currentStoreId)
       .order('name');
@@ -234,6 +236,7 @@ export default function Sales() {
 
     setMembers(data || []);
   };
+
 
   const fetchLoyaltyRules = async () => {
     const { data, error } = await supabase
