@@ -261,8 +261,10 @@ export default function Members() {
   const filteredMembers = members.filter(member =>
     member.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     member.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    member.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     member.member_code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
 
   if (loading) {
     return (
