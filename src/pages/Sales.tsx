@@ -66,9 +66,11 @@ interface Member {
   id: string;
   name: string;
   member_code: string;
+  phone?: string | null;
   points: number;
   total_purchases?: number;
 }
+
 
 interface LoyaltyPointRule {
   id: string;
