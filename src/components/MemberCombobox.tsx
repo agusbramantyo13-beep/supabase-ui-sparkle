@@ -52,11 +52,12 @@ export function MemberCombobox({
         >
           <span className="truncate text-left">
             {selected
-              ? `${selected.name} (${selected.member_code}) - ${selected.points} poin`
+              ? `${selected.name} (${selected.member_code})${selected.phone ? ` · ${selected.phone}` : ""} - ${selected.points} poin`
               : value === "none"
               ? "Bukan member"
               : placeholder}
           </span>
+
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
