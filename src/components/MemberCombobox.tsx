@@ -17,7 +17,9 @@ export interface MemberComboboxItem {
   name: string;
   member_code: string;
   points: number;
+  phone?: string | null;
 }
+
 
 interface MemberComboboxProps {
   members: MemberComboboxItem[];
