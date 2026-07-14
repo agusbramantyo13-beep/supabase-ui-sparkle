@@ -98,6 +98,19 @@ export default function TransactionHistory() {
 
       if (expErr) throw expErr;
 
+      // Other sales (Penjualan Lain-lain) for the day — treated as cash income
+      const { data: otherSalesData } = await supabase
+        .from('other_sales')
+        .select('amount, sale_date, created_at')
+        .eq('store_id', currentStoreId);
+      const osSum = (otherSalesData || [])
+        .filter((r: any) => {
+          const d = r.sale_date ? new Date(r.sale_date) : new Date(r.created_at);
+          return d >= startDate && d <= endDate;
+        })
+        .reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
+      setOtherSalesSum(osSum);
+
       const expUserIds = Array.from(
         new Set((expensesData || []).map((e: any) => e.submitted_by).filter(Boolean))
       );
