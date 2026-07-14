@@ -48,6 +48,7 @@ const formatRp = (n: number) => `Rp ${Math.abs(Number(n || 0)).toLocaleString('i
 
 export default function TransactionHistory() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [otherSalesSum, setOtherSalesSum] = useState(0);
   const [loading, setLoading] = useState(true);
   const { currentStoreId, currentStore } = useStore();
   const btPrinter = useBluetoothPrinter();
@@ -96,6 +97,19 @@ export default function TransactionHistory() {
         .lte('approved_at', endDate.toISOString());
 
       if (expErr) throw expErr;
+
+      // Other sales (Penjualan Lain-lain) for the day — treated as cash income
+      const { data: otherSalesData } = await supabase
+        .from('other_sales')
+        .select('amount, sale_date, created_at')
+        .eq('store_id', currentStoreId);
+      const osSum = (otherSalesData || [])
+        .filter((r: any) => {
+          const d = r.sale_date ? new Date(r.sale_date) : new Date(r.created_at);
+          return d >= startDate && d <= endDate;
+        })
+        .reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
+      setOtherSalesSum(osSum);
 
       const expUserIds = Array.from(
         new Set((expensesData || []).map((e: any) => e.submitted_by).filter(Boolean))
@@ -294,20 +308,115 @@ export default function TransactionHistory() {
 
       <Card className="bg-gradient-card border-border/50">
         <CardContent className="p-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Total Bersih (Penjualan - Belanja)</p>
+              <p className="text-sm font-medium text-muted-foreground">
+                Omzet Bersih Semua Metode Pembayaran
+              </p>
               <p className="text-2xl font-bold text-foreground">
                 Rp {getTotalAmount().toLocaleString('id-ID')}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                {transactions.filter(t => t.status !== 'returned').length} transaksi
+                {transactions.filter(t => t.status !== 'returned').length} transaksi · Penjualan − Belanja Toko
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Termasuk pembayaran tunai, kartu, QRIS, transfer, dan split payment.
               </p>
             </div>
-            <Receipt className="w-8 h-8 text-primary" />
+            <Receipt className="w-8 h-8 text-primary shrink-0" />
           </div>
         </CardContent>
       </Card>
+
+      {(() => {
+        const active = transactions.filter(t => t.type === 'sale' && t.status !== 'returned');
+        const sumBy = (fn: (t: Transaction) => number) => active.reduce((s, t) => s + fn(t), 0);
+        const pd = (t: Transaction) => t.payment_details || {};
+        const cashSales = sumBy(t => {
+          if (t.payment_method === 'cash') return Number(t.total || 0);
+          if (t.payment_method === 'split') return Number(pd(t).cash_amount || 0);
+          return 0;
+        });
+        const cardSales = sumBy(t => {
+          if (t.payment_method === 'card') return Number(t.total || 0);
+          if (t.payment_method === 'split') return Number(pd(t).card_amount || 0);
+          return 0;
+        });
+        const qrisSales = sumBy(t => {
+          if (t.payment_method === 'qris') return Number(t.total || 0);
+          if (t.payment_method === 'split') return Number(pd(t).qris_amount || 0);
+          return 0;
+        });
+        const transferSales = sumBy(t => {
+          if (t.payment_method === 'transfer') return Number(t.total || 0);
+          if (t.payment_method === 'split') return Number(pd(t).transfer_amount || 0);
+          return 0;
+        });
+        const expensesTotal = transactions
+          .filter(t => t.type === 'expense')
+          .reduce((s, t) => s + Math.abs(Number(t.total || 0)), 0);
+        const totalOmzet = cashSales + cardSales + qrisSales + transferSales;
+        const physicalCashExpected = cashSales + otherSalesSum - expensesTotal;
+
+        const rows: Array<{ label: string; value: number; hint?: string; strong?: boolean; accent?: string }> = [
+          { label: 'Penjualan Tunai (Cash)', value: cashSales },
+          { label: 'Penjualan Kartu (Card)', value: cardSales },
+          { label: 'Penjualan QRIS', value: qrisSales },
+          { label: 'Penjualan Transfer', value: transferSales },
+          { label: 'Penjualan Lain-lain (Kas)', value: otherSalesSum, hint: 'other_sales' },
+          { label: 'Belanja Toko (dibayar dari kas)', value: -expensesTotal },
+        ];
+
+        return (
+          <Card className="bg-gradient-card border-border/50">
+            <CardHeader>
+              <CardTitle className="text-foreground flex items-center gap-2">
+                <Receipt className="w-5 h-5" />
+                Rekonsiliasi Harian
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Rincian per metode pembayaran untuk memudahkan pencocokan omzet dengan uang fisik di laci kasir.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {rows.map((r) => (
+                <div key={r.label} className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0">
+                  <span className="text-sm text-muted-foreground">{r.label}</span>
+                  <span className={cn("text-sm font-medium tabular-nums", r.value < 0 && "text-destructive")}>
+                    {r.value < 0 ? '- ' : ''}Rp {Math.abs(r.value).toLocaleString('id-ID')}
+                  </span>
+                </div>
+              ))}
+
+              <div className="flex items-center justify-between pt-3 mt-2 border-t border-border/60">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Total Omzet (semua metode)</p>
+                  <p className="text-[11px] text-muted-foreground">Cash + Card + QRIS + Transfer</p>
+                </div>
+                <span className="text-base font-bold tabular-nums text-foreground">
+                  Rp {totalOmzet.toLocaleString('id-ID')}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <div>
+                  <p className="text-sm font-semibold text-primary">Kas Fisik Diharapkan</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Cash + Penjualan Lain-lain − Belanja Toko
+                  </p>
+                </div>
+                <span className="text-base font-bold tabular-nums text-primary">
+                  Rp {physicalCashExpected.toLocaleString('id-ID')}
+                </span>
+              </div>
+
+              <p className="text-[11px] text-muted-foreground pt-3 leading-relaxed">
+                Kenapa "Omzet Bersih" bisa berbeda dari "Kas Fisik"? Omzet menghitung <strong>semua metode pembayaran</strong>, sedangkan Kas Fisik hanya uang tunai yang benar-benar masuk laci. Kartu, QRIS, dan transfer tidak menambah kas fisik; Penjualan Lain-lain menambah kas walau bukan penjualan reguler.
+              </p>
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       <Card className="bg-gradient-card border-border/50">
         <CardHeader>

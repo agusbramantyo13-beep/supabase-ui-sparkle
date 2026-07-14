@@ -394,11 +394,14 @@ export default function CashDeposits() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Banknote className="w-4 h-4" /> Penjualan Tunai Hari Ini
+              <Banknote className="w-4 h-4" /> Kas Fisik Hari Ini
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatRupiah(todayCashSales)}</div>
+            <p className="text-[11px] text-muted-foreground mt-1 leading-snug">
+              Termasuk penjualan tunai, bagian tunai dari split payment, dan penjualan lain-lain (kas).
+            </p>
           </CardContent>
         </Card>
         <Card>
