@@ -48,6 +48,7 @@ const formatRp = (n: number) => `Rp ${Math.abs(Number(n || 0)).toLocaleString('i
 
 export default function TransactionHistory() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [otherSalesSum, setOtherSalesSum] = useState(0);
   const [loading, setLoading] = useState(true);
   const { currentStoreId, currentStore } = useStore();
   const btPrinter = useBluetoothPrinter();
