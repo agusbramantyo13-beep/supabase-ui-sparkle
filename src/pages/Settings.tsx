@@ -309,8 +309,8 @@ export default function Settings() {
               <div className="space-y-4">
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-1">Role / Hak Akses</h4>
-                  <Badge variant={getRoleBadgeVariant(userProfile?.role || 'store_keeper')} className="text-sm">
-                    {getRoleLabel(userProfile?.role || 'store_keeper')}
+                  <Badge variant={getRoleBadgeVariant(userProfile?.role || 'staff')} className="text-sm">
+                    {getRoleLabel(userProfile?.role || 'staff')}
                   </Badge>
                 </div>
                 <div>
