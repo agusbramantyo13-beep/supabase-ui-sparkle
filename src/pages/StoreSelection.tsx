@@ -7,8 +7,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Store, Plus, LogOut } from "lucide-react";
+import { Store, Plus, LogOut, Trash2 } from "lucide-react";
 
 export default function StoreSelection() {
   const { stores, setCurrentStore, refreshStores, loading } = useStore();
@@ -36,6 +46,8 @@ export default function StoreSelection() {
   const [newStoreAddress, setNewStoreAddress] = useState("");
   const [newStorePhone, setNewStorePhone] = useState("");
   const [creating, setCreating] = useState(false);
+  const [storeToDelete, setStoreToDelete] = useState<any | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const handleSelectStore = (store: any) => {
     setCurrentStore(store);
@@ -60,7 +72,6 @@ export default function StoreSelection() {
 
       if (storeError) throw storeError;
 
-      // Add creator as owner of the store
       const { error: memberError } = await supabase
         .from('store_members')
         .insert({
@@ -79,6 +90,29 @@ export default function StoreSelection() {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleDeleteStore = async () => {
+    if (!storeToDelete) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from('stores').delete().eq('id', storeToDelete.id);
+      if (error) throw error;
+      toast({ title: "Berhasil", description: `Toko "${storeToDelete.name}" berhasil dihapus` });
+      setStoreToDelete(null);
+      await refreshStores();
+    } catch (error: any) {
+      const isFk = error?.code === '23503' || /foreign key|violates/i.test(error?.message || '');
+      toast({
+        title: "Gagal menghapus toko",
+        description: isFk
+          ? "Toko ini masih punya data terkait (mis. mutasi stok antar toko). Hapus/pindahkan data tersebut terlebih dahulu."
+          : error?.message || 'Terjadi kesalahan',
+        variant: "destructive",
+      });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -105,7 +139,7 @@ export default function StoreSelection() {
             {stores.map((store) => (
               <Card
                 key={store.id}
-                className="cursor-pointer hover:border-primary transition-colors"
+                className="cursor-pointer hover:border-primary transition-colors relative"
                 onClick={() => handleSelectStore(store)}
               >
                 <CardContent className="p-6 flex items-center gap-4">
@@ -118,6 +152,20 @@ export default function StoreSelection() {
                       <p className="text-sm text-muted-foreground truncate">{store.address}</p>
                     )}
                   </div>
+                  {isDeveloper && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-2 right-2 h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setStoreToDelete(store);
+                      }}
+                      aria-label={`Hapus toko ${store.name}`}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             ))}
@@ -192,6 +240,30 @@ export default function StoreSelection() {
           </div>
         )}
       </div>
+
+      <AlertDialog open={!!storeToDelete} onOpenChange={(open) => !open && setStoreToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus toko "{storeToDelete?.name}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tindakan ini tidak bisa dibatalkan. Semua data terkait toko ini (produk, penjualan, member, inventaris, dst.) akan ikut terhapus secara permanen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteStore();
+              }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? "Menghapus..." : "Hapus"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
