@@ -50,7 +50,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     setLoading(true);
 
-    // Check developer status
     const { data: profileData } = await supabase
       .from('profiles')
       .select('role')
@@ -58,7 +57,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       .maybeSingle();
     const isDev = profileData?.role === 'developer';
 
-    // Fetch stores (RLS returns all for developer, only member stores otherwise)
     const { data: storesData, error: storesError } = await supabase
       .from('stores')
       .select('*')
@@ -80,7 +78,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Restore last selected store or pick first
     const savedStoreId = localStorage.getItem(STORE_KEY);
     const savedStore = unique.find(s => s.id === savedStoreId);
     const selectedStore = savedStore || unique[0];
