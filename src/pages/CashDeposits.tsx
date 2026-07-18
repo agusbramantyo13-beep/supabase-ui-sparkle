@@ -133,18 +133,31 @@ export default function CashDeposits() {
       setTotalApproved(approved);
       setTotalPending(pending);
 
-      // Load all cash-bearing sales for the store (cash + split payments)
-      // NOTE: filter status client-side — server-side `.neq("status","returned")`
-      // drops rows where status IS NULL (SQL: NULL <> 'returned' is unknown).
-      const { data: salesDataRaw, error: salesErr } = await supabase
-        .from("sales")
-        .select("total, payment_method, payment_details, created_at, status")
-        .eq("store_id", currentStore.id)
-        .in("payment_method", ["cash", "split"]);
+      // Load ALL cash-bearing sales (cash + split) with pagination.
+      // Supabase caps a single request at 1000 rows — without paging we silently
+      // drop rows past the cap, which understates "Belum Disetor".
+      // Also filter status client-side (server-side `.neq("status","returned")`
+      // drops rows where status IS NULL because NULL <> 'returned' is unknown).
+      const PAGE = 1000;
+      let salesDataRaw: any[] = [];
+      let from = 0;
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const { data, error } = await supabase
+          .from("sales")
+          .select("total, payment_method, payment_details, created_at, status")
+          .eq("store_id", currentStore.id)
+          .in("payment_method", ["cash", "split"])
+          .order("created_at", { ascending: true })
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        const chunk = data || [];
+        salesDataRaw = salesDataRaw.concat(chunk);
+        if (chunk.length < PAGE) break;
+        from += PAGE;
+      }
 
-      if (salesErr) throw salesErr;
-
-      const salesData = (salesDataRaw || []).filter(
+      const salesData = salesDataRaw.filter(
         (r: any) => r.status !== "returned"
       );
 
