@@ -39,7 +39,7 @@ export default function Users() {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editedName, setEditedName] = useState("");
-  const [editedRole, setEditedRole] = useState<'developer' | 'staff'>('store_keeper');
+  const [editedRole, setEditedRole] = useState<'developer' | 'staff'>('staff');
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
@@ -47,7 +47,7 @@ export default function Users() {
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserName, setNewUserName] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("");
-  const [newUserRole, setNewUserRole] = useState<'developer' | 'staff'>('store_keeper');
+  const [newUserRole, setNewUserRole] = useState<'developer' | 'staff'>('staff');
   const [isCreating, setIsCreating] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
@@ -61,9 +61,9 @@ export default function Users() {
   const [allStores, setAllStores] = useState<StoreInfo[]>([]);
   const [userMemberships, setUserMemberships] = useState<StoreMembership[]>([]);
   const [newUserStoreId, setNewUserStoreId] = useState("");
-  const [newUserStoreRole, setNewUserStoreRole] = useState("store_keeper");
+  const [newUserStoreRole, setNewUserStoreRole] = useState("cashier");
   const [editStoreId, setEditStoreId] = useState("");
-  const [editStoreRole, setEditStoreRole] = useState("store_keeper");
+  const [editStoreRole, setEditStoreRole] = useState("cashier");
   const [userStoreMap, setUserStoreMap] = useState<Record<string, StoreMembership[]>>({});
 
   useEffect(() => {
@@ -145,7 +145,7 @@ export default function Users() {
     setNewPassword("");
     setShowNewPassword(false);
     setEditStoreId("");
-    setEditStoreRole("store_keeper");
+    setEditStoreRole("cashier");
     setEditDialogOpen(true);
     await fetchUserMemberships(user.id);
   };
@@ -188,7 +188,7 @@ export default function Users() {
     const success = await addStoreMembership(selectedUser.id, editStoreId, editStoreRole);
     if (success) {
       setEditStoreId("");
-      setEditStoreRole("store_keeper");
+      setEditStoreRole("cashier");
       await fetchUserMemberships(selectedUser.id);
       await fetchAllUserMemberships();
     }
@@ -301,9 +301,9 @@ export default function Users() {
         setNewUserEmail("");
         setNewUserName("");
         setNewUserPassword("");
-        setNewUserRole('store_keeper');
+        setNewUserRole('staff');
         setNewUserStoreId("");
-        setNewUserStoreRole("store_keeper");
+        setNewUserStoreRole("cashier");
         setAddDialogOpen(false);
         await fetchUsers();
         await fetchAllUserMemberships();
@@ -448,7 +448,7 @@ export default function Users() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="store_keeper">Karyawan</SelectItem>
+                  <SelectItem value="cashier">Karyawan</SelectItem>
                   <SelectItem value="owner">Pemilik</SelectItem>
                 </SelectContent>
               </Select>
