@@ -62,7 +62,7 @@ export default function Reports() {
 
       // Fetch profit data (only if not store keeper)
       let totalProfit = 0;
-      if (userRole !== 'store_keeper') {
+      if (isOwner) {
         const { data: profitData } = await supabase
           .from('v_profit_by_date')
           .select('*')
