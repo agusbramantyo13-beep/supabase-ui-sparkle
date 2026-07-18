@@ -20,8 +20,8 @@ interface ReportData {
 
 export default function Reports() {
   const { user } = useAuth();
-  const { currentStoreId } = useStore();
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const { currentStoreId, userStoreRole } = useStore();
+  const isOwner = userStoreRole === 'owner';
   const [reportData, setReportData] = useState<ReportData>({
     totalSales: 0,
     totalProfit: 0,
@@ -32,22 +32,6 @@ export default function Reports() {
   });
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState("30");
-
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      if (user) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .maybeSingle();
-        
-        setUserRole(data?.role || null);
-      }
-    };
-    
-    fetchUserRole();
-  }, [user]);
 
   useEffect(() => {
     fetchReportData();
