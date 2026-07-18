@@ -46,9 +46,9 @@ export default function Settings() {
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
-      case 'owner':
+      case 'developer':
         return 'default';
-      case 'store_keeper':
+      case 'staff':
         return 'secondary';
       default:
         return 'secondary';
@@ -57,10 +57,10 @@ export default function Settings() {
 
   const getRoleLabel = (role: string) => {
     switch (role) {
-      case 'owner':
-        return 'Pemilik (Owner)';
-      case 'store_keeper':
-        return 'Penjaga Toko (Store Keeper)';
+      case 'developer':
+        return 'Developer';
+      case 'staff':
+        return 'Staff';
       default:
         return role;
     }
