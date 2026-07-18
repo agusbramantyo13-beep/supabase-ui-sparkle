@@ -15,7 +15,7 @@ interface StoreContextType {
   currentStore: Store | null;
   currentStoreId: string | null;
   loading: boolean;
-  setCurrentStore: (store: Store) => void;
+  setCurrentStore: (store: Store) => void | Promise<void>;
   refreshStores: () => Promise<void>;
   userStoreRole: string | null;
 }
