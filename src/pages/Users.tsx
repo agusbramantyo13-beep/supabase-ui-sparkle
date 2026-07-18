@@ -247,74 +247,43 @@ export default function Users() {
     setIsCreating(true);
 
     try {
-      const { data, error: authError } = await supabase.auth.signUp({
-        email: newUserEmail,
-        password: newUserPassword,
-        options: { emailRedirectTo: `${window.location.origin}/` },
+      const { data, error } = await supabase.functions.invoke('admin-create-user', {
+        body: {
+          email: newUserEmail,
+          password: newUserPassword,
+          name: newUserName,
+          role: newUserRole,
+          store_id: newUserStoreId || undefined,
+          store_role: newUserStoreId ? newUserStoreRole : undefined,
+        },
       });
 
-      if (authError) {
-        toast({ title: "Error", description: authError.message, variant: "destructive" });
-        return;
-      }
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-      if (data.user) {
-        let retryCount = 0;
-        let profileExists = false;
-
-        while (retryCount < 10 && !profileExists) {
-          const delay = Math.min(1000 * Math.pow(1.5, retryCount), 5000);
-          await new Promise(resolve => setTimeout(resolve, delay));
-
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('id, role')
-            .eq('id', data.user.id)
-            .maybeSingle();
-
-          if (profileData && !profileError) {
-            profileExists = true;
-            await supabase
-              .from('profiles')
-              .update({ role: newUserRole, name: newUserName })
-              .eq('id', data.user.id);
-          } else {
-            retryCount++;
-          }
-        }
-
-        if (!profileExists) {
-          await supabase.from('profiles').insert({
-            id: data.user.id,
-            email: newUserEmail,
-            name: newUserName,
-            role: newUserRole,
-          });
-        }
-
-        // Add to store if selected
-        if (newUserStoreId) {
-          await addStoreMembership(data.user.id, newUserStoreId, newUserStoreRole);
-        }
-
+      if (data?.warning) {
+        toast({ title: "Berhasil dengan peringatan", description: data.warning });
+      } else {
         toast({ title: "Berhasil", description: "Pengguna berhasil dibuat" });
-        setNewUserEmail("");
-        setNewUserName("");
-        setNewUserPassword("");
-        setNewUserRole('staff');
-        setNewUserStoreId("");
-        setNewUserStoreRole("cashier");
-        setAddDialogOpen(false);
-        await fetchUsers();
-        await fetchAllUserMemberships();
       }
-    } catch (error) {
+
+      setNewUserEmail("");
+      setNewUserName("");
+      setNewUserPassword("");
+      setNewUserRole('staff');
+      setNewUserStoreId("");
+      setNewUserStoreRole("cashier");
+      setAddDialogOpen(false);
+      await fetchUsers();
+      await fetchAllUserMemberships();
+    } catch (error: any) {
       console.error("Create user error:", error);
-      toast({ title: "Error", description: "Terjadi kesalahan", variant: "destructive" });
+      toast({ title: "Error", description: error?.message || "Gagal membuat pengguna", variant: "destructive" });
     } finally {
       setIsCreating(false);
     }
   };
+
 
   const handleDeleteUser = async () => {
     if (!userToDelete) return;

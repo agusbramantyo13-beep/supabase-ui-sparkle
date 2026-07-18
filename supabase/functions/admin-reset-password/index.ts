@@ -52,9 +52,9 @@ Deno.serve(async (req) => {
       .eq("id", caller.id)
       .single();
 
-    if (!profile || profile.role !== "owner") {
+    if (!profile || profile.role !== "developer") {
       return new Response(
-        JSON.stringify({ error: "Forbidden: only owners can reset passwords" }),
+        JSON.stringify({ error: "Forbidden: only developers can reset passwords" }),
         {
           status: 403,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
