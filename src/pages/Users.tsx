@@ -641,11 +641,11 @@ export default function Users() {
                 <Select value={editedRole} onValueChange={(value: 'developer' | 'staff') => setEditedRole(value)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="store_keeper">
-                      <div className="flex items-center gap-2"><ShoppingCart className="w-4 h-4" />Penjaga Toko</div>
+                    <SelectItem value="staff">
+                      <div className="flex items-center gap-2"><User className="w-4 h-4" />Staff</div>
                     </SelectItem>
-                    <SelectItem value="owner">
-                      <div className="flex items-center gap-2"><Shield className="w-4 h-4" />Pemilik</div>
+                    <SelectItem value="developer">
+                      <div className="flex items-center gap-2"><Shield className="w-4 h-4" />Developer</div>
                     </SelectItem>
                   </SelectContent>
                 </Select>
