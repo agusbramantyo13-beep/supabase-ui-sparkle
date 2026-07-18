@@ -28,7 +28,7 @@ export default function StoreSelection() {
     }
   }, [user]);
 
-  const isOwner = profileRole === 'owner';
+  const isDeveloper = profileRole === 'developer';
   const navigate = useNavigate();
   const { toast } = useToast();
   const [showCreateForm, setShowCreateForm] = useState(false);
