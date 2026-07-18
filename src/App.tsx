@@ -87,7 +87,7 @@ const App = () => (
                                   </RoleBasedRoute>
                                 } />
                                 <Route path="/sales" element={
-                                  <RoleBasedRoute allowedRoles={["owner", "store_keeper"]}>
+                                  <RoleBasedRoute allowedRoles={["owner", "cashier"]}>
                                     <Sales />
                                   </RoleBasedRoute>
                                 } />
@@ -102,17 +102,17 @@ const App = () => (
                                   </RoleBasedRoute>
                                 } />
                                 <Route path="/transaction-history" element={
-                                  <RoleBasedRoute allowedRoles={["owner", "store_keeper"]}>
+                                  <RoleBasedRoute allowedRoles={["owner", "cashier"]}>
                                     <TransactionHistory />
                                   </RoleBasedRoute>
                                 } />
                                 <Route path="/attendance" element={
-                                  <RoleBasedRoute allowedRoles={["owner", "store_keeper"]}>
+                                  <RoleBasedRoute allowedRoles={["owner", "cashier"]}>
                                     <Attendance />
                                   </RoleBasedRoute>
                                 } />
                                 <Route path="/members" element={
-                                  <RoleBasedRoute allowedRoles={["owner", "store_keeper"]}>
+                                  <RoleBasedRoute allowedRoles={["owner", "cashier"]}>
                                     <Members />
                                   </RoleBasedRoute>
                                 } />
@@ -122,7 +122,7 @@ const App = () => (
                                   </RoleBasedRoute>
                                 } />
                                 <Route path="/settings" element={
-                                  <RoleBasedRoute allowedRoles={["owner", "store_keeper"]}>
+                                  <RoleBasedRoute allowedRoles={["owner", "cashier"]}>
                                     <Settings />
                                   </RoleBasedRoute>
                                 } />
@@ -147,17 +147,17 @@ const App = () => (
                                   </RoleBasedRoute>
                                 } />
                                 <Route path="/cash-deposits" element={
-                                  <RoleBasedRoute allowedRoles={["owner", "store_keeper"]}>
+                                  <RoleBasedRoute allowedRoles={["owner", "cashier"]}>
                                     <CashDeposits />
                                   </RoleBasedRoute>
                                 } />
                                 <Route path="/store-expenses" element={
-                                  <RoleBasedRoute allowedRoles={["owner", "store_keeper"]}>
+                                  <RoleBasedRoute allowedRoles={["owner", "cashier"]}>
                                     <StoreExpenses />
                                   </RoleBasedRoute>
                                 } />
                                 <Route path="/other-sales" element={
-                                  <RoleBasedRoute allowedRoles={["owner", "store_keeper"]}>
+                                  <RoleBasedRoute allowedRoles={["owner", "cashier"]}>
                                     <OtherSales />
                                   </RoleBasedRoute>
                                 } />
