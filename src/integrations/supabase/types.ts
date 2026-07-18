@@ -1624,6 +1624,8 @@ export type Database = {
       }
       generate_member_code: { Args: never; Returns: string }
       get_user_store_ids: { Args: { _user_id: string }; Returns: string[] }
+      has_any_store_owner_role: { Args: { _user_id: string }; Returns: boolean }
+      is_developer: { Args: { _user_id: string }; Returns: boolean }
       is_store_owner: {
         Args: { _store_id: string; _user_id: string }
         Returns: boolean
@@ -1642,7 +1644,7 @@ export type Database = {
         | "stock_opname"
         | "product_return"
         | "initial_stock"
-      user_role: "owner" | "store_keeper"
+      user_role: "developer" | "staff"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1782,7 +1784,7 @@ export const Constants = {
         "product_return",
         "initial_stock",
       ],
-      user_role: ["owner", "store_keeper"],
+      user_role: ["developer", "staff"],
     },
   },
 } as const
