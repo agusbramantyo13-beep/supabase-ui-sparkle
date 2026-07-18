@@ -43,36 +43,25 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (!user) {
       setStores([]);
       setCurrentStoreState(null);
+      setUserStoreRole(null);
       setLoading(false);
       return;
     }
 
     setLoading(true);
-    
-    // Get stores user belongs to
-    const { data: memberData, error: memberError } = await supabase
-      .from('store_members')
-      .select('store_id, role')
-      .eq('user_id', user.id);
 
-    if (memberError) {
-      console.error('Error fetching store memberships:', memberError);
-      setLoading(false);
-      return;
-    }
+    // Check developer status
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle();
+    const isDev = profileData?.role === 'developer';
 
-    if (!memberData || memberData.length === 0) {
-      setStores([]);
-      setCurrentStoreState(null);
-      setLoading(false);
-      return;
-    }
-
-    const storeIds = memberData.map(m => m.store_id);
+    // Fetch stores (RLS returns all for developer, only member stores otherwise)
     const { data: storesData, error: storesError } = await supabase
       .from('stores')
       .select('*')
-      .in('id', storeIds)
       .order('name');
 
     if (storesError) {
@@ -81,19 +70,33 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    setStores(storesData || []);
+    const unique = (storesData || []).filter((s, i, arr) => arr.findIndex(x => x.id === s.id) === i);
+    setStores(unique);
+
+    if (unique.length === 0) {
+      setCurrentStoreState(null);
+      setUserStoreRole(null);
+      setLoading(false);
+      return;
+    }
 
     // Restore last selected store or pick first
     const savedStoreId = localStorage.getItem(STORE_KEY);
-    const savedStore = storesData?.find(s => s.id === savedStoreId);
-    const selectedStore = savedStore || storesData?.[0] || null;
-    
-    if (selectedStore) {
-      setCurrentStoreState(selectedStore);
-      localStorage.setItem(STORE_KEY, selectedStore.id);
-      
-      // Set role for this store
-      const membership = memberData.find(m => m.store_id === selectedStore.id);
+    const savedStore = unique.find(s => s.id === savedStoreId);
+    const selectedStore = savedStore || unique[0];
+
+    setCurrentStoreState(selectedStore);
+    localStorage.setItem(STORE_KEY, selectedStore.id);
+
+    if (isDev) {
+      setUserStoreRole('owner');
+    } else {
+      const { data: membership } = await supabase
+        .from('store_members')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('store_id', selectedStore.id)
+        .maybeSingle();
       setUserStoreRole(membership?.role || null);
     }
 
