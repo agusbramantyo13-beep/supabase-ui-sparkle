@@ -62,18 +62,6 @@ export default function Members() {
     fetchMembers();
   }, []);
 
-  useEffect(() => {
-    const fetchRole = async () => {
-      if (!user) return;
-      const { data } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .maybeSingle();
-      setUserRole((data?.role as string) || 'store_keeper');
-    };
-    fetchRole();
-  }, [user]);
 
   const fetchMembers = async () => {
     const { data, error } = await supabase
