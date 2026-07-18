@@ -134,14 +134,19 @@ export default function CashDeposits() {
       setTotalPending(pending);
 
       // Load all cash-bearing sales for the store (cash + split payments)
-      const { data: salesData, error: salesErr } = await supabase
+      // NOTE: filter status client-side — server-side `.neq("status","returned")`
+      // drops rows where status IS NULL (SQL: NULL <> 'returned' is unknown).
+      const { data: salesDataRaw, error: salesErr } = await supabase
         .from("sales")
         .select("total, payment_method, payment_details, created_at, status")
         .eq("store_id", currentStore.id)
-        .in("payment_method", ["cash", "split"])
-        .neq("status", "returned");
+        .in("payment_method", ["cash", "split"]);
 
       if (salesErr) throw salesErr;
+
+      const salesData = (salesDataRaw || []).filter(
+        (r: any) => r.status !== "returned"
+      );
 
       // Extract cash portion — full total for 'cash', payment_details.cash_amount for 'split'
       const cashPortion = (r: any): number => {
