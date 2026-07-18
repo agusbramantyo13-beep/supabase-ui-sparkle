@@ -179,7 +179,7 @@ export default function Reports() {
               </CardContent>
             </Card>
 
-            {userRole !== 'store_keeper' && (
+            {isOwner && (
               <Card className="bg-gradient-card border-border/50">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
