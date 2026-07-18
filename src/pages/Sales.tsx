@@ -640,7 +640,8 @@ export default function Sales() {
           },
           user_id: user?.id || null,
           store_id: currentStoreId,
-          member_id: selectedMemberId || null
+          member_id: selectedMemberId || null,
+          status: 'completed'
         })
         .select()
         .single();
