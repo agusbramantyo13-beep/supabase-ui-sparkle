@@ -340,24 +340,24 @@ export default function Users() {
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
-      case 'owner': return 'bg-gradient-primary text-primary-foreground';
-      case 'store_keeper': return 'bg-secondary text-secondary-foreground';
+      case 'developer': return 'bg-gradient-primary text-primary-foreground';
+      case 'staff': return 'bg-secondary text-secondary-foreground';
       default: return 'bg-muted text-muted-foreground';
     }
   };
 
   const getRoleIcon = (role: string) => {
     switch (role) {
-      case 'owner': return <Shield className="w-4 h-4" />;
-      case 'store_keeper': return <Store className="w-4 h-4" />;
+      case 'developer': return <Shield className="w-4 h-4" />;
+      case 'staff': return <User className="w-4 h-4" />;
       default: return <User className="w-4 h-4" />;
     }
   };
 
   const getRoleDisplayName = (role: string) => {
     switch (role) {
-      case 'owner': return 'Pemilik';
-      case 'store_keeper': return 'Penjaga Toko';
+      case 'developer': return 'Developer';
+      case 'staff': return 'Staff';
       default: return role;
     }
   };
