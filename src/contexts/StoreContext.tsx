@@ -107,22 +107,29 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     fetchStores();
   }, [user]);
 
-  const setCurrentStore = (store: Store) => {
+  const setCurrentStore = async (store: Store) => {
     setCurrentStoreState(store);
     localStorage.setItem(STORE_KEY, store.id);
-    
-    // Refresh role for new store
-    if (user) {
-      supabase
-        .from('store_members')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('store_id', store.id)
-        .maybeSingle()
-        .then(({ data }) => {
-          setUserStoreRole(data?.role || null);
-        });
+
+    if (!user) return;
+
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle();
+    if (profileData?.role === 'developer') {
+      setUserStoreRole('owner');
+      return;
     }
+
+    const { data } = await supabase
+      .from('store_members')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('store_id', store.id)
+      .maybeSingle();
+    setUserStoreRole(data?.role || null);
   };
 
   const value: StoreContextType = {
