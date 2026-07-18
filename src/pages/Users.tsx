@@ -16,7 +16,7 @@ interface UserProfile {
   id: string;
   email: string;
   name: string | null;
-  role: 'owner' | 'store_keeper';
+  role: 'developer' | 'staff';
   created_at: string;
 }
 
@@ -39,7 +39,7 @@ export default function Users() {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editedName, setEditedName] = useState("");
-  const [editedRole, setEditedRole] = useState<'owner' | 'store_keeper'>('store_keeper');
+  const [editedRole, setEditedRole] = useState<'developer' | 'staff'>('staff');
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
@@ -47,7 +47,7 @@ export default function Users() {
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserName, setNewUserName] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("");
-  const [newUserRole, setNewUserRole] = useState<'owner' | 'store_keeper'>('store_keeper');
+  const [newUserRole, setNewUserRole] = useState<'developer' | 'staff'>('staff');
   const [isCreating, setIsCreating] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
@@ -61,9 +61,9 @@ export default function Users() {
   const [allStores, setAllStores] = useState<StoreInfo[]>([]);
   const [userMemberships, setUserMemberships] = useState<StoreMembership[]>([]);
   const [newUserStoreId, setNewUserStoreId] = useState("");
-  const [newUserStoreRole, setNewUserStoreRole] = useState("store_keeper");
+  const [newUserStoreRole, setNewUserStoreRole] = useState("cashier");
   const [editStoreId, setEditStoreId] = useState("");
-  const [editStoreRole, setEditStoreRole] = useState("store_keeper");
+  const [editStoreRole, setEditStoreRole] = useState("cashier");
   const [userStoreMap, setUserStoreMap] = useState<Record<string, StoreMembership[]>>({});
 
   useEffect(() => {
@@ -145,7 +145,7 @@ export default function Users() {
     setNewPassword("");
     setShowNewPassword(false);
     setEditStoreId("");
-    setEditStoreRole("store_keeper");
+    setEditStoreRole("cashier");
     setEditDialogOpen(true);
     await fetchUserMemberships(user.id);
   };
@@ -188,7 +188,7 @@ export default function Users() {
     const success = await addStoreMembership(selectedUser.id, editStoreId, editStoreRole);
     if (success) {
       setEditStoreId("");
-      setEditStoreRole("store_keeper");
+      setEditStoreRole("cashier");
       await fetchUserMemberships(selectedUser.id);
       await fetchAllUserMemberships();
     }
@@ -301,9 +301,9 @@ export default function Users() {
         setNewUserEmail("");
         setNewUserName("");
         setNewUserPassword("");
-        setNewUserRole('store_keeper');
+        setNewUserRole('staff');
         setNewUserStoreId("");
-        setNewUserStoreRole("store_keeper");
+        setNewUserStoreRole("cashier");
         setAddDialogOpen(false);
         await fetchUsers();
         await fetchAllUserMemberships();
@@ -340,24 +340,24 @@ export default function Users() {
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
-      case 'owner': return 'bg-gradient-primary text-primary-foreground';
-      case 'store_keeper': return 'bg-secondary text-secondary-foreground';
+      case 'developer': return 'bg-gradient-primary text-primary-foreground';
+      case 'staff': return 'bg-secondary text-secondary-foreground';
       default: return 'bg-muted text-muted-foreground';
     }
   };
 
   const getRoleIcon = (role: string) => {
     switch (role) {
-      case 'owner': return <Shield className="w-4 h-4" />;
-      case 'store_keeper': return <Store className="w-4 h-4" />;
+      case 'developer': return <Shield className="w-4 h-4" />;
+      case 'staff': return <User className="w-4 h-4" />;
       default: return <User className="w-4 h-4" />;
     }
   };
 
   const getRoleDisplayName = (role: string) => {
     switch (role) {
-      case 'owner': return 'Pemilik';
-      case 'store_keeper': return 'Penjaga Toko';
+      case 'developer': return 'Developer';
+      case 'staff': return 'Staff';
       default: return role;
     }
   };
@@ -448,7 +448,7 @@ export default function Users() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="store_keeper">Karyawan</SelectItem>
+                  <SelectItem value="cashier">Karyawan</SelectItem>
                   <SelectItem value="owner">Pemilik</SelectItem>
                 </SelectContent>
               </Select>
@@ -506,14 +506,14 @@ export default function Users() {
               </div>
               <div>
                 <Label>Peran</Label>
-                <Select value={newUserRole} onValueChange={(value: 'owner' | 'store_keeper') => setNewUserRole(value)}>
+                <Select value={newUserRole} onValueChange={(value: 'developer' | 'staff') => setNewUserRole(value)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="store_keeper">
-                      <div className="flex items-center gap-2"><ShoppingCart className="w-4 h-4" />Penjaga Toko</div>
+                    <SelectItem value="staff">
+                      <div className="flex items-center gap-2"><User className="w-4 h-4" />Staff</div>
                     </SelectItem>
-                    <SelectItem value="owner">
-                      <div className="flex items-center gap-2"><Shield className="w-4 h-4" />Pemilik</div>
+                    <SelectItem value="developer">
+                      <div className="flex items-center gap-2"><Shield className="w-4 h-4" />Developer</div>
                     </SelectItem>
                   </SelectContent>
                 </Select>
@@ -638,14 +638,14 @@ export default function Users() {
               </div>
               <div>
                 <Label>Peran</Label>
-                <Select value={editedRole} onValueChange={(value: 'owner' | 'store_keeper') => setEditedRole(value)}>
+                <Select value={editedRole} onValueChange={(value: 'developer' | 'staff') => setEditedRole(value)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="store_keeper">
-                      <div className="flex items-center gap-2"><ShoppingCart className="w-4 h-4" />Penjaga Toko</div>
+                    <SelectItem value="staff">
+                      <div className="flex items-center gap-2"><User className="w-4 h-4" />Staff</div>
                     </SelectItem>
-                    <SelectItem value="owner">
-                      <div className="flex items-center gap-2"><Shield className="w-4 h-4" />Pemilik</div>
+                    <SelectItem value="developer">
+                      <div className="flex items-center gap-2"><Shield className="w-4 h-4" />Developer</div>
                     </SelectItem>
                   </SelectContent>
                 </Select>

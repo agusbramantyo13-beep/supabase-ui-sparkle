@@ -1,44 +1,13 @@
-import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { useStore } from "@/contexts/StoreContext";
 
 interface RoleBasedRouteProps {
   children: React.ReactNode;
-  allowedRoles: string[];
+  allowedRoles: string[]; // e.g. ["owner"], ["owner","cashier"]
 }
 
 export function RoleBasedRoute({ children, allowedRoles }: RoleBasedRouteProps) {
-  const { user } = useAuth();
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      if (!user) { setLoading(false); return; }
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .maybeSingle();
-
-        if (error) {
-          console.error('Error fetching user role:', error);
-        }
-
-        const role = (data?.role as string) || 'store_keeper';
-        setUserRole(role);
-      } catch (err) {
-        console.error('Unexpected error fetching user role:', err);
-        setUserRole('store_keeper');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchUserRole();
-  }, [user]);
+  const { userStoreRole, loading } = useStore();
 
   if (loading) {
     return (
@@ -48,7 +17,7 @@ export function RoleBasedRoute({ children, allowedRoles }: RoleBasedRouteProps) 
     );
   }
 
-  if (!userRole || !allowedRoles.includes(userRole)) {
+  if (!userStoreRole || !allowedRoles.includes(userStoreRole)) {
     return <Navigate to="/sales" replace />;
   }
 

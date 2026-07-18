@@ -22,22 +22,22 @@ import {
 const allMenuItems = [
   { title: "Dasbor", url: "/", icon: LayoutDashboard, roles: ["owner"] },
   { title: "Produk", url: "/products", icon: Package, roles: ["owner"] },
-  { title: "Penjualan", url: "/sales", icon: ShoppingCart, roles: ["owner", "store_keeper"] },
+  { title: "Penjualan", url: "/sales", icon: ShoppingCart, roles: ["owner", "cashier"] },
   { title: "Inventori", url: "/inventory", icon: Warehouse, roles: ["owner"] },
   { title: "Laporan Pembelian", url: "/purchase-report", icon: FileText, roles: ["owner"] },
   { title: "Mutasi Stok", url: "/stock-transfer", icon: ArrowRightLeft, roles: ["owner"] },
   { title: "Audit Penyesuaian", url: "/stock-adjustment-report", icon: ClipboardList, roles: ["owner"] },
   { title: "Riwayat Stok", url: "/stock-history", icon: History, roles: ["owner"] },
-  { title: "Member", url: "/members", icon: UserCheck, roles: ["owner", "store_keeper"] },
+  { title: "Member", url: "/members", icon: UserCheck, roles: ["owner", "cashier"] },
   { title: "Diskon", url: "/discounts", icon: Tag, roles: ["owner"] },
-  { title: "Riwayat Transaksi", url: "/transaction-history", icon: Receipt, roles: ["owner", "store_keeper"] },
-  { title: "Setoran Kas", url: "/cash-deposits", icon: Wallet, roles: ["owner", "store_keeper"] },
-  { title: "Belanja Toko", url: "/store-expenses", icon: ShoppingBag, roles: ["owner", "store_keeper"] },
-  { title: "Penjualan Lain-lain", url: "/other-sales", icon: Coins, roles: ["owner", "store_keeper"] },
-  { title: "Kehadiran", url: "/attendance", icon: UserCheck, roles: ["owner", "store_keeper"] },
+  { title: "Riwayat Transaksi", url: "/transaction-history", icon: Receipt, roles: ["owner", "cashier"] },
+  { title: "Setoran Kas", url: "/cash-deposits", icon: Wallet, roles: ["owner", "cashier"] },
+  { title: "Belanja Toko", url: "/store-expenses", icon: ShoppingBag, roles: ["owner", "cashier"] },
+  { title: "Penjualan Lain-lain", url: "/other-sales", icon: Coins, roles: ["owner", "cashier"] },
+  { title: "Kehadiran", url: "/attendance", icon: UserCheck, roles: ["owner", "cashier"] },
   { title: "Laporan", url: "/reports", icon: BarChart3, roles: ["owner"] },
   { title: "Pengguna", url: "/users", icon: Users, roles: ["owner"] },
-  { title: "Pengaturan", url: "/settings", icon: Settings, roles: ["owner", "store_keeper"] },
+  { title: "Pengaturan", url: "/settings", icon: Settings, roles: ["owner", "cashier"] },
 ]
 
 export function AppSidebar() {
@@ -56,7 +56,7 @@ export function AppSidebar() {
       const filteredItems = allMenuItems.filter(item => item.roles.includes(userStoreRole));
       setMenuItems(filteredItems);
     } else {
-      setMenuItems(allMenuItems.filter(item => item.roles.includes('store_keeper')));
+      setMenuItems(allMenuItems.filter(item => item.roles.includes('cashier')));
     }
   }, [userStoreRole]);
 

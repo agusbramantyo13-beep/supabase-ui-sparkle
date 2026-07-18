@@ -69,17 +69,28 @@ export default function PurchaseReturnDialog({
         return;
       }
 
-      // Check if the user is an owner
-      const { data: profileData, error: profileError } = await supabase
+      const { data: profileData } = await supabase
         .from("profiles")
         .select("role")
         .eq("id", signInData.user.id)
         .maybeSingle();
 
-      if (profileError || !profileData || profileData.role !== "owner") {
+      let isAuthorized = profileData?.role === 'developer';
+      if (!isAuthorized) {
+        const { data: ownerMembership } = await supabase
+          .from('store_members')
+          .select('id')
+          .eq('user_id', signInData.user.id)
+          .eq('role', 'owner')
+          .limit(1)
+          .maybeSingle();
+        isAuthorized = !!ownerMembership;
+      }
+
+      if (!isAuthorized) {
         toast({
           title: "Akses Ditolak",
-          description: "Hanya pemilik (owner) yang dapat melakukan retur",
+          description: "Hanya pemilik toko yang dapat melakukan retur",
           variant: "destructive",
         });
         setLoading(false);

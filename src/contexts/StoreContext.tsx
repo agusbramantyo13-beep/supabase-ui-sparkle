@@ -15,7 +15,7 @@ interface StoreContextType {
   currentStore: Store | null;
   currentStoreId: string | null;
   loading: boolean;
-  setCurrentStore: (store: Store) => void;
+  setCurrentStore: (store: Store) => void | Promise<void>;
   refreshStores: () => Promise<void>;
   userStoreRole: string | null;
 }
@@ -43,36 +43,23 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (!user) {
       setStores([]);
       setCurrentStoreState(null);
+      setUserStoreRole(null);
       setLoading(false);
       return;
     }
 
     setLoading(true);
-    
-    // Get stores user belongs to
-    const { data: memberData, error: memberError } = await supabase
-      .from('store_members')
-      .select('store_id, role')
-      .eq('user_id', user.id);
 
-    if (memberError) {
-      console.error('Error fetching store memberships:', memberError);
-      setLoading(false);
-      return;
-    }
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle();
+    const isDev = profileData?.role === 'developer';
 
-    if (!memberData || memberData.length === 0) {
-      setStores([]);
-      setCurrentStoreState(null);
-      setLoading(false);
-      return;
-    }
-
-    const storeIds = memberData.map(m => m.store_id);
     const { data: storesData, error: storesError } = await supabase
       .from('stores')
       .select('*')
-      .in('id', storeIds)
       .order('name');
 
     if (storesError) {
@@ -81,19 +68,32 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    setStores(storesData || []);
+    const unique = (storesData || []).filter((s, i, arr) => arr.findIndex(x => x.id === s.id) === i);
+    setStores(unique);
 
-    // Restore last selected store or pick first
+    if (unique.length === 0) {
+      setCurrentStoreState(null);
+      setUserStoreRole(null);
+      setLoading(false);
+      return;
+    }
+
     const savedStoreId = localStorage.getItem(STORE_KEY);
-    const savedStore = storesData?.find(s => s.id === savedStoreId);
-    const selectedStore = savedStore || storesData?.[0] || null;
-    
-    if (selectedStore) {
-      setCurrentStoreState(selectedStore);
-      localStorage.setItem(STORE_KEY, selectedStore.id);
-      
-      // Set role for this store
-      const membership = memberData.find(m => m.store_id === selectedStore.id);
+    const savedStore = unique.find(s => s.id === savedStoreId);
+    const selectedStore = savedStore || unique[0];
+
+    setCurrentStoreState(selectedStore);
+    localStorage.setItem(STORE_KEY, selectedStore.id);
+
+    if (isDev) {
+      setUserStoreRole('owner');
+    } else {
+      const { data: membership } = await supabase
+        .from('store_members')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('store_id', selectedStore.id)
+        .maybeSingle();
       setUserStoreRole(membership?.role || null);
     }
 
@@ -104,22 +104,29 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     fetchStores();
   }, [user]);
 
-  const setCurrentStore = (store: Store) => {
+  const setCurrentStore = async (store: Store) => {
     setCurrentStoreState(store);
     localStorage.setItem(STORE_KEY, store.id);
-    
-    // Refresh role for new store
-    if (user) {
-      supabase
-        .from('store_members')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('store_id', store.id)
-        .maybeSingle()
-        .then(({ data }) => {
-          setUserStoreRole(data?.role || null);
-        });
+
+    if (!user) return;
+
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle();
+    if (profileData?.role === 'developer') {
+      setUserStoreRole('owner');
+      return;
     }
+
+    const { data } = await supabase
+      .from('store_members')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('store_id', store.id)
+      .maybeSingle();
+    setUserStoreRole(data?.role || null);
   };
 
   const value: StoreContextType = {

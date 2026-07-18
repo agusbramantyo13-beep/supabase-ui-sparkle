@@ -19,9 +19,9 @@ interface ReportData {
 }
 
 export default function Reports() {
-  const { user } = useAuth();
-  const { currentStoreId } = useStore();
-  const [userRole, setUserRole] = useState<string | null>(null);
+  useAuth();
+  const { currentStoreId, userStoreRole } = useStore();
+  const isOwner = userStoreRole === 'owner';
   const [reportData, setReportData] = useState<ReportData>({
     totalSales: 0,
     totalProfit: 0,
@@ -32,22 +32,6 @@ export default function Reports() {
   });
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState("30");
-
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      if (user) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .maybeSingle();
-        
-        setUserRole(data?.role || null);
-      }
-    };
-    
-    fetchUserRole();
-  }, [user]);
 
   useEffect(() => {
     fetchReportData();
@@ -78,7 +62,7 @@ export default function Reports() {
 
       // Fetch profit data (only if not store keeper)
       let totalProfit = 0;
-      if (userRole !== 'store_keeper') {
+      if (isOwner) {
         const { data: profitData } = await supabase
           .from('v_profit_by_date')
           .select('*')
@@ -195,7 +179,7 @@ export default function Reports() {
               </CardContent>
             </Card>
 
-            {userRole !== 'store_keeper' && (
+            {isOwner && (
               <Card className="bg-gradient-card border-border/50">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
