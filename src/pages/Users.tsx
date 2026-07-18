@@ -16,7 +16,7 @@ interface UserProfile {
   id: string;
   email: string;
   name: string | null;
-  role: 'owner' | 'store_keeper';
+  role: 'developer' | 'staff';
   created_at: string;
 }
 
@@ -39,7 +39,7 @@ export default function Users() {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editedName, setEditedName] = useState("");
-  const [editedRole, setEditedRole] = useState<'owner' | 'store_keeper'>('store_keeper');
+  const [editedRole, setEditedRole] = useState<'developer' | 'staff'>('store_keeper');
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
@@ -47,7 +47,7 @@ export default function Users() {
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserName, setNewUserName] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("");
-  const [newUserRole, setNewUserRole] = useState<'owner' | 'store_keeper'>('store_keeper');
+  const [newUserRole, setNewUserRole] = useState<'developer' | 'staff'>('store_keeper');
   const [isCreating, setIsCreating] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
@@ -506,7 +506,7 @@ export default function Users() {
               </div>
               <div>
                 <Label>Peran</Label>
-                <Select value={newUserRole} onValueChange={(value: 'owner' | 'store_keeper') => setNewUserRole(value)}>
+                <Select value={newUserRole} onValueChange={(value: 'developer' | 'staff') => setNewUserRole(value)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="store_keeper">
@@ -638,7 +638,7 @@ export default function Users() {
               </div>
               <div>
                 <Label>Peran</Label>
-                <Select value={editedRole} onValueChange={(value: 'owner' | 'store_keeper') => setEditedRole(value)}>
+                <Select value={editedRole} onValueChange={(value: 'developer' | 'staff') => setEditedRole(value)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="store_keeper">
