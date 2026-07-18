@@ -19,7 +19,7 @@ interface ReportData {
 }
 
 export default function Reports() {
-  const { user } = useAuth();
+  useAuth();
   const { currentStoreId, userStoreRole } = useStore();
   const isOwner = userStoreRole === 'owner';
   const [reportData, setReportData] = useState<ReportData>({
