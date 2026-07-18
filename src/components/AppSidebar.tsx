@@ -56,7 +56,7 @@ export function AppSidebar() {
       const filteredItems = allMenuItems.filter(item => item.roles.includes(userStoreRole));
       setMenuItems(filteredItems);
     } else {
-      setMenuItems(allMenuItems.filter(item => item.roles.includes('store_keeper')));
+      setMenuItems(allMenuItems.filter(item => item.roles.includes('cashier')));
     }
   }, [userStoreRole]);
 
