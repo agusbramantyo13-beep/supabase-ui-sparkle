@@ -289,14 +289,18 @@ export default function Users() {
     if (!userToDelete) return;
     setIsDeleting(true);
     try {
-      const { error } = await supabase.from('profiles').delete().eq('id', userToDelete.id);
+      const { data, error } = await supabase.functions.invoke('admin-delete-user', {
+        body: { user_id: userToDelete.id },
+      });
       if (error) throw error;
-      toast({ title: "Berhasil", description: "Pengguna berhasil dihapus" });
-      fetchUsers();
+      if (data?.error) throw new Error(data.error);
+      toast({ title: "Berhasil", description: "Pengguna dan akun login berhasil dihapus" });
+      await fetchUsers();
+      await fetchAllUserMemberships();
       setDeleteDialogOpen(false);
       setUserToDelete(null);
-    } catch (error) {
-      toast({ title: "Error", description: "Gagal menghapus pengguna", variant: "destructive" });
+    } catch (error: any) {
+      toast({ title: "Error", description: error?.message || "Gagal menghapus pengguna", variant: "destructive" });
     } finally {
       setIsDeleting(false);
     }
