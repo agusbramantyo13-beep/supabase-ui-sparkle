@@ -62,44 +62,28 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { email, password, name, role, store_id, store_role } = body ?? {};
 
+    // Helper: return user-facing errors as 200 so supabase.functions.invoke
+    // exposes them in `data.error` instead of throwing a generic FunctionsHttpError.
+    const userError = (message: string) =>
+      new Response(JSON.stringify({ error: message }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+
     if (!email || !password || !name || !role) {
-      return new Response(
-        JSON.stringify({ error: "email, password, name, and role are required" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      return userError("Email, password, nama, dan role wajib diisi");
     }
 
     if (password.length < 6) {
-      return new Response(
-        JSON.stringify({ error: "Password minimal 6 karakter" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      return userError("Password minimal 6 karakter");
     }
 
     if (role !== "developer" && role !== "staff") {
-      return new Response(
-        JSON.stringify({ error: "role must be 'developer' or 'staff'" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      return userError("Role harus 'developer' atau 'staff'");
     }
 
     if (store_id && store_role && store_role !== "owner" && store_role !== "cashier") {
-      return new Response(
-        JSON.stringify({ error: "store_role must be 'owner' or 'cashier'" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      return userError("Peran toko harus 'owner' atau 'cashier'");
     }
 
     // Create user via admin API - happens server-side, doesn't touch caller's session
@@ -116,10 +100,7 @@ Deno.serve(async (req) => {
         /already registered|already exists|duplicate/i.test(msg)
           ? "Email sudah terdaftar"
           : msg;
-      return new Response(JSON.stringify({ error: friendly }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return userError(friendly);
     }
 
     const newUserId = created.user.id;
