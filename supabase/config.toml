@@ -9,5 +9,8 @@ verify_jwt = false
 [functions.admin-delete-user]
 verify_jwt = false
 
+[functions.cleanup-orphan-auth-users]
+verify_jwt = false
+
 [functions.mcp]
 verify_jwt = false
