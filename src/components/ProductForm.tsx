@@ -66,6 +66,12 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
   const [categoryId, setCategoryId] = useState("");
   const [variants, setVariants] = useState<VariantRow[]>([emptyVariant()]);
   const [loading, setLoading] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [existingImagePath, setExistingImagePath] = useState<string | null>(null);
+  const [existingImageUpdatedAt, setExistingImageUpdatedAt] = useState<string | null>(null);
+  const [imageBusy, setImageBusy] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { currentStoreId } = useStore();
 
@@ -76,10 +82,24 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
   }, []);
 
   useEffect(() => {
+    // reset image preview object url
+    if (imagePreview) {
+      return () => URL.revokeObjectURL(imagePreview);
+    }
+  }, [imagePreview]);
+
+  useEffect(() => {
+    setImageFile(null);
+    setImagePreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
     if (product) {
       setProductName(product.name || "");
       setCategoryId(product.category_id?.toString() || "");
       if (product.category_name) setCategorySearch(product.category_name);
+      setExistingImagePath(product.image_path ?? null);
+      setExistingImageUpdatedAt(product.updated_at ?? null);
       setVariants([{
         id: product.variant_id,
         name: product.variant_name || "",
@@ -92,6 +112,8 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
       setProductName("");
       setCategoryId("");
       setCategorySearch("");
+      setExistingImagePath(null);
+      setExistingImageUpdatedAt(null);
       setVariants([emptyVariant()]);
     }
   }, [product, open]);
