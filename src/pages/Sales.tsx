@@ -15,6 +15,7 @@ import { MemberCombobox } from "@/components/MemberCombobox";
 import { CurrencyKeypadInput } from "@/components/CurrencyKeypadInput";
 import { applyInventoryChange } from "@/lib/stockHistory";
 import { ProductImage } from "@/components/ProductImage";
+import { cn } from "@/lib/utils";
 
 interface ProductVariant {
   id: string;
