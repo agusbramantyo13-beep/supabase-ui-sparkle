@@ -172,6 +172,8 @@ export default function Sales() {
           id,
           name,
           category_id,
+          image_path,
+          updated_at,
           categories(id, name)
         )
       `)
@@ -196,7 +198,7 @@ export default function Sales() {
       inventoryData?.map(inv => [inv.variant_id, inv.quantity]) || []
     );
 
-    const formattedProducts: ProductVariant[] = data?.map(variant => ({
+    const formattedProducts: ProductVariant[] = data?.map((variant: any) => ({
       id: variant.id.toString(),
       name: variant.name,
       product_name: variant.products.name,
@@ -204,7 +206,9 @@ export default function Sales() {
       price: Number(variant.price) || 0,
       category_name: variant.products.categories?.name,
       category_id: variant.products.categories?.id?.toString() ?? variant.products.category_id?.toString(),
-      available_stock: inventoryMap.get(variant.id) || 0
+      available_stock: inventoryMap.get(variant.id) || 0,
+      image_path: variant.products.image_path ?? null,
+      product_updated_at: variant.products.updated_at ?? null,
     })) || [];
 
     setProducts(formattedProducts);
