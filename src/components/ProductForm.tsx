@@ -175,6 +175,60 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
     setVariants(prev => prev.filter((_, i) => i !== index));
   };
 
+  const handlePickImage = () => fileInputRef.current?.click();
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      validateImageFile(file);
+    } catch (err: any) {
+      toast({ title: "Gambar tidak valid", description: err.message, variant: "destructive" });
+      return;
+    }
+
+    if (isEditMode && product?.id && currentStoreId) {
+      setImageBusy(true);
+      try {
+        const path = await uploadProductImage(currentStoreId, product.id, file);
+        const now = new Date().toISOString();
+        await supabase.from('products').update({ image_path: path }).eq('id', product.id);
+        setExistingImagePath(path);
+        setExistingImageUpdatedAt(now);
+        toast({ title: "Berhasil", description: "Gambar produk diperbarui" });
+      } catch (err: any) {
+        toast({ title: "Gagal upload", description: err.message, variant: "destructive" });
+      } finally {
+        setImageBusy(false);
+      }
+    } else {
+      if (imagePreview) URL.revokeObjectURL(imagePreview);
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    if (isEditMode && product?.id && existingImagePath && currentStoreId) {
+      setImageBusy(true);
+      try {
+        await deleteProductImage(currentStoreId, product.id);
+        await supabase.from('products').update({ image_path: null }).eq('id', product.id);
+        setExistingImagePath(null);
+        toast({ title: "Berhasil", description: "Gambar produk dihapus" });
+      } catch (err: any) {
+        toast({ title: "Gagal hapus gambar", description: err.message, variant: "destructive" });
+      } finally {
+        setImageBusy(false);
+      }
+    } else {
+      if (imagePreview) URL.revokeObjectURL(imagePreview);
+      setImageFile(null);
+      setImagePreview(null);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
