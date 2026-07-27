@@ -301,6 +301,20 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
           }
         }
 
+        // Upload image if selected (create mode)
+        if (imageFile && currentStoreId) {
+          try {
+            const path = await uploadProductImage(currentStoreId, productData.id, imageFile);
+            await supabase.from('products').update({ image_path: path }).eq('id', productData.id);
+          } catch (imgErr: any) {
+            toast({
+              title: "Produk tersimpan, gambar gagal diupload",
+              description: imgErr.message,
+              variant: "destructive",
+            });
+          }
+        }
+
         toast({ title: "Berhasil", description: `Produk dengan ${validVariants.length} varian berhasil ditambahkan` });
       }
 
