@@ -337,6 +337,66 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
         <div className="flex-1 overflow-y-auto pr-1 min-h-0">
           <form onSubmit={handleSubmit} className="space-y-4 pb-2" id="product-form">
             {/* Product Name */}
+            {/* Image */}
+            <div className="space-y-2">
+              <Label>Gambar Produk</Label>
+              <div className="flex items-center gap-3">
+                <div className="w-24 h-24 rounded-lg border border-border overflow-hidden bg-muted flex items-center justify-center shrink-0 relative">
+                  {imagePreview ? (
+                    <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                  ) : existingImagePath ? (
+                    <ProductImage
+                      imagePath={existingImagePath}
+                      updatedAt={existingImageUpdatedAt}
+                      alt={productName || "Produk"}
+                      className="w-full h-full"
+                    />
+                  ) : (
+                    <Package className="w-8 h-8 text-muted-foreground/50" />
+                  )}
+                  {imageBusy && (
+                    <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-col gap-2 flex-1">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePickImage}
+                    disabled={imageBusy}
+                  >
+                    <Upload className="w-3 h-3 mr-2" />
+                    {existingImagePath || imagePreview ? "Ganti Gambar" : "Upload Gambar"}
+                  </Button>
+                  {(existingImagePath || imagePreview) && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleRemoveImage}
+                      disabled={imageBusy}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <ImageOff className="w-3 h-3 mr-2" />
+                      Hapus Gambar
+                    </Button>
+                  )}
+                  <p className="text-xs text-muted-foreground">Max 10MB. Otomatis dikompres ke WebP.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Product Name */}
             <div>
               <Label htmlFor="name">Nama Produk *</Label>
               <Input
