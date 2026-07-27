@@ -24,11 +24,15 @@ interface ProductVariant {
   product_id?: string;
   available_stock?: number;
   product_name: string;
+  image_path?: string | null;
+  product_updated_at?: string | null;
 }
 
 interface GroupedProduct {
   product_name: string;
   category_name?: string;
+  image_path?: string | null;
+  product_updated_at?: string | null;
   variants: ProductVariant[];
 }
 
