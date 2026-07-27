@@ -12,6 +12,7 @@ import { AddVariantDialog } from "@/components/AddVariantDialog"
 import { useToast } from "@/hooks/use-toast"
 import { formatRupiah } from "@/lib/utils"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { ProductImage } from "@/components/ProductImage"
 
 interface Variant {
   id: number
@@ -27,6 +28,8 @@ interface Product {
   name: string
   created_at: string
   category_id: number
+  image_path?: string | null
+  updated_at?: string | null
   categories?: { name: string }
   variants?: Variant[]
 }
@@ -133,6 +136,8 @@ export default function Products() {
       name: product.name,
       category_id: product.category_id,
       category_name: product.categories?.name,
+      image_path: product.image_path,
+      updated_at: product.updated_at,
       variant_id: variant.id,
       variant_name: variant.name,
       variant_price: variant.price,
@@ -235,6 +240,12 @@ export default function Products() {
                       <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
                     )}
                     <Package className="w-5 h-5 text-primary shrink-0" />
+                    <ProductImage
+                      imagePath={product.image_path}
+                      updatedAt={product.updated_at}
+                      alt={product.name}
+                      className="w-12 h-12 rounded-md shrink-0"
+                    />
                     <div className="min-w-0">
                       <h3 className="font-semibold text-foreground truncate">{product.name}</h3>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">

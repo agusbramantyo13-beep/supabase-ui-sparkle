@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Check, ChevronsUpDown, Trash2 } from "lucide-react";
+import { Plus, Check, ChevronsUpDown, Trash2, Upload, ImageOff, Package, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useStore } from "@/contexts/StoreContext";
@@ -11,6 +11,12 @@ import { applyInventoryChange } from "@/lib/stockHistory";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ProductImage } from "@/components/ProductImage";
+import {
+  validateImageFile,
+  uploadProductImage,
+  deleteProductImage,
+} from "@/lib/productImage";
 
 const formatPriceInput = (value: string): string => {
   const num = value.replace(/\D/g, "");
@@ -60,6 +66,12 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
   const [categoryId, setCategoryId] = useState("");
   const [variants, setVariants] = useState<VariantRow[]>([emptyVariant()]);
   const [loading, setLoading] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [existingImagePath, setExistingImagePath] = useState<string | null>(null);
+  const [existingImageUpdatedAt, setExistingImageUpdatedAt] = useState<string | null>(null);
+  const [imageBusy, setImageBusy] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { currentStoreId } = useStore();
 
@@ -70,10 +82,24 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
   }, []);
 
   useEffect(() => {
+    // reset image preview object url
+    if (imagePreview) {
+      return () => URL.revokeObjectURL(imagePreview);
+    }
+  }, [imagePreview]);
+
+  useEffect(() => {
+    setImageFile(null);
+    setImagePreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
     if (product) {
       setProductName(product.name || "");
       setCategoryId(product.category_id?.toString() || "");
       if (product.category_name) setCategorySearch(product.category_name);
+      setExistingImagePath(product.image_path ?? null);
+      setExistingImageUpdatedAt(product.updated_at ?? null);
       setVariants([{
         id: product.variant_id,
         name: product.variant_name || "",
@@ -86,6 +112,8 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
       setProductName("");
       setCategoryId("");
       setCategorySearch("");
+      setExistingImagePath(null);
+      setExistingImageUpdatedAt(null);
       setVariants([emptyVariant()]);
     }
   }, [product, open]);
@@ -145,6 +173,60 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
   const removeVariant = (index: number) => {
     if (variants.length <= 1) return;
     setVariants(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handlePickImage = () => fileInputRef.current?.click();
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      validateImageFile(file);
+    } catch (err: any) {
+      toast({ title: "Gambar tidak valid", description: err.message, variant: "destructive" });
+      return;
+    }
+
+    if (isEditMode && product?.id && currentStoreId) {
+      setImageBusy(true);
+      try {
+        const path = await uploadProductImage(currentStoreId, product.id, file);
+        const now = new Date().toISOString();
+        await supabase.from('products').update({ image_path: path }).eq('id', product.id);
+        setExistingImagePath(path);
+        setExistingImageUpdatedAt(now);
+        toast({ title: "Berhasil", description: "Gambar produk diperbarui" });
+      } catch (err: any) {
+        toast({ title: "Gagal upload", description: err.message, variant: "destructive" });
+      } finally {
+        setImageBusy(false);
+      }
+    } else {
+      if (imagePreview) URL.revokeObjectURL(imagePreview);
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    if (isEditMode && product?.id && existingImagePath && currentStoreId) {
+      setImageBusy(true);
+      try {
+        await deleteProductImage(currentStoreId, product.id);
+        await supabase.from('products').update({ image_path: null }).eq('id', product.id);
+        setExistingImagePath(null);
+        toast({ title: "Berhasil", description: "Gambar produk dihapus" });
+      } catch (err: any) {
+        toast({ title: "Gagal hapus gambar", description: err.message, variant: "destructive" });
+      } finally {
+        setImageBusy(false);
+      }
+    } else {
+      if (imagePreview) URL.revokeObjectURL(imagePreview);
+      setImageFile(null);
+      setImagePreview(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -219,6 +301,20 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
           }
         }
 
+        // Upload image if selected (create mode)
+        if (imageFile && currentStoreId) {
+          try {
+            const path = await uploadProductImage(currentStoreId, productData.id, imageFile);
+            await supabase.from('products').update({ image_path: path }).eq('id', productData.id);
+          } catch (imgErr: any) {
+            toast({
+              title: "Produk tersimpan, gambar gagal diupload",
+              description: imgErr.message,
+              variant: "destructive",
+            });
+          }
+        }
+
         toast({ title: "Berhasil", description: `Produk dengan ${validVariants.length} varian berhasil ditambahkan` });
       }
 
@@ -240,6 +336,66 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
 
         <div className="flex-1 overflow-y-auto pr-1 min-h-0">
           <form onSubmit={handleSubmit} className="space-y-4 pb-2" id="product-form">
+            {/* Product Name */}
+            {/* Image */}
+            <div className="space-y-2">
+              <Label>Gambar Produk</Label>
+              <div className="flex items-center gap-3">
+                <div className="w-24 h-24 rounded-lg border border-border overflow-hidden bg-muted flex items-center justify-center shrink-0 relative">
+                  {imagePreview ? (
+                    <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                  ) : existingImagePath ? (
+                    <ProductImage
+                      imagePath={existingImagePath}
+                      updatedAt={existingImageUpdatedAt}
+                      alt={productName || "Produk"}
+                      className="w-full h-full"
+                    />
+                  ) : (
+                    <Package className="w-8 h-8 text-muted-foreground/50" />
+                  )}
+                  {imageBusy && (
+                    <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-col gap-2 flex-1">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePickImage}
+                    disabled={imageBusy}
+                  >
+                    <Upload className="w-3 h-3 mr-2" />
+                    {existingImagePath || imagePreview ? "Ganti Gambar" : "Upload Gambar"}
+                  </Button>
+                  {(existingImagePath || imagePreview) && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleRemoveImage}
+                      disabled={imageBusy}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <ImageOff className="w-3 h-3 mr-2" />
+                      Hapus Gambar
+                    </Button>
+                  )}
+                  <p className="text-xs text-muted-foreground">Max 10MB. Otomatis dikompres ke WebP.</p>
+                </div>
+              </div>
+            </div>
+
             {/* Product Name */}
             <div>
               <Label htmlFor="name">Nama Produk *</Label>

@@ -676,22 +676,28 @@ export type Database = {
           category_id: number | null
           created_at: string | null
           id: number
+          image_path: string | null
           name: string
           store_id: string | null
+          updated_at: string
         }
         Insert: {
           category_id?: number | null
           created_at?: string | null
           id?: number
+          image_path?: string | null
           name: string
           store_id?: string | null
+          updated_at?: string
         }
         Update: {
           category_id?: number | null
           created_at?: string | null
           id?: number
+          image_path?: string | null
           name?: string
           store_id?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
