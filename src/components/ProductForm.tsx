@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Check, ChevronsUpDown, Trash2 } from "lucide-react";
+import { Plus, Check, ChevronsUpDown, Trash2, Upload, ImageOff, Package, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useStore } from "@/contexts/StoreContext";
@@ -11,6 +11,12 @@ import { applyInventoryChange } from "@/lib/stockHistory";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ProductImage } from "@/components/ProductImage";
+import {
+  validateImageFile,
+  uploadProductImage,
+  deleteProductImage,
+} from "@/lib/productImage";
 
 const formatPriceInput = (value: string): string => {
   const num = value.replace(/\D/g, "");
