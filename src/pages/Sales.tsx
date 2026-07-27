@@ -807,6 +807,8 @@ export default function Sales() {
     groupedProducts.push({
       product_name,
       category_name: sortedVariants[0]?.category_name,
+      image_path: sortedVariants[0]?.image_path,
+      product_updated_at: sortedVariants[0]?.product_updated_at,
       variants: sortedVariants
     });
   });
