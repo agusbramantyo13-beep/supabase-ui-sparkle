@@ -12,6 +12,7 @@ import { AddVariantDialog } from "@/components/AddVariantDialog"
 import { useToast } from "@/hooks/use-toast"
 import { formatRupiah } from "@/lib/utils"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { ProductImage } from "@/components/ProductImage"
 
 interface Variant {
   id: number
@@ -27,6 +28,8 @@ interface Product {
   name: string
   created_at: string
   category_id: number
+  image_path?: string | null
+  updated_at?: string | null
   categories?: { name: string }
   variants?: Variant[]
 }
