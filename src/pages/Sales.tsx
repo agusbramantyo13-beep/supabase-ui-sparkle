@@ -854,73 +854,136 @@ export default function Sales() {
           </div>
         </div>
 
-        <div className="space-y-2 lg:max-h-[calc(100vh-200px)] lg:overflow-y-auto">
-          {groupedProducts.map((group) => {
-            const isExpanded = expandedSalesProducts.has(group.product_name);
-            const hasMultipleVariants = group.variants.length > 1;
+        <div className="lg:max-h-[calc(100vh-200px)] lg:overflow-y-auto pr-1">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            {groupedProducts.map((group) => {
+              const hasMultipleVariants = group.variants.length > 1;
 
-            // Single variant: click directly adds to cart
-            if (!hasMultipleVariants) {
-              const variant = group.variants[0];
+              if (!hasMultipleVariants) {
+                const variant = group.variants[0];
+                const stock = variant.available_stock || 0;
+                return (
+                  <Card
+                    key={variant.id}
+                    className="group cursor-pointer hover:shadow-card hover:border-primary/50 transition-all bg-gradient-card overflow-hidden flex flex-col"
+                    onClick={() => addToCart(variant)}
+                  >
+                    <div className="relative aspect-square">
+                      <ProductImage
+                        imagePath={group.image_path}
+                        updatedAt={group.product_updated_at}
+                        alt={group.product_name}
+                        className="w-full h-full"
+                      />
+                      <Badge
+                        variant={stock > 0 ? "secondary" : "destructive"}
+                        className="absolute top-1.5 right-1.5 text-[10px] px-1.5 py-0"
+                      >
+                        {stock > 0 ? `Stok ${stock}` : "Habis"}
+                      </Badge>
+                    </div>
+                    <CardContent className="p-2.5 flex flex-col gap-1 flex-1">
+                      <h3 className="font-semibold text-sm text-foreground line-clamp-2 leading-tight">
+                        {group.product_name}
+                      </h3>
+                      <div className="flex items-end justify-between gap-1 mt-auto pt-1">
+                        <p className="text-sm font-bold text-primary">
+                          Rp {variant.price.toLocaleString('id-ID')}
+                        </p>
+                        <Button
+                          size="icon"
+                          className="h-7 w-7 shrink-0 bg-gradient-primary"
+                          onClick={(e) => { e.stopPropagation(); addToCart(variant); }}
+                          aria-label="Tambah ke keranjang"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              }
+
+              // Multiple variants: card triggers variant picker (expand inline below card row)
+              const isExpanded = expandedSalesProducts.has(group.product_name);
               return (
                 <Card
-                  key={variant.id}
-                  className="cursor-pointer hover:shadow-card transition-shadow bg-gradient-card"
-                  onClick={() => addToCart(variant)}
+                  key={group.product_name}
+                  className={cn(
+                    "group cursor-pointer hover:shadow-card hover:border-primary/50 transition-all bg-gradient-card overflow-hidden flex flex-col",
+                    isExpanded && "col-span-2 sm:col-span-3 md:col-span-4 lg:col-span-3 xl:col-span-4"
+                  )}
                 >
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold text-foreground truncate">{group.product_name}</h3>
-                    <p className="text-sm text-muted-foreground">{group.category_name}</p>
-                    <div className="flex items-center justify-between mt-2">
-                      <p className="text-lg font-bold text-primary">Rp {variant.price.toLocaleString('id-ID')}</p>
-                      <span className="text-xs text-muted-foreground">Stok: {variant.available_stock || 0}</span>
+                  {!isExpanded ? (
+                    <div onClick={() => toggleSalesExpanded(group.product_name)}>
+                      <div className="relative aspect-square">
+                        <ProductImage
+                          imagePath={group.image_path}
+                          updatedAt={group.product_updated_at}
+                          alt={group.product_name}
+                          className="w-full h-full"
+                        />
+                        <Badge variant="outline" className="absolute top-1.5 right-1.5 text-[10px] px-1.5 py-0 bg-background/90">
+                          {group.variants.length} varian
+                        </Badge>
+                      </div>
+                      <CardContent className="p-2.5 flex flex-col gap-1">
+                        <h3 className="font-semibold text-sm text-foreground line-clamp-2 leading-tight">
+                          {group.product_name}
+                        </h3>
+                        <p className="text-xs text-muted-foreground">
+                          Mulai Rp {Math.min(...group.variants.map(v => v.price)).toLocaleString('id-ID')}
+                        </p>
+                      </CardContent>
                     </div>
-                  </CardContent>
+                  ) : (
+                    <div>
+                      <div
+                        className="flex items-center gap-3 p-3 cursor-pointer hover:bg-muted/30"
+                        onClick={() => toggleSalesExpanded(group.product_name)}
+                      >
+                        <ProductImage
+                          imagePath={group.image_path}
+                          updatedAt={group.product_updated_at}
+                          alt={group.product_name}
+                          className="w-14 h-14 rounded-md shrink-0"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-semibold text-foreground truncate">{group.product_name}</h3>
+                          <p className="text-xs text-muted-foreground">
+                            {group.category_name} · {group.variants.length} varian
+                          </p>
+                        </div>
+                        <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                      <div className="border-t border-border/50 grid grid-cols-1 sm:grid-cols-2">
+                        {group.variants.map((variant) => {
+                          const stock = variant.available_stock || 0;
+                          return (
+                            <button
+                              key={variant.id}
+                              type="button"
+                              className="flex items-center justify-between px-3 py-2.5 text-left hover:bg-muted/30 transition-colors border-b border-border/30 last:border-b-0 sm:border-r sm:last:border-r-0"
+                              onClick={() => addToCart(variant)}
+                            >
+                              <div className="min-w-0">
+                                <p className="font-medium text-sm text-foreground truncate">{variant.name}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  Rp {variant.price.toLocaleString('id-ID')} · Stok {stock}
+                                </p>
+                              </div>
+                              <Plus className="w-4 h-4 text-primary shrink-0 ml-2" />
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </Card>
               );
-            }
-
-            // Multiple variants: expandable
-            return (
-              <Card key={group.product_name} className="bg-gradient-card overflow-hidden">
-                <div
-                  className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/30 transition-colors"
-                  onClick={() => toggleSalesExpanded(group.product_name)}
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    {isExpanded ? (
-                      <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
-                    ) : (
-                      <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
-                    )}
-                    <div className="min-w-0">
-                      <h3 className="font-semibold text-foreground truncate">{group.product_name}</h3>
-                      <p className="text-sm text-muted-foreground">{group.category_name} · {group.variants.length} varian</p>
-                    </div>
-                  </div>
-                </div>
-
-                {isExpanded && (
-                  <div className="border-t border-border/50">
-                    {group.variants.map((variant) => (
-                      <div
-                        key={variant.id}
-                        className="flex items-center justify-between px-4 py-3 pl-10 cursor-pointer hover:bg-muted/20 transition-colors border-b border-border/30 last:border-b-0"
-                        onClick={() => addToCart(variant)}
-                      >
-                        <div>
-                          <p className="font-medium text-foreground">{variant.name}</p>
-                          <span className="text-xs text-muted-foreground">Stok: {variant.available_stock || 0}</span>
-                        </div>
-                        <p className="text-lg font-bold text-primary">Rp {variant.price.toLocaleString('id-ID')}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </Card>
-            );
-          })}
-      </div>
+            })}
+          </div>
+        </div>
 
       </div>
 
