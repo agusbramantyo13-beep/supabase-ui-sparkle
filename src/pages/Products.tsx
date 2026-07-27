@@ -136,6 +136,8 @@ export default function Products() {
       name: product.name,
       category_id: product.category_id,
       category_name: product.categories?.name,
+      image_path: product.image_path,
+      updated_at: product.updated_at,
       variant_id: variant.id,
       variant_name: variant.name,
       variant_price: variant.price,
