@@ -14,6 +14,7 @@ import { SplitPaymentInputs } from "@/components/SplitPaymentInputs";
 import { MemberCombobox } from "@/components/MemberCombobox";
 import { CurrencyKeypadInput } from "@/components/CurrencyKeypadInput";
 import { applyInventoryChange } from "@/lib/stockHistory";
+import { ProductImage } from "@/components/ProductImage";
 
 interface ProductVariant {
   id: string;
