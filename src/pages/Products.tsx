@@ -30,6 +30,7 @@ interface Product {
   category_id: number
   image_path?: string | null
   updated_at?: string | null
+  has_variants?: boolean
   categories?: { name: string }
   variants?: Variant[]
 }
@@ -44,6 +45,8 @@ export default function Products() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [productToDelete, setProductToDelete] = useState<Product | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [variantToDelete, setVariantToDelete] = useState<{ product: Product; variant: Variant } | null>(null)
+  const [isDeletingVariant, setIsDeletingVariant] = useState(false)
   const [expandedProducts, setExpandedProducts] = useState<Set<number>>(new Set())
   const [addVariantOpen, setAddVariantOpen] = useState(false)
   const [productForVariant, setProductForVariant] = useState<Product | null>(null)
@@ -138,6 +141,8 @@ export default function Products() {
       category_name: product.categories?.name,
       image_path: product.image_path,
       updated_at: product.updated_at,
+      has_variants: product.has_variants,
+      variant_count: product.variants?.length ?? 1,
       variant_id: variant.id,
       variant_name: variant.name,
       variant_price: variant.price,
@@ -147,6 +152,46 @@ export default function Products() {
     })
     setProductFormOpen(true)
   }
+
+  const handleDeleteVariant = async () => {
+    if (!variantToDelete) return
+    const { product, variant } = variantToDelete
+    setIsDeletingVariant(true)
+    try {
+      // Block deletion if variant has sales history (preserve report integrity)
+      const { count, error: countError } = await supabase
+        .from('sale_items')
+        .select('id', { count: 'exact', head: true })
+        .eq('variant_id', variant.id)
+      if (countError) throw countError
+      if ((count ?? 0) > 0) {
+        toast({
+          title: "Tidak bisa dihapus",
+          description: "Varian ini sudah punya riwayat transaksi, tidak bisa dihapus.",
+          variant: "destructive",
+        })
+        setVariantToDelete(null)
+        return
+      }
+
+      // inventory has ON DELETE CASCADE from variants — no manual cleanup needed
+      const { error } = await supabase.from('variants').delete().eq('id', variant.id)
+      if (error) throw error
+
+      toast({ title: "Berhasil", description: `Varian "${variant.name}" dihapus` })
+      setVariantToDelete(null)
+      fetchProducts()
+    } catch (error: any) {
+      toast({
+        title: "Gagal",
+        description: error.message || "Gagal menghapus varian",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDeletingVariant(false)
+    }
+  }
+
 
   const availableCategories = Array.from(
     new Set(products.map(p => p.categories?.name).filter(Boolean) as string[])
@@ -225,19 +270,23 @@ export default function Products() {
             const isExpanded = expandedProducts.has(product.id)
             const totalStock = getTotalStock(product)
             const variantCount = product.variants?.length || 0
+            const isSimple = !product.has_variants
+            const soleVariant = isSimple ? sortVariants(product.variants || [])[0] : null
 
             return (
               <Card key={product.id} className="bg-gradient-card border-border/50 overflow-hidden">
                 {/* Product Header Row */}
                 <div
-                  className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/30 transition-colors"
-                  onClick={() => toggleExpanded(product.id)}
+                  className={`flex items-center justify-between p-4 transition-colors ${isSimple ? "" : "cursor-pointer hover:bg-muted/30"}`}
+                  onClick={isSimple ? undefined : () => toggleExpanded(product.id)}
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    {isExpanded ? (
-                      <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0" />
-                    ) : (
-                      <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
+                    {!isSimple && (
+                      isExpanded ? (
+                        <ChevronDown className="w-5 h-5 text-muted-foreground shrink-0" />
+                      ) : (
+                        <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
+                      )
                     )}
                     <Package className="w-5 h-5 text-primary shrink-0" />
                     <ProductImage
@@ -252,7 +301,14 @@ export default function Products() {
                         {product.categories && (
                           <Badge variant="secondary" className="text-xs">{product.categories.name}</Badge>
                         )}
-                        <span className="text-xs text-muted-foreground">{variantCount} varian</span>
+                        {isSimple && soleVariant ? (
+                          <span className="text-xs text-muted-foreground">
+                            {formatRupiah(soleVariant.price)}
+                            {soleVariant.sku ? ` • SKU: ${soleVariant.sku}` : ""}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">{variantCount} varian</span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -265,6 +321,17 @@ export default function Products() {
                       Stok: {totalStock}
                     </Badge>
                     <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                      {isSimple && soleVariant && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditVariant(product, soleVariant)}
+                          title="Ubah Produk"
+                        >
+                          <Edit className="w-3 h-3 mr-1" />
+                          Ubah
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"
@@ -289,11 +356,12 @@ export default function Products() {
                   </div>
                 </div>
 
-                {/* Expanded Variants */}
-                {isExpanded && product.variants && product.variants.length > 0 && (
+                {/* Expanded Variants (only for products with variants) */}
+                {!isSimple && isExpanded && product.variants && product.variants.length > 0 && (
                   <div className="border-t border-border/50">
                     {sortVariants(product.variants).map((variant) => {
                       const stock = variant.inventory?.[0]?.quantity || 0
+                      const isLastVariant = (product.variants?.length || 0) <= 1
                       return (
                         <div
                           key={variant.id}
@@ -324,6 +392,16 @@ export default function Products() {
                             >
                               <Edit className="w-3 h-3 mr-1" />
                               Ubah
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setVariantToDelete({ product, variant })}
+                              disabled={isLastVariant}
+                              title={isLastVariant ? "Tidak bisa menghapus varian terakhir" : "Hapus Varian"}
+                              className="text-destructive hover:text-destructive disabled:text-muted-foreground"
+                            >
+                              <Trash2 className="w-3 h-3" />
                             </Button>
                           </div>
                         </div>
@@ -399,6 +477,27 @@ export default function Products() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {isDeleting ? "Menghapus..." : "Hapus"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!variantToDelete} onOpenChange={(o) => !o && setVariantToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Varian</AlertDialogTitle>
+            <AlertDialogDescription>
+              Hapus varian "{variantToDelete?.variant.name}" dari produk "{variantToDelete?.product.name}"? Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingVariant}>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteVariant}
+              disabled={isDeletingVariant}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeletingVariant ? "Menghapus..." : "Hapus"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

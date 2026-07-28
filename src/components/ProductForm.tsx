@@ -3,12 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Check, ChevronsUpDown, Trash2, Upload, ImageOff, Package, Loader2 } from "lucide-react";
+import { Plus, Check, ChevronsUpDown, Trash2, Upload, ImageOff, Package, Loader2, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useStore } from "@/contexts/StoreContext";
 import { applyInventoryChange } from "@/lib/stockHistory";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ProductImage } from "@/components/ProductImage";
@@ -65,6 +67,8 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
   const [productName, setProductName] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [variants, setVariants] = useState<VariantRow[]>([emptyVariant()]);
+  const [hasVariantsToggle, setHasVariantsToggle] = useState(false);
+  const [toggleLocked, setToggleLocked] = useState(false);
   const [loading, setLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -100,6 +104,11 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
       if (product.category_name) setCategorySearch(product.category_name);
       setExistingImagePath(product.image_path ?? null);
       setExistingImageUpdatedAt(product.updated_at ?? null);
+      const variantCount = product.variant_count ?? 1;
+      const productHasVariants = !!product.has_variants;
+      const lock = productHasVariants && variantCount > 1;
+      setHasVariantsToggle(productHasVariants);
+      setToggleLocked(lock);
       setVariants([{
         id: product.variant_id,
         name: product.variant_name || "",
@@ -114,6 +123,8 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
       setCategorySearch("");
       setExistingImagePath(null);
       setExistingImageUpdatedAt(null);
+      setHasVariantsToggle(false);
+      setToggleLocked(false);
       setVariants([emptyVariant()]);
     }
   }, [product, open]);
@@ -237,9 +248,21 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
       return;
     }
 
-    const validVariants = variants.filter(v => v.name && v.price);
+    // When toggle is OFF, hidden variant name is auto-set to product name.
+    // When toggle is ON, each row must have a name.
+    const preparedVariants = hasVariantsToggle
+      ? variants
+      : variants.slice(0, 1).map((v) => ({ ...v, name: v.name || productName }));
+
+    const validVariants = preparedVariants.filter(v => v.name && v.price);
     if (validVariants.length === 0) {
-      toast({ title: "Error", description: "Minimal 1 varian harus diisi (nama & harga)", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: hasVariantsToggle
+          ? "Minimal 1 varian harus diisi (nama & harga)"
+          : "Harga jual wajib diisi",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -247,14 +270,18 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
 
     try {
       if (isEditMode) {
-        // Edit mode: update product + single variant
+        // Edit mode: update product + single variant record
         const { error: productError } = await supabase
           .from('products')
-          .update({ name: productName, category_id: parseInt(categoryId) })
+          .update({
+            name: productName,
+            category_id: parseInt(categoryId),
+            has_variants: hasVariantsToggle,
+          } as any)
           .eq('id', product.id);
         if (productError) throw productError;
 
-        const v = variants[0];
+        const v = validVariants[0];
         const { error: variantError } = await supabase
           .from('variants')
           .update({
@@ -268,10 +295,15 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
 
         toast({ title: "Berhasil", description: "Produk berhasil diperbarui" });
       } else {
-        // Create mode: create product + multiple variants
+        // Create mode
         const { data: productData, error: productError } = await supabase
           .from('products')
-          .insert({ name: productName, category_id: parseInt(categoryId), store_id: currentStoreId })
+          .insert({
+            name: productName,
+            category_id: parseInt(categoryId),
+            store_id: currentStoreId,
+            has_variants: hasVariantsToggle,
+          } as any)
           .select()
           .single();
         if (productError) throw productError;
@@ -315,7 +347,12 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
           }
         }
 
-        toast({ title: "Berhasil", description: `Produk dengan ${validVariants.length} varian berhasil ditambahkan` });
+        toast({
+          title: "Berhasil",
+          description: hasVariantsToggle
+            ? `Produk dengan ${validVariants.length} varian berhasil ditambahkan`
+            : "Produk berhasil ditambahkan",
+        });
       }
 
       onSuccess();
@@ -326,6 +363,7 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
       setLoading(false);
     }
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -473,21 +511,56 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
               </Popover>
             </div>
 
-            {/* Variants */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-base font-semibold">Varian</Label>
-                {!isEditMode && (
-                  <Button type="button" variant="outline" size="sm" onClick={addVariant}>
-                    <Plus className="w-3 h-3 mr-1" />
-                    Tambah Varian
-                  </Button>
-                )}
+            {/* Variants toggle */}
+            <div className="flex items-center justify-between rounded-lg border border-border p-3">
+              <div className="space-y-0.5">
+                <Label className="text-sm font-medium">Produk ini memiliki varian</Label>
+                <p className="text-xs text-muted-foreground">
+                  Aktifkan bila produk punya beberapa pilihan (ukuran, rasa, dll).
+                </p>
               </div>
+              {toggleLocked ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-2">
+                        <Lock className="w-3 h-3 text-muted-foreground" />
+                        <Switch checked disabled />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="left">
+                      Produk sudah punya lebih dari satu varian dan tidak bisa diubah jadi produk simpel.
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
+                <Switch
+                  checked={hasVariantsToggle}
+                  onCheckedChange={(v) => {
+                    setHasVariantsToggle(v);
+                    if (!v) setVariants((prev) => prev.slice(0, 1));
+                  }}
+                />
+              )}
+            </div>
 
-              {variants.map((variant, index) => (
-                <div key={index} className="border border-border rounded-lg p-3 space-y-3 relative">
-                  {variants.length > 1 && !isEditMode && (
+            {/* Detail section */}
+            <div className="space-y-3">
+              {hasVariantsToggle && (
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-semibold">Varian</Label>
+                  {!isEditMode && (
+                    <Button type="button" variant="outline" size="sm" onClick={addVariant}>
+                      <Plus className="w-3 h-3 mr-1" />
+                      Tambah Varian
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {(hasVariantsToggle ? variants : variants.slice(0, 1)).map((variant, index) => (
+                <div key={index} className={cn(hasVariantsToggle && "border border-border rounded-lg p-3", "space-y-3 relative")}>
+                  {hasVariantsToggle && variants.length > 1 && !isEditMode && (
                     <Button
                       type="button"
                       variant="ghost"
@@ -499,16 +572,19 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
                     </Button>
                   )}
 
-                  <div className="text-xs font-medium text-muted-foreground">Varian {index + 1}</div>
-
-                  <div>
-                    <Label>Nama Varian *</Label>
-                    <Input
-                      value={variant.name}
-                      onChange={(e) => updateVariant(index, 'name', e.target.value)}
-                      placeholder="cth: Default, Kecil, Besar"
-                    />
-                  </div>
+                  {hasVariantsToggle && (
+                    <>
+                      <div className="text-xs font-medium text-muted-foreground">Varian {index + 1}</div>
+                      <div>
+                        <Label>Nama Varian *</Label>
+                        <Input
+                          value={variant.name}
+                          onChange={(e) => updateVariant(index, 'name', e.target.value)}
+                          placeholder="cth: Kecil, Besar, Rasa Coklat"
+                        />
+                      </div>
+                    </>
+                  )}
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
@@ -535,11 +611,11 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label>SKU</Label>
+                      <Label>SKU / Barcode</Label>
                       <Input
                         value={variant.sku}
                         onChange={(e) => updateVariant(index, 'sku', e.target.value)}
-                        placeholder="Kode SKU"
+                        placeholder="Opsional"
                       />
                     </div>
                     {!isEditMode && (
