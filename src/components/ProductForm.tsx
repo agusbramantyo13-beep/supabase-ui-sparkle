@@ -248,9 +248,21 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
       return;
     }
 
-    const validVariants = variants.filter(v => v.name && v.price);
+    // When toggle is OFF, hidden variant name is auto-set to product name.
+    // When toggle is ON, each row must have a name.
+    const preparedVariants = hasVariantsToggle
+      ? variants
+      : variants.slice(0, 1).map((v) => ({ ...v, name: v.name || productName }));
+
+    const validVariants = preparedVariants.filter(v => v.name && v.price);
     if (validVariants.length === 0) {
-      toast({ title: "Error", description: "Minimal 1 varian harus diisi (nama & harga)", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: hasVariantsToggle
+          ? "Minimal 1 varian harus diisi (nama & harga)"
+          : "Harga jual wajib diisi",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -258,14 +270,18 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
 
     try {
       if (isEditMode) {
-        // Edit mode: update product + single variant
+        // Edit mode: update product + single variant record
         const { error: productError } = await supabase
           .from('products')
-          .update({ name: productName, category_id: parseInt(categoryId) })
+          .update({
+            name: productName,
+            category_id: parseInt(categoryId),
+            has_variants: hasVariantsToggle,
+          } as any)
           .eq('id', product.id);
         if (productError) throw productError;
 
-        const v = variants[0];
+        const v = validVariants[0];
         const { error: variantError } = await supabase
           .from('variants')
           .update({
@@ -279,10 +295,15 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
 
         toast({ title: "Berhasil", description: "Produk berhasil diperbarui" });
       } else {
-        // Create mode: create product + multiple variants
+        // Create mode
         const { data: productData, error: productError } = await supabase
           .from('products')
-          .insert({ name: productName, category_id: parseInt(categoryId), store_id: currentStoreId })
+          .insert({
+            name: productName,
+            category_id: parseInt(categoryId),
+            store_id: currentStoreId,
+            has_variants: hasVariantsToggle,
+          } as any)
           .select()
           .single();
         if (productError) throw productError;
@@ -326,7 +347,12 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
           }
         }
 
-        toast({ title: "Berhasil", description: `Produk dengan ${validVariants.length} varian berhasil ditambahkan` });
+        toast({
+          title: "Berhasil",
+          description: hasVariantsToggle
+            ? `Produk dengan ${validVariants.length} varian berhasil ditambahkan`
+            : "Produk berhasil ditambahkan",
+        });
       }
 
       onSuccess();
@@ -337,6 +363,7 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
       setLoading(false);
     }
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
