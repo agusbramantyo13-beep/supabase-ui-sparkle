@@ -98,6 +98,12 @@ export function AddVariantDialog({ open, onOpenChange, onSuccess, productId, pro
         }
       }
 
+      // Bump product to "has_variants" once an extra variant is attached
+      await supabase
+        .from('products')
+        .update({ has_variants: true } as any)
+        .eq('id', productId);
+
       toast({ title: "Berhasil", description: `${validVariants.length} varian berhasil ditambahkan` });
       onSuccess();
       onOpenChange(false);
