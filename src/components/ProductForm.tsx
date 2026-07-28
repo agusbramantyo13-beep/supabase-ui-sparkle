@@ -511,21 +511,56 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
               </Popover>
             </div>
 
-            {/* Variants */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-base font-semibold">Varian</Label>
-                {!isEditMode && (
-                  <Button type="button" variant="outline" size="sm" onClick={addVariant}>
-                    <Plus className="w-3 h-3 mr-1" />
-                    Tambah Varian
-                  </Button>
-                )}
+            {/* Variants toggle */}
+            <div className="flex items-center justify-between rounded-lg border border-border p-3">
+              <div className="space-y-0.5">
+                <Label className="text-sm font-medium">Produk ini memiliki varian</Label>
+                <p className="text-xs text-muted-foreground">
+                  Aktifkan bila produk punya beberapa pilihan (ukuran, rasa, dll).
+                </p>
               </div>
+              {toggleLocked ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-2">
+                        <Lock className="w-3 h-3 text-muted-foreground" />
+                        <Switch checked disabled />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="left">
+                      Produk sudah punya lebih dari satu varian dan tidak bisa diubah jadi produk simpel.
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
+                <Switch
+                  checked={hasVariantsToggle}
+                  onCheckedChange={(v) => {
+                    setHasVariantsToggle(v);
+                    if (!v) setVariants((prev) => prev.slice(0, 1));
+                  }}
+                />
+              )}
+            </div>
 
-              {variants.map((variant, index) => (
-                <div key={index} className="border border-border rounded-lg p-3 space-y-3 relative">
-                  {variants.length > 1 && !isEditMode && (
+            {/* Detail section */}
+            <div className="space-y-3">
+              {hasVariantsToggle && (
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-semibold">Varian</Label>
+                  {!isEditMode && (
+                    <Button type="button" variant="outline" size="sm" onClick={addVariant}>
+                      <Plus className="w-3 h-3 mr-1" />
+                      Tambah Varian
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {(hasVariantsToggle ? variants : variants.slice(0, 1)).map((variant, index) => (
+                <div key={index} className={cn(hasVariantsToggle && "border border-border rounded-lg p-3", "space-y-3 relative")}>
+                  {hasVariantsToggle && variants.length > 1 && !isEditMode && (
                     <Button
                       type="button"
                       variant="ghost"
@@ -537,16 +572,19 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
                     </Button>
                   )}
 
-                  <div className="text-xs font-medium text-muted-foreground">Varian {index + 1}</div>
-
-                  <div>
-                    <Label>Nama Varian *</Label>
-                    <Input
-                      value={variant.name}
-                      onChange={(e) => updateVariant(index, 'name', e.target.value)}
-                      placeholder="cth: Default, Kecil, Besar"
-                    />
-                  </div>
+                  {hasVariantsToggle && (
+                    <>
+                      <div className="text-xs font-medium text-muted-foreground">Varian {index + 1}</div>
+                      <div>
+                        <Label>Nama Varian *</Label>
+                        <Input
+                          value={variant.name}
+                          onChange={(e) => updateVariant(index, 'name', e.target.value)}
+                          placeholder="cth: Kecil, Besar, Rasa Coklat"
+                        />
+                      </div>
+                    </>
+                  )}
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
@@ -573,11 +611,11 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label>SKU</Label>
+                      <Label>SKU / Barcode</Label>
                       <Input
                         value={variant.sku}
                         onChange={(e) => updateVariant(index, 'sku', e.target.value)}
-                        placeholder="Kode SKU"
+                        placeholder="Opsional"
                       />
                     </div>
                     {!isEditMode && (
