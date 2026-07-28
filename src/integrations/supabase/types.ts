@@ -675,6 +675,7 @@ export type Database = {
         Row: {
           category_id: number | null
           created_at: string | null
+          has_variants: boolean
           id: number
           image_path: string | null
           name: string
@@ -684,6 +685,7 @@ export type Database = {
         Insert: {
           category_id?: number | null
           created_at?: string | null
+          has_variants?: boolean
           id?: number
           image_path?: string | null
           name: string
@@ -693,6 +695,7 @@ export type Database = {
         Update: {
           category_id?: number | null
           created_at?: string | null
+          has_variants?: boolean
           id?: number
           image_path?: string | null
           name?: string
