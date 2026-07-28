@@ -45,6 +45,8 @@ export default function Products() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [productToDelete, setProductToDelete] = useState<Product | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [variantToDelete, setVariantToDelete] = useState<{ product: Product; variant: Variant } | null>(null)
+  const [isDeletingVariant, setIsDeletingVariant] = useState(false)
   const [expandedProducts, setExpandedProducts] = useState<Set<number>>(new Set())
   const [addVariantOpen, setAddVariantOpen] = useState(false)
   const [productForVariant, setProductForVariant] = useState<Product | null>(null)
