@@ -141,6 +141,8 @@ export default function Products() {
       category_name: product.categories?.name,
       image_path: product.image_path,
       updated_at: product.updated_at,
+      has_variants: product.has_variants,
+      variant_count: product.variants?.length ?? 1,
       variant_id: variant.id,
       variant_name: variant.name,
       variant_price: variant.price,
@@ -150,6 +152,46 @@ export default function Products() {
     })
     setProductFormOpen(true)
   }
+
+  const handleDeleteVariant = async () => {
+    if (!variantToDelete) return
+    const { product, variant } = variantToDelete
+    setIsDeletingVariant(true)
+    try {
+      // Block deletion if variant has sales history (preserve report integrity)
+      const { count, error: countError } = await supabase
+        .from('sale_items')
+        .select('id', { count: 'exact', head: true })
+        .eq('variant_id', variant.id)
+      if (countError) throw countError
+      if ((count ?? 0) > 0) {
+        toast({
+          title: "Tidak bisa dihapus",
+          description: "Varian ini sudah punya riwayat transaksi, tidak bisa dihapus.",
+          variant: "destructive",
+        })
+        setVariantToDelete(null)
+        return
+      }
+
+      // inventory has ON DELETE CASCADE from variants — no manual cleanup needed
+      const { error } = await supabase.from('variants').delete().eq('id', variant.id)
+      if (error) throw error
+
+      toast({ title: "Berhasil", description: `Varian "${variant.name}" dihapus` })
+      setVariantToDelete(null)
+      fetchProducts()
+    } catch (error: any) {
+      toast({
+        title: "Gagal",
+        description: error.message || "Gagal menghapus varian",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDeletingVariant(false)
+    }
+  }
+
 
   const availableCategories = Array.from(
     new Set(products.map(p => p.categories?.name).filter(Boolean) as string[])
