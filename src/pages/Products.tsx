@@ -30,6 +30,7 @@ interface Product {
   category_id: number
   image_path?: string | null
   updated_at?: string | null
+  has_variants?: boolean
   categories?: { name: string }
   variants?: Variant[]
 }
