@@ -67,6 +67,8 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
   const [productName, setProductName] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [variants, setVariants] = useState<VariantRow[]>([emptyVariant()]);
+  const [hasVariantsToggle, setHasVariantsToggle] = useState(false);
+  const [toggleLocked, setToggleLocked] = useState(false);
   const [loading, setLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
