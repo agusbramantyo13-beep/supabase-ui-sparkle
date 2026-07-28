@@ -481,6 +481,27 @@ export default function Products() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={!!variantToDelete} onOpenChange={(o) => !o && setVariantToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Varian</AlertDialogTitle>
+            <AlertDialogDescription>
+              Hapus varian "{variantToDelete?.variant.name}" dari produk "{variantToDelete?.product.name}"? Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingVariant}>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteVariant}
+              disabled={isDeletingVariant}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeletingVariant ? "Menghapus..." : "Hapus"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
