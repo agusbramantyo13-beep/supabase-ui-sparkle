@@ -104,6 +104,11 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
       if (product.category_name) setCategorySearch(product.category_name);
       setExistingImagePath(product.image_path ?? null);
       setExistingImageUpdatedAt(product.updated_at ?? null);
+      const variantCount = product.variant_count ?? 1;
+      const productHasVariants = !!product.has_variants;
+      const lock = productHasVariants && variantCount > 1;
+      setHasVariantsToggle(productHasVariants);
+      setToggleLocked(lock);
       setVariants([{
         id: product.variant_id,
         name: product.variant_name || "",
@@ -118,6 +123,8 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
       setCategorySearch("");
       setExistingImagePath(null);
       setExistingImageUpdatedAt(null);
+      setHasVariantsToggle(false);
+      setToggleLocked(false);
       setVariants([emptyVariant()]);
     }
   }, [product, open]);
