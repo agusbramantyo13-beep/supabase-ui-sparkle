@@ -132,11 +132,17 @@ export default function Reports() {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 max-w-md">
+        <TabsList className={cn("grid w-full max-w-lg", isOwner ? "grid-cols-3" : "grid-cols-2")}>
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
             Overview
           </TabsTrigger>
+          {isOwner && (
+            <TabsTrigger value="profit" className="flex items-center gap-2">
+              <LineChart className="w-4 h-4" />
+              Profit
+            </TabsTrigger>
+          )}
           <TabsTrigger value="member" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
             Transaksi Member
