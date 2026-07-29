@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { BarChart3, DollarSign, TrendingUp, Calendar, Download, Users } from "lucide-react";
+import { BarChart3, DollarSign, TrendingUp, Calendar, Download, Users, LineChart } from "lucide-react";
+import ProfitDashboard from "@/components/ProfitDashboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
