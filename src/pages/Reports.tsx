@@ -290,6 +290,12 @@ export default function Reports() {
           </Card>
         </TabsContent>
 
+        {isOwner && (
+          <TabsContent value="profit">
+            <ProfitDashboard />
+          </TabsContent>
+        )}
+
         <TabsContent value="member">
           <MemberTransactionReport />
         </TabsContent>
