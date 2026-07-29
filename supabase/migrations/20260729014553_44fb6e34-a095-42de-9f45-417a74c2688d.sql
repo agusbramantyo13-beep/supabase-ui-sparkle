@@ -1,0 +1,1 @@
+ALTER VIEW public.v_sale_item_profit SET (security_invoker = true);
