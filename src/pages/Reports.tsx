@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { BarChart3, DollarSign, TrendingUp, Calendar, Download, Users } from "lucide-react";
+import { BarChart3, DollarSign, TrendingUp, Calendar, Download, Users, LineChart } from "lucide-react";
+import ProfitDashboard from "@/components/ProfitDashboard";
+import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -131,11 +133,17 @@ export default function Reports() {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 max-w-md">
+        <TabsList className={cn("grid w-full max-w-lg", isOwner ? "grid-cols-3" : "grid-cols-2")}>
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
             Overview
           </TabsTrigger>
+          {isOwner && (
+            <TabsTrigger value="profit" className="flex items-center gap-2">
+              <LineChart className="w-4 h-4" />
+              Profit
+            </TabsTrigger>
+          )}
           <TabsTrigger value="member" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
             Transaksi Member
@@ -281,6 +289,12 @@ export default function Reports() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {isOwner && (
+          <TabsContent value="profit">
+            <ProfitDashboard />
+          </TabsContent>
+        )}
 
         <TabsContent value="member">
           <MemberTransactionReport />
