@@ -904,6 +904,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "sale_items_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "v_sale_item_profit"
+            referencedColumns: ["sale_id"]
+          },
+          {
             foreignKeyName: "sale_items_variant_id_fkey"
             columns: ["variant_id"]
             isOneToOne: false
@@ -1575,6 +1582,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_sale_item_profit"
+            referencedColumns: ["product_id"]
+          },
+          {
             foreignKeyName: "variants_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
@@ -1611,6 +1625,67 @@ export type Database = {
         }
         Relationships: []
       }
+      v_sale_item_profit: {
+        Row: {
+          cashier_id: string | null
+          cashier_name: string | null
+          category_id: number | null
+          category_name: string | null
+          cost_price: number | null
+          discount: number | null
+          margin_pct: number | null
+          product_id: number | null
+          product_name: string | null
+          product_snapshot: Json | null
+          profit: number | null
+          quantity: number | null
+          receipt_number: string | null
+          sale_created_at: string | null
+          sale_id: string | null
+          store_id: string | null
+          total: number | null
+          unit_price: number | null
+          variant_id: number | null
+          variant_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "v_current_inventory"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "sale_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "variants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_user_id_fkey"
+            columns: ["cashier_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_sales_summary: {
         Row: {
           day: string | null
@@ -1632,6 +1707,76 @@ export type Database = {
         Returns: undefined
       }
       generate_member_code: { Args: never; Returns: string }
+      get_profit_by_cashier: {
+        Args: { p_end: string; p_start: string; p_store_id: string }
+        Returns: {
+          cashier_id: string
+          cashier_name: string
+          cost: number
+          margin_pct: number
+          profit: number
+          revenue: number
+          total_transactions: number
+        }[]
+      }
+      get_profit_by_category: {
+        Args: { p_end: string; p_start: string; p_store_id: string }
+        Returns: {
+          category_id: number
+          category_name: string
+          cost: number
+          margin_pct: number
+          profit: number
+          quantity_sold: number
+          revenue: number
+        }[]
+      }
+      get_profit_by_period: {
+        Args: {
+          p_end: string
+          p_group_by: string
+          p_start: string
+          p_store_id: string
+        }
+        Returns: {
+          cost: number
+          margin_pct: number
+          period_start: string
+          profit: number
+          revenue: number
+          transactions: number
+        }[]
+      }
+      get_profit_summary: {
+        Args: { p_end: string; p_start: string; p_store_id: string }
+        Returns: {
+          avg_margin_pct: number
+          total_cost: number
+          total_profit: number
+          total_revenue: number
+          total_transactions: number
+        }[]
+      }
+      get_top_products_profit: {
+        Args: {
+          p_end: string
+          p_limit?: number
+          p_metric: string
+          p_start: string
+          p_store_id: string
+        }
+        Returns: {
+          cost: number
+          margin_pct: number
+          product_id: number
+          product_name: string
+          profit: number
+          quantity_sold: number
+          revenue: number
+          variant_id: number
+          variant_name: string
+        }[]
+      }
       get_user_store_ids: { Args: { _user_id: string }; Returns: string[] }
       has_any_store_owner_role: { Args: { _user_id: string }; Returns: boolean }
       is_developer: { Args: { _user_id: string }; Returns: boolean }
