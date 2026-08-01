@@ -37,7 +37,7 @@ export default function Reports() {
 
   useEffect(() => {
     fetchReportData();
-  }, [dateRange]);
+  }, [dateRange, currentStoreId, isOwner]);
 
   const fetchReportData = async () => {
     setLoading(true);
