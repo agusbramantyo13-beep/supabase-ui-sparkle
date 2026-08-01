@@ -37,7 +37,7 @@ export default function Reports() {
 
   useEffect(() => {
     fetchReportData();
-  }, [dateRange]);
+  }, [dateRange, currentStoreId, isOwner]);
 
   const fetchReportData = async () => {
     setLoading(true);
@@ -62,16 +62,16 @@ export default function Reports() {
         .gte('day', startDate.toISOString().split('T')[0])
         .lte('day', endDate.toISOString().split('T')[0]);
 
-      // Fetch profit data (only if not store keeper)
+      // Fetch profit data per-store via RPC (only for owner/developer)
       let totalProfit = 0;
-      if (isOwner) {
-        const { data: profitData } = await supabase
-          .from('v_profit_by_date')
-          .select('*')
-          .gte('day', startDate.toISOString().split('T')[0])
-          .lte('day', endDate.toISOString().split('T')[0]);
-        
-        totalProfit = profitData?.reduce((sum, profit) => sum + Number(profit.profit || 0), 0) || 0;
+      if (isOwner && currentStoreId) {
+        const { data: profitSummary, error: profitError } = await supabase.rpc('get_profit_summary', {
+          p_store_id: currentStoreId,
+          p_start: startDate.toISOString().split('T')[0],
+          p_end: endDate.toISOString().split('T')[0],
+        });
+        if (profitError) console.error('Error fetching profit summary:', profitError);
+        totalProfit = Number(profitSummary?.[0]?.total_profit || 0);
       }
 
       // Fetch other sales (lain-lain) in the range
