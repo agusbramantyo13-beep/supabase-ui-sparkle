@@ -19,6 +19,7 @@ interface Variant {
   name: string
   price: number
   cost_price: number
+  average_cost?: number | null
   sku: string | null
   inventory?: Array<{ quantity: number }>
 }
