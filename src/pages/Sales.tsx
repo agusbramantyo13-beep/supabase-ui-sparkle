@@ -21,6 +21,8 @@ interface ProductVariant {
   id: string;
   name: string;
   price: number;
+  cost_price?: number | null;
+  average_cost?: number | null;
   category_name?: string;
   category_id?: string;
   product_id?: string;
