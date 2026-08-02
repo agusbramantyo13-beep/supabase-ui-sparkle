@@ -376,6 +376,13 @@ export default function Products() {
                               {variant.cost_price > 0 && (
                                 <span>Modal: {formatRupiah(variant.cost_price)}</span>
                               )}
+                              {variant.average_cost != null && Number(variant.average_cost) !== Number(variant.cost_price) && (
+                                <span className="text-xs italic">
+                                  Modal rata-rata (otomatis): {formatRupiah(Number(variant.average_cost))}
+                                </span>
+                              )}
+                              {false && (
+                              )}
                               {variant.sku && <span>SKU: {variant.sku}</span>}
                             </div>
                           </div>
