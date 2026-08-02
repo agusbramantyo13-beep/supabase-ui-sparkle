@@ -12,7 +12,6 @@ import { useStore } from "@/contexts/StoreContext";
 import { Plus, Trash2, Check, ChevronsUpDown } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { applyInventoryChange } from "@/lib/stockHistory";
 
 interface ProductVariant {
   id: string;
