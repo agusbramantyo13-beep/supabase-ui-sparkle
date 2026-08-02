@@ -70,6 +70,7 @@ export default function Products() {
             name,
             price,
             cost_price,
+            average_cost,
             sku,
             inventory(quantity)
           )
