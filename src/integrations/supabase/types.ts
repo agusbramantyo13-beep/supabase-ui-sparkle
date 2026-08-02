@@ -1544,6 +1544,7 @@ export type Database = {
       }
       variants: {
         Row: {
+          average_cost: number | null
           cost_price: number
           created_at: string | null
           id: number
@@ -1554,6 +1555,7 @@ export type Database = {
           store_id: string | null
         }
         Insert: {
+          average_cost?: number | null
           cost_price?: number
           created_at?: string | null
           id?: number
@@ -1564,6 +1566,7 @@ export type Database = {
           store_id?: string | null
         }
         Update: {
+          average_cost?: number | null
           cost_price?: number
           created_at?: string | null
           id?: number
@@ -1702,6 +1705,16 @@ export type Database = {
           p_new_qty: number
           p_notes?: string
           p_type: Database["public"]["Enums"]["stock_history_type"]
+          p_variant_id: number
+        }
+        Returns: undefined
+      }
+      apply_purchase_and_recalc_cost: {
+        Args: {
+          p_notes?: string
+          p_purchase_cost: number
+          p_quantity: number
+          p_selling_price?: number
           p_variant_id: number
         }
         Returns: undefined
