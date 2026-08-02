@@ -19,6 +19,7 @@ interface Variant {
   name: string
   price: number
   cost_price: number
+  average_cost?: number | null
   sku: string | null
   inventory?: Array<{ quantity: number }>
 }
@@ -69,6 +70,7 @@ export default function Products() {
             name,
             price,
             cost_price,
+            average_cost,
             sku,
             inventory(quantity)
           )
@@ -373,6 +375,11 @@ export default function Products() {
                               <span>Harga: {formatRupiah(variant.price)}</span>
                               {variant.cost_price > 0 && (
                                 <span>Modal: {formatRupiah(variant.cost_price)}</span>
+                              )}
+                              {variant.average_cost != null && Number(variant.average_cost) !== Number(variant.cost_price) && (
+                                <span className="text-xs italic">
+                                  Modal rata-rata (otomatis): {formatRupiah(Number(variant.average_cost))}
+                                </span>
                               )}
                               {variant.sku && <span>SKU: {variant.sku}</span>}
                             </div>

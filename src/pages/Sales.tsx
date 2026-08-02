@@ -21,6 +21,8 @@ interface ProductVariant {
   id: string;
   name: string;
   price: number;
+  cost_price?: number | null;
+  average_cost?: number | null;
   category_name?: string;
   category_id?: string;
   product_id?: string;
@@ -169,6 +171,8 @@ export default function Sales() {
         id,
         name,
         price,
+        cost_price,
+        average_cost,
         product_id,
         products!inner(
           id,
@@ -206,6 +210,8 @@ export default function Sales() {
       product_name: variant.products.name,
       product_id: variant.products.id?.toString(),
       price: Number(variant.price) || 0,
+      cost_price: variant.cost_price != null ? Number(variant.cost_price) : null,
+      average_cost: variant.average_cost != null ? Number(variant.average_cost) : null,
       category_name: variant.products.categories?.name,
       category_id: variant.products.categories?.id?.toString() ?? variant.products.category_id?.toString(),
       available_stock: inventoryMap.get(variant.id) || 0,
@@ -664,7 +670,7 @@ export default function Sales() {
         variant_id: Number(item.product.id),
         quantity: item.quantity,
         unit_price: item.product.price,
-        cost_price: item.product.price * 0.6, // Estimated cost
+        cost_price: item.product.average_cost ?? item.product.cost_price ?? 0,
         total: item.subtotal,
         discount: 0,
         product_snapshot: {
