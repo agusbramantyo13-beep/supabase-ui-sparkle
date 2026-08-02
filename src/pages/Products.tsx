@@ -381,8 +381,6 @@ export default function Products() {
                                   Modal rata-rata (otomatis): {formatRupiah(Number(variant.average_cost))}
                                 </span>
                               )}
-                              {false && (
-                              )}
                               {variant.sku && <span>SKU: {variant.sku}</span>}
                             </div>
                           </div>
