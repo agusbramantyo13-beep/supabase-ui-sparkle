@@ -171,6 +171,8 @@ export default function Sales() {
         id,
         name,
         price,
+        cost_price,
+        average_cost,
         product_id,
         products!inner(
           id,
