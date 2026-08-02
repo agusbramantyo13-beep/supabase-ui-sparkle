@@ -210,6 +210,8 @@ export default function Sales() {
       product_name: variant.products.name,
       product_id: variant.products.id?.toString(),
       price: Number(variant.price) || 0,
+      cost_price: variant.cost_price != null ? Number(variant.cost_price) : null,
+      average_cost: variant.average_cost != null ? Number(variant.average_cost) : null,
       category_name: variant.products.categories?.name,
       category_id: variant.products.categories?.id?.toString() ?? variant.products.category_id?.toString(),
       available_stock: inventoryMap.get(variant.id) || 0,
