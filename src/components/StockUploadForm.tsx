@@ -215,17 +215,11 @@ export function StockUploadForm({ open, onOpenChange, onSuccess }: StockUploadFo
 
           if (existingVariant) {
             variantId = existingVariant.id
-            // Update prices
-            await supabase
-              .from('variants')
-              .update({
-                cost_price: row.cost_price,
-                price: row.selling_price,
-                ...(row.sku ? { sku: row.sku } : {})
-              })
-              .eq('id', variantId)
+            if (row.sku) {
+              await supabase.from('variants').update({ sku: row.sku }).eq('id', variantId)
+            }
           } else {
-            // Create new variant
+            // Create new variant (average_cost dibiarkan kosong, diisi oleh RPC pembelian)
             const { data: newVariant } = await supabase
               .from('variants')
               .insert({
@@ -243,22 +237,19 @@ export function StockUploadForm({ open, onOpenChange, onSuccess }: StockUploadFo
 
           if (!variantId) { errorCount++; continue }
 
-          // Update or create inventory via helper (records stock history)
-          const { data: existingInv } = await supabase
-            .from('inventory')
-            .select('quantity')
-            .eq('variant_id', variantId)
-            .eq('store_id', currentStoreId)
-            .maybeSingle()
-
-          const currentQty = existingInv?.quantity || 0
-          const isInitial = !existingInv
-          await applyInventoryChange({
-            variantId,
-            newQuantity: currentQty + row.quantity,
-            type: isInitial ? 'initial_stock' : 'product_added',
-            notes: 'Upload stok dari Excel',
-          })
+          if (row.quantity > 0) {
+            // Tambah stok + hitung ulang modal rata-rata secara atomik
+            const { error: macError } = await supabase.rpc('apply_purchase_and_recalc_cost' as any, {
+              p_variant_id: variantId,
+              p_quantity: row.quantity,
+              p_purchase_cost: row.cost_price,
+              p_selling_price: row.selling_price || null,
+              p_notes: 'Upload stok dari Excel',
+            })
+            if (macError) throw macError
+          } else if (row.selling_price) {
+            await supabase.from('variants').update({ price: row.selling_price }).eq('id', variantId)
+          }
 
           successCount++
         } catch {
