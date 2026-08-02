@@ -670,7 +670,7 @@ export default function Sales() {
         variant_id: Number(item.product.id),
         quantity: item.quantity,
         unit_price: item.product.price,
-        cost_price: item.product.price * 0.6, // Estimated cost
+        cost_price: item.product.average_cost ?? item.product.cost_price ?? 0,
         total: item.subtotal,
         discount: 0,
         product_snapshot: {

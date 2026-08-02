@@ -294,31 +294,16 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
 
         if (purchaseItemError) throw purchaseItemError;
 
-        // Get current inventory
-        const { data: currentInventory } = await supabase
-          .from('inventory')
-          .select('id, quantity')
-          .eq('variant_id', parseInt(item.variant_id))
-          .maybeSingle();
-
-        const currentQty = currentInventory?.quantity || 0;
-        await applyInventoryChange({
-          variantId: parseInt(item.variant_id),
-          newQuantity: currentQty + item.quantity,
-          type: 'product_added',
-          notes: 'Pembelian stok',
+        // Add stock + recalculate moving average cost atomically (server-side)
+        const { error: macError } = await supabase.rpc('apply_purchase_and_recalc_cost' as any, {
+          p_variant_id: parseInt(item.variant_id),
+          p_quantity: item.quantity,
+          p_purchase_cost: item.cost_price,
+          p_selling_price: item.selling_price || null,
+          p_notes: 'Pembelian stok',
         });
 
-        // Update variant prices if changed
-        const { error: variantError } = await supabase
-          .from('variants')
-          .update({
-            cost_price: item.cost_price,
-            price: item.selling_price
-          })
-          .eq('id', parseInt(item.variant_id));
-
-        if (variantError) throw variantError;
+        if (macError) throw macError;
 
         // Create stock movement record
         const { error: movementError } = await supabase

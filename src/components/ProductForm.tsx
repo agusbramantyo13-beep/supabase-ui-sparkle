@@ -309,24 +309,27 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
         if (productError) throw productError;
 
         for (const v of validVariants) {
+          const initialQty = v.initial_quantity ? parseInt(v.initial_quantity) : 0;
+          const costPrice = v.cost_price ? parseFloat(v.cost_price) : 0;
           const { data: variantData, error: variantError } = await supabase
             .from('variants')
             .insert({
               product_id: productData.id,
               name: v.name,
               price: parseFloat(v.price),
-              cost_price: v.cost_price ? parseFloat(v.cost_price) : 0,
+              cost_price: costPrice,
+              ...(initialQty > 0 ? { average_cost: costPrice } : {}),
               sku: v.sku || null,
               store_id: currentStoreId
-            })
+            } as any)
             .select()
             .single();
           if (variantError) throw variantError;
 
-          if (v.initial_quantity && parseInt(v.initial_quantity) > 0) {
+          if (initialQty > 0) {
             await applyInventoryChange({
               variantId: variantData.id,
-              newQuantity: parseInt(v.initial_quantity),
+              newQuantity: initialQty,
               type: 'initial_stock',
               notes: 'Stok awal produk baru',
             });
