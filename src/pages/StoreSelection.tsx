@@ -118,17 +118,17 @@ export default function StoreSelection() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-dvh flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-dvh bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-2xl space-y-6">
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-foreground">KENZHO Apps</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">KENZHO Apps</h1>
           <p className="text-muted-foreground">
             Selamat datang, {userName || user?.email}! Pilih toko untuk melanjutkan.
           </p>

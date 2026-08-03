@@ -258,11 +258,11 @@ export default function Members() {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-foreground">Member</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">Member</h1>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
-            <Card key={i} className="bg-gradient-card animate-pulse">
+            <Card key={i} className="bg-card animate-pulse">
               <CardContent className="p-6">
                 <div className="h-20 bg-muted rounded"></div>
               </CardContent>
@@ -277,7 +277,7 @@ export default function Members() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Member</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">Member</h1>
           <p className="text-muted-foreground">Kelola akun dan informasi member</p>
         </div>
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
@@ -382,7 +382,7 @@ export default function Members() {
 
 
       {filteredMembers.length === 0 ? (
-        <Card className="bg-gradient-card">
+        <Card className="bg-card">
           <CardContent className="p-12 text-center">
             <UserCheck className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">Member tidak ditemukan</h3>
@@ -402,7 +402,7 @@ export default function Members() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredMembers.map((member) => (
-            <Card key={member.id} className="bg-gradient-card hover:shadow-card transition-shadow">
+            <Card key={member.id} className="bg-card hover:shadow-card transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">

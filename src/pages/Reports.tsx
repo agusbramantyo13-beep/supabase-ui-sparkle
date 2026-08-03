@@ -108,11 +108,11 @@ export default function Reports() {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-foreground">Reports</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">Reports</h1>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[...Array(4)].map((_, i) => (
-            <Card key={i} className="bg-gradient-card animate-pulse">
+            <Card key={i} className="bg-card animate-pulse">
               <CardContent className="p-6">
                 <div className="h-16 bg-muted rounded"></div>
               </CardContent>
@@ -127,7 +127,7 @@ export default function Reports() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Reports & Analytics</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">Reports & Analytics</h1>
           <p className="text-muted-foreground">Track your business performance</p>
         </div>
       </div>
@@ -172,12 +172,12 @@ export default function Reports() {
 
           {/* Key Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="bg-gradient-card border-border/50">
+            <Card className="bg-card border-border">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Total Sales</p>
-                    <p className="text-2xl font-bold text-foreground">
+                    <p className="num text-2xl font-semibold text-foreground">
                       Rp {reportData.totalSales.toLocaleString('id-ID')}
                     </p>
                     <p className="text-xs text-success">+12% from previous period</p>
@@ -188,12 +188,12 @@ export default function Reports() {
             </Card>
 
             {isOwner && (
-              <Card className="bg-gradient-card border-border/50">
+              <Card className="bg-card border-border">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Total Profit</p>
-                      <p className="text-2xl font-bold text-foreground">
+                      <p className="num text-2xl font-semibold text-foreground">
                         Rp {reportData.totalProfit.toLocaleString('id-ID')}
                       </p>
                       <p className="text-xs text-success">+8% from previous period</p>
@@ -204,12 +204,12 @@ export default function Reports() {
               </Card>
             )}
 
-            <Card className="bg-gradient-card border-border/50">
+            <Card className="bg-card border-border">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Transactions</p>
-                    <p className="text-2xl font-bold text-foreground">
+                    <p className="num text-2xl font-semibold text-foreground">
                       {reportData.totalTransactions.toLocaleString('id-ID')}
                     </p>
                     <p className="text-xs text-warning">-2% from previous period</p>
@@ -219,12 +219,12 @@ export default function Reports() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-card border-border/50">
+            <Card className="bg-card border-border">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Avg. Order Value</p>
-                    <p className="text-2xl font-bold text-foreground">
+                    <p className="num text-2xl font-semibold text-foreground">
                       Rp {reportData.averageOrderValue.toFixed(2)}
                     </p>
                     <p className="text-xs text-success">+5% from previous period</p>
@@ -236,7 +236,7 @@ export default function Reports() {
           </div>
 
           {/* Sales Chart */}
-          <Card className="bg-gradient-card border-border/50">
+          <Card className="bg-card border-border">
             <CardHeader>
               <CardTitle className="text-foreground">Sales Overview</CardTitle>
             </CardHeader>
@@ -252,7 +252,7 @@ export default function Reports() {
           </Card>
 
           {/* Sales Summary Table */}
-          <Card className="bg-gradient-card border-border/50">
+          <Card className="bg-card border-border">
             <CardHeader>
               <CardTitle className="text-foreground">Daily Sales Summary</CardTitle>
             </CardHeader>

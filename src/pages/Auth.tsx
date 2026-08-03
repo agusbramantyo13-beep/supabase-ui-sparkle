@@ -220,14 +220,14 @@ export default function Auth() {
     : "Masuk ke akun Anda atau buat akun baru";
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
+    <div className="min-h-dvh flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-foreground mb-2">{pageTitle}</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground mb-2">{pageTitle}</h1>
           <p className="text-muted-foreground">{pageSubtitle}</p>
         </div>
 
-        <Card className="bg-gradient-card">
+        <Card className="bg-card">
           <CardContent className="p-6">
             {isRecovery ? (
               <>

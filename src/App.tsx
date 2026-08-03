@@ -60,16 +60,17 @@ const App = () => (
                   <ProtectedRoute>
                     <StoreRequiredRoute>
                       <SidebarProvider defaultOpen={true}>
-                        <div className="flex min-h-screen w-full">
+                        <div className="flex min-h-dvh w-full">
                           <AppSidebar />
-                          <SidebarInset className="flex-1">
-                            <header className="flex h-16 shrink-0 items-center gap-2 border-b border-border/50 px-4">
-                              <SidebarTrigger className="mr-2" />
-                              <div className="flex items-center gap-2">
-                                <h1 className="text-lg font-semibold">KENZHO Apps</h1>
+                          <SidebarInset className="flex-1 min-w-0">
+                            <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background/95 px-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:px-4">
+                              <SidebarTrigger className="tap-target -ml-1" aria-label="Buka atau tutup menu" />
+                              <div className="flex min-w-0 items-center gap-2">
+                                <h1 className="truncate text-base font-semibold tracking-tight sm:text-lg">KENZHO Apps</h1>
                               </div>
                             </header>
-                            <main className="flex-1 p-6">
+                            <main className="flex-1 p-3 sm:p-4 lg:p-6">
+
                               <Routes>
                                 <Route path="/" element={
                                   <RoleBasedRoute allowedRoles={["owner"]}>

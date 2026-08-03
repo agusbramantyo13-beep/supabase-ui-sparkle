@@ -110,12 +110,12 @@ export function Dashboard() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[...Array(4)].map((_, i) => (
-            <Card key={i} className="bg-gradient-card animate-pulse">
-              <CardContent className="p-6">
-                <div className="h-16 bg-muted rounded"></div>
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-4">
+                <div className="h-14 bg-muted rounded"></div>
               </CardContent>
             </Card>
           ))}
@@ -125,98 +125,97 @@ export function Dashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="toolbar">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back! Here's what's happening in your store.</p>
+          <h1 className="page-title">Dasbor</h1>
+          <p className="page-subtitle">Ringkasan operasional toko hari ini.</p>
         </div>
-        <Button 
-          className="bg-gradient-primary hover:bg-primary/90"
+        <Button
+          className="tap-target"
           onClick={() => navigate('/sales')}
         >
-          New Sale
+          <ShoppingCart className="w-4 h-4 mr-2" aria-hidden="true" />
+          Penjualan Baru
         </Button>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard
-          title="Total Sales"
+          title="Total Penjualan"
           value={`Rp ${stats.totalSales.toLocaleString('id-ID')}`}
-          subtitle="This month"
-          icon={<DollarSign className="w-6 h-6 text-primary-foreground" />}
-          trend={{ value: "+12%", isPositive: true }}
+          subtitle="Akumulasi toko ini"
+          icon={<DollarSign className="w-5 h-5" />}
         />
-        
+
         <StatCard
-          title="Products"
+          title="Produk"
           value={stats.totalProducts}
-          subtitle="Active products"
-          icon={<Package className="w-6 h-6 text-primary-foreground" />}
+          subtitle="Produk aktif"
+          icon={<Package className="w-5 h-5" />}
         />
-        
+
         <StatCard
-          title="Orders"
+          title="Pesanan"
           value={stats.totalOrders}
-          subtitle="Total orders"
-          icon={<ShoppingCart className="w-6 h-6 text-primary-foreground" />}
-          trend={{ value: "+8%", isPositive: true }}
+          subtitle="Total pesanan"
+          icon={<ShoppingCart className="w-5 h-5" />}
         />
-        
+
         <StatCard
-          title="Users"
+          title="Pengguna"
           value={stats.totalUsers}
-          subtitle="Active users"
-          icon={<Users className="w-6 h-6 text-primary-foreground" />}
+          subtitle="Pengguna aktif"
+          icon={<Users className="w-5 h-5" />}
         />
       </div>
 
       {/* Second Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <StatCard
-          title="Inventory Value"
+          title="Nilai Inventori"
           value={`Rp ${stats.inventoryValue.toLocaleString('id-ID')}`}
-          subtitle="Current stock value"
-          icon={<Warehouse className="w-6 h-6 text-primary-foreground" />}
+          subtitle="Nilai modal stok saat ini"
+          icon={<Warehouse className="w-5 h-5" />}
         />
-        
+
         <StatCard
-          title="Low Stock Alert"
+          title="Stok Menipis"
           value={stats.lowStockItems}
-          subtitle="Items need restocking"
-          icon={<TrendingUp className="w-6 h-6 text-warning-foreground" />}
-          className="border-warning/20"
+          subtitle="Item perlu restock"
+          status={stats.lowStockItems > 0 ? "warning" : "none"}
+          icon={<TrendingUp className="w-5 h-5" />}
         />
-        
-        <Card className="bg-gradient-card border-border/50">
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h3>
-            <div className="space-y-3">
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
+
+        <Card>
+          <CardContent className="p-4">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">Aksi Cepat</h2>
+            <div className="space-y-2">
+              <Button
+                variant="outline"
+                className="w-full justify-start tap-target"
                 onClick={() => navigate('/products')}
               >
-                <Package className="w-4 h-4 mr-2" />
-                Add Product
+                <Package className="w-4 h-4 mr-2" aria-hidden="true" />
+                Tambah Produk
               </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
+              <Button
+                variant="outline"
+                className="w-full justify-start tap-target"
                 onClick={() => navigate('/sales')}
               >
-                <ShoppingCart className="w-4 h-4 mr-2" />
-                Process Sale
+                <ShoppingCart className="w-4 h-4 mr-2" aria-hidden="true" />
+                Proses Penjualan
               </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
+              <Button
+                variant="outline"
+                className="w-full justify-start tap-target"
                 onClick={() => navigate('/inventory')}
               >
-                <Warehouse className="w-4 h-4 mr-2" />
-                Update Inventory
+                <Warehouse className="w-4 h-4 mr-2" aria-hidden="true" />
+                Perbarui Inventori
               </Button>
             </div>
           </CardContent>
@@ -227,43 +226,45 @@ export function Dashboard() {
       <SalesByCategoryReport />
 
       {/* Recent Activity */}
-      <Card className="bg-gradient-card border-border/50">
-        <CardHeader>
-          <CardTitle className="text-foreground">Penjualan Terbaru</CardTitle>
+      <Card>
+        <CardHeader className="py-3">
+          <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Penjualan Terbaru
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
+        <CardContent className="pt-0">
+          <ul className="divide-y divide-border">
             {stats.recentSales.length > 0 ? (
               stats.recentSales.map((sale) => (
-                <div key={sale.id} className="flex items-center justify-between p-4 bg-muted/20 rounded-lg">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
-                      Receipt #{sale.receipt_number || sale.id.slice(0, 8)}
+                <li key={sale.id} className="flex items-center justify-between gap-3 py-2.5">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">
+                      Nota #{sale.receipt_number || sale.id.slice(0, 8)}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(sale.created_at).toLocaleDateString()}
+                      {new Date(sale.created_at).toLocaleDateString('id-ID')}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-lg font-semibold text-foreground">
+                  <div className="text-right flex-shrink-0">
+                    <p className="num text-base font-semibold text-foreground">
                       Rp {Number(sale.total).toLocaleString('id-ID')}
                     </p>
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="secondary" className="text-[11px] font-normal">
                       {sale.payment_method || 'Cash'}
                     </Badge>
                   </div>
-                </div>
+                </li>
               ))
             ) : (
-              <div className="text-center py-8">
-                <ShoppingCart className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">Belum ada penjualan</p>
-                <Button variant="outline" className="mt-4" onClick={() => navigate('/sales')}>
+              <li className="text-center py-8">
+                <ShoppingCart className="w-10 h-10 mx-auto text-muted-foreground mb-3" aria-hidden="true" />
+                <p className="text-sm text-muted-foreground">Belum ada penjualan</p>
+                <Button variant="outline" className="mt-4 tap-target" onClick={() => navigate('/sales')}>
                   Buat Penjualan Pertama
                 </Button>
-              </div>
+              </li>
             )}
-          </div>
+          </ul>
         </CardContent>
       </Card>
     </div>

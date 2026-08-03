@@ -257,7 +257,7 @@ export default function StockTransfer() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Mutasi Stok</h2>
+          <h2 className="num text-2xl font-semibold text-foreground">Mutasi Stok</h2>
           <p className="text-muted-foreground">Transfer stok antar toko</p>
         </div>
         <Button onClick={() => setShowForm(true)}>

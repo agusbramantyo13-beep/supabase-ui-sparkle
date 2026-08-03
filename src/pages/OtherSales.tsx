@@ -200,7 +200,7 @@ export default function OtherSales() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
+          <h1 className="num text-2xl font-semibold flex items-center gap-2">
             <Coins className="w-7 h-7 text-primary" /> Penjualan Lain-lain
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -269,7 +269,7 @@ export default function OtherSales() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatRupiah(totalToday)}</div>
+            <div className="num text-2xl font-semibold">{formatRupiah(totalToday)}</div>
           </CardContent>
         </Card>
         <Card>
@@ -279,7 +279,7 @@ export default function OtherSales() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">
+            <div className="num text-2xl font-semibold text-primary">
               {formatRupiah(totalAll)}
             </div>
           </CardContent>

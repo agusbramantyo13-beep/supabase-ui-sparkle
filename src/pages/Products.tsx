@@ -225,7 +225,7 @@ export default function Products() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Produk</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">Produk</h1>
           <p className="text-muted-foreground">Kelola katalog produk Anda</p>
         </div>
         <Button 
@@ -238,7 +238,7 @@ export default function Products() {
       </div>
 
       {/* Search */}
-      <Card className="bg-gradient-card border-border/50">
+      <Card className="bg-card border-border">
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
@@ -276,7 +276,7 @@ export default function Products() {
             const soleVariant = isSimple ? sortVariants(product.variants || [])[0] : null
 
             return (
-              <Card key={product.id} className="bg-gradient-card border-border/50 overflow-hidden">
+              <Card key={product.id} className="bg-card border-border overflow-hidden">
                 {/* Product Header Row */}
                 <div
                   className={`flex items-center justify-between p-4 transition-colors ${isSimple ? "" : "cursor-pointer hover:bg-muted/30"}`}
@@ -421,7 +421,7 @@ export default function Products() {
           })}
         </div>
       ) : (
-        <Card className="bg-gradient-card border-border/50">
+        <Card className="bg-card border-border">
           <CardContent className="p-12 text-center">
             <Package className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold text-foreground mb-2">Produk Tidak Ditemukan</h3>

@@ -348,7 +348,7 @@ export default function CashDeposits() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
+          <h1 className="num text-2xl font-semibold flex items-center gap-2">
             <Wallet className="w-7 h-7 text-primary" /> Setoran Kas
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -416,7 +416,7 @@ export default function CashDeposits() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatRupiah(todayCashSales)}</div>
+            <div className="num text-2xl font-semibold">{formatRupiah(todayCashSales)}</div>
             <p className="text-[11px] text-muted-foreground mt-1 leading-snug">
               Termasuk penjualan tunai, bagian tunai dari split payment, dan penjualan lain-lain (kas).
             </p>
@@ -429,7 +429,7 @@ export default function CashDeposits() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatRupiah(totalCashSales)}</div>
+            <div className="num text-2xl font-semibold">{formatRupiah(totalCashSales)}</div>
           </CardContent>
         </Card>
         <Card>
@@ -439,7 +439,7 @@ export default function CashDeposits() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="num text-2xl font-semibold text-green-600">
               {formatRupiah(totalApproved)}
             </div>
             {totalPending > 0 && (
@@ -456,7 +456,7 @@ export default function CashDeposits() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">
+            <div className="num text-2xl font-semibold text-primary">
               {formatRupiah(undeposited)}
             </div>
             {totalExpenses > 0 && (

@@ -117,7 +117,7 @@ export function CurrencyKeypadInput({
           <div className="px-5 pb-3">
             <div className="rounded-lg border border-border bg-muted/40 px-4 py-4 text-right">
               <div className="text-xs text-muted-foreground mb-1">Nominal</div>
-              <div className="text-3xl font-bold tabular-nums break-all">
+              <div className="text-xl font-semibold tracking-tight tabular-nums break-all">
                 Rp {draft ? formatRupiah(draft) : "0"}
               </div>
               {targetAmount !== undefined && targetAmount > 0 && (

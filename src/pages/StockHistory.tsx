@@ -254,7 +254,7 @@ export default function StockHistory() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
+          <h1 className="num text-2xl font-semibold flex items-center gap-2">
             <History className="w-6 h-6" /> Riwayat Stok
           </h1>
           <p className="text-sm text-muted-foreground">Semua pergerakan stok tercatat otomatis dan permanen.</p>
@@ -279,7 +279,7 @@ export default function StockHistory() {
               <ArrowUpCircle className="w-4 h-4 text-green-600" /> Total Penambahan
             </CardTitle>
           </CardHeader>
-          <CardContent><p className="text-2xl font-bold text-green-600">+{stats.additions.toLocaleString("id-ID")}</p></CardContent>
+          <CardContent><p className="num text-2xl font-semibold text-green-600">+{stats.additions.toLocaleString("id-ID")}</p></CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
@@ -287,13 +287,13 @@ export default function StockHistory() {
               <ArrowDownCircle className="w-4 h-4 text-red-600" /> Total Pengurangan
             </CardTitle>
           </CardHeader>
-          <CardContent><p className="text-2xl font-bold text-red-600">-{stats.reductions.toLocaleString("id-ID")}</p></CardContent>
+          <CardContent><p className="num text-2xl font-semibold text-red-600">-{stats.reductions.toLocaleString("id-ID")}</p></CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-muted-foreground">Jumlah Pergerakan</CardTitle>
           </CardHeader>
-          <CardContent><p className="text-2xl font-bold">{stats.count.toLocaleString("id-ID")}</p></CardContent>
+          <CardContent><p className="num text-2xl font-semibold">{stats.count.toLocaleString("id-ID")}</p></CardContent>
         </Card>
       </div>
 

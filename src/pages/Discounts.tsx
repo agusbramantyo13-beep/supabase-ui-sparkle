@@ -318,7 +318,7 @@ export default function Discounts() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Manajemen Diskon & Loyalty</h1>
+          <h1 className="text-xl font-semibold tracking-tight tracking-tight">Manajemen Diskon & Loyalty</h1>
           <p className="text-muted-foreground">
             Kelola diskon produk, promosi, dan program loyalty point untuk member
           </p>
