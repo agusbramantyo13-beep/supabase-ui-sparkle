@@ -834,12 +834,12 @@ export default function Sales() {
   const totalCartItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <div className="h-full grid grid-cols-1 lg:grid-cols-2 gap-6 pb-24 lg:pb-0">
+    <div className="h-full grid grid-cols-1 lg:grid-cols-5 gap-4 pb-24 lg:pb-0">
       {/* Products Section */}
 
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <h2 className="num text-2xl font-semibold text-foreground">Produk</h2>
+      <div className="space-y-3 lg:col-span-3">
+        <div className="sticky top-0 z-10 -mx-1 px-1 py-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <h2 className="text-base font-semibold uppercase tracking-wide text-muted-foreground">Produk</h2>
           <div className="flex flex-col sm:flex-row gap-2 sm:max-w-md w-full">
             <Input
               placeholder="Cari produk..."
@@ -861,8 +861,9 @@ export default function Sales() {
           </div>
         </div>
 
-        <div className="lg:max-h-[calc(100vh-200px)] lg:overflow-y-auto pr-1">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        <div className="lg:max-h-[calc(100dvh-190px)] lg:overflow-y-auto pr-1">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-2.5">
+
             {groupedProducts.map((group) => {
               const hasMultipleVariants = group.variants.length > 1;
 
