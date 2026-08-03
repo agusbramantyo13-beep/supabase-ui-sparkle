@@ -895,7 +895,7 @@ export default function Sales() {
                         {group.product_name}
                       </h3>
                       <div className="flex items-end justify-between gap-1 mt-auto pt-1">
-                        <p className="text-sm font-bold text-primary">
+                        <p className="text-sm font-semibold text-primary [font-variant-numeric:tabular-nums]">
                           Rp {variant.price.toLocaleString('id-ID')}
                         </p>
                         <Button
@@ -1000,7 +1000,7 @@ export default function Sales() {
         <div ref={mobileCartSectionRef} className="lg:hidden space-y-4 scroll-mt-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h2 className="num text-2xl font-semibold text-foreground">Keranjang</h2>
+              <h2 className="text-lg font-semibold text-foreground">Keranjang</h2>
               <p className="text-sm text-muted-foreground">{totalCartItems} item</p>
             </div>
             <div className="flex items-center gap-2">
@@ -1235,9 +1235,9 @@ export default function Sales() {
       )}
 
       {/* Cart Section - Desktop only */}
-      <div className="hidden lg:block space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="num text-2xl font-semibold text-foreground">Keranjang</h2>
+      <div className="hidden lg:block space-y-3 lg:col-span-2">
+        <div className="flex items-center justify-between py-2">
+          <h2 className="text-base font-semibold uppercase tracking-wide text-muted-foreground">Keranjang</h2>
           {cart.length > 0 && (
             <Button variant="outline" size="sm" onClick={clearCart}>
               <Trash2 className="w-4 h-4 mr-2" />
@@ -1246,7 +1246,7 @@ export default function Sales() {
           )}
         </div>
 
-        <Card className="bg-card lg:h-[calc(100vh-200px)] flex flex-col">
+        <Card className="bg-card lg:h-[calc(100dvh-190px)] flex flex-col">
           <CardContent className="p-4 sm:p-6 flex-1 flex flex-col">
             {cart.length === 0 ? (
               <div className="flex-1 flex items-center justify-center text-center">
