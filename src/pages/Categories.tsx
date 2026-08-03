@@ -123,7 +123,7 @@ export default function Categories() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Categories</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">Categories</h1>
           <p className="text-muted-foreground">Organize your products into categories</p>
         </div>
         <Button 
@@ -139,7 +139,7 @@ export default function Categories() {
       </div>
 
       {/* Search */}
-      <Card className="bg-gradient-card border-border/50">
+      <Card className="bg-card border-border">
         <CardContent className="p-6">
           <div className="flex items-center gap-4">
             <div className="flex-1 relative">
@@ -159,7 +159,7 @@ export default function Categories() {
       {filteredCategories.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCategories.map((category) => (
-            <Card key={category.id} className="bg-gradient-card border-border/50 hover:shadow-card transition-all duration-300">
+            <Card key={category.id} className="bg-card border-border hover:shadow-card transition-all duration-300">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg text-foreground flex items-center gap-2">
@@ -242,7 +242,7 @@ export default function Categories() {
           ))}
         </div>
       ) : (
-        <Card className="bg-gradient-card border-border/50">
+        <Card className="bg-card border-border">
           <CardContent className="p-12 text-center">
             <FolderOpen className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold text-foreground mb-2">No Categories Found</h3>

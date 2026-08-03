@@ -164,7 +164,7 @@ export function SalesByCategoryReport() {
   const grandItems = categorySales.reduce((sum, cat) => sum + cat.total_items, 0)
 
   return (
-    <Card className="bg-gradient-card border-border/50">
+    <Card className="bg-card border-border">
       <CardHeader>
         <CardTitle className="text-foreground flex items-center gap-2">
           <Package className="w-5 h-5" />
@@ -244,13 +244,13 @@ export function SalesByCategoryReport() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Total Penjualan</p>
-                  <p className="text-2xl font-bold text-foreground">
+                  <p className="num text-2xl font-semibold text-foreground">
                     Rp {grandTotal.toLocaleString('id-ID')}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Total Item Terjual</p>
-                  <p className="text-2xl font-bold text-foreground">
+                  <p className="num text-2xl font-semibold text-foreground">
                     {grandItems.toLocaleString('id-ID')} item
                   </p>
                 </div>

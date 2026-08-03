@@ -276,13 +276,13 @@ export default function Attendance() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Attendance</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">Attendance</h1>
         <p className="text-muted-foreground">Record your attendance with selfie</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Camera Section */}
-        <Card className="bg-gradient-card border-border/50">
+        <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-foreground flex items-center gap-2">
               <Camera className="w-5 h-5" />
@@ -366,7 +366,7 @@ export default function Attendance() {
         </Card>
 
         {/* Today's Status */}
-        <Card className="bg-gradient-card border-border/50">
+        <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-foreground flex items-center gap-2">
               <Clock className="w-5 h-5" />
@@ -424,7 +424,7 @@ export default function Attendance() {
       </div>
 
       {/* Recent Attendance */}
-      <Card className="bg-gradient-card border-border/50">
+      <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="text-foreground">Recent Attendance</CardTitle>
         </CardHeader>

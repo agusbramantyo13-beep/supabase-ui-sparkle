@@ -269,7 +269,7 @@ export default function Settings() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Pengaturan</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">Pengaturan</h1>
           <p className="text-muted-foreground">Konfigurasi toko dan preferensi aplikasi Anda</p>
         </div>
         <Button 
@@ -282,7 +282,7 @@ export default function Settings() {
       </div>
 
       {/* User Info Card */}
-      <Card className="bg-gradient-card border-border/50">
+      <Card className="bg-card border-border">
         <CardHeader>
           <div className="flex items-center gap-2">
             <UserIcon className="w-5 h-5 text-primary" />
@@ -344,7 +344,7 @@ export default function Settings() {
         </TabsList>
 
         <TabsContent value="store" className="space-y-6">
-          <Card className="bg-gradient-card border-border/50">
+          <Card className="bg-card border-border">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Store className="w-5 h-5 text-primary" />
@@ -431,7 +431,7 @@ export default function Settings() {
         </TabsContent>
 
         <TabsContent value="printer" className="space-y-6">
-          <Card className="bg-gradient-card border-border/50">
+          <Card className="bg-card border-border">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Printer className="w-5 h-5 text-primary" />
@@ -483,7 +483,7 @@ export default function Settings() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-card border-border/50">
+          <Card className="bg-card border-border">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <CreditCard className="w-5 h-5 text-primary" />
@@ -655,7 +655,7 @@ export default function Settings() {
         </TabsContent>
 
         <TabsContent value="notifications" className="space-y-6">
-          <Card className="bg-gradient-card border-border/50">
+          <Card className="bg-card border-border">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Bell className="w-5 h-5 text-primary" />
@@ -700,7 +700,7 @@ export default function Settings() {
         </TabsContent>
 
         <TabsContent value="security" className="space-y-6">
-          <Card className="bg-gradient-card border-border/50">
+          <Card className="bg-card border-border">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Shield className="w-5 h-5 text-primary" />
@@ -745,7 +745,7 @@ export default function Settings() {
         </TabsContent>
 
         <TabsContent value="system" className="space-y-6">
-          <Card className="bg-gradient-card border-border/50">
+          <Card className="bg-card border-border">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Database className="w-5 h-5 text-primary" />

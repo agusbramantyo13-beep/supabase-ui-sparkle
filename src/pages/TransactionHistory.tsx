@@ -203,9 +203,9 @@ export default function TransactionHistory() {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-foreground">Riwayat Transaksi</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">Riwayat Transaksi</h1>
         </div>
-        <Card className="bg-gradient-card animate-pulse">
+        <Card className="bg-card animate-pulse">
           <CardContent className="p-6">
             <div className="h-64 bg-muted rounded"></div>
           </CardContent>
@@ -281,7 +281,7 @@ export default function TransactionHistory() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Riwayat Transaksi</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">Riwayat Transaksi</h1>
           <p className="text-muted-foreground">Penjualan dan pengeluaran belanja toko</p>
         </div>
         <Popover>
@@ -306,14 +306,14 @@ export default function TransactionHistory() {
         </Popover>
       </div>
 
-      <Card className="bg-gradient-card border-border/50">
+      <Card className="bg-card border-border">
         <CardContent className="p-6">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-sm font-medium text-muted-foreground">
                 Omzet Bersih Semua Metode Pembayaran
               </p>
-              <p className="text-2xl font-bold text-foreground">
+              <p className="num text-2xl font-semibold text-foreground">
                 Rp {getTotalAmount().toLocaleString('id-ID')}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
@@ -368,7 +368,7 @@ export default function TransactionHistory() {
         ];
 
         return (
-          <Card className="bg-gradient-card border-border/50">
+          <Card className="bg-card border-border">
             <CardHeader>
               <CardTitle className="text-foreground flex items-center gap-2">
                 <Receipt className="w-5 h-5" />
@@ -418,7 +418,7 @@ export default function TransactionHistory() {
         );
       })()}
 
-      <Card className="bg-gradient-card border-border/50">
+      <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="text-foreground flex items-center gap-2">
             <CalendarIcon className="w-5 h-5" />

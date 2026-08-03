@@ -80,7 +80,7 @@ export default function OAuthConsent() {
 
   if (error) {
     return (
-      <main className="min-h-screen flex items-center justify-center p-6">
+      <main className="min-h-dvh flex items-center justify-center p-6">
         <Card className="max-w-md w-full">
           <CardHeader><CardTitle>Tidak dapat memuat permintaan otorisasi</CardTitle></CardHeader>
           <CardContent><p className="text-sm text-muted-foreground">{error}</p></CardContent>
@@ -90,7 +90,7 @@ export default function OAuthConsent() {
   }
   if (!details) {
     return (
-      <main className="min-h-screen flex items-center justify-center p-6">
+      <main className="min-h-dvh flex items-center justify-center p-6">
         <p className="text-muted-foreground">Memuat…</p>
       </main>
     );
@@ -98,7 +98,7 @@ export default function OAuthConsent() {
 
   const clientName = details.client?.name ?? "aplikasi ini";
   return (
-    <main className="min-h-screen flex items-center justify-center p-6">
+    <main className="min-h-dvh flex items-center justify-center p-6">
       <Card className="max-w-md w-full">
         <CardHeader>
           <CardTitle>Hubungkan {clientName} ke akun Anda</CardTitle>

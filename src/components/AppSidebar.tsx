@@ -20,25 +20,30 @@ import {
 } from "@/components/ui/sidebar"
 
 const allMenuItems = [
-  { title: "Dasbor", url: "/", icon: LayoutDashboard, roles: ["owner"] },
-  { title: "Produk", url: "/products", icon: Package, roles: ["owner"] },
-  { title: "Penjualan", url: "/sales", icon: ShoppingCart, roles: ["owner", "cashier"] },
-  { title: "Inventori", url: "/inventory", icon: Warehouse, roles: ["owner"] },
-  { title: "Laporan Pembelian", url: "/purchase-report", icon: FileText, roles: ["owner"] },
-  { title: "Mutasi Stok", url: "/stock-transfer", icon: ArrowRightLeft, roles: ["owner"] },
-  { title: "Audit Penyesuaian", url: "/stock-adjustment-report", icon: ClipboardList, roles: ["owner"] },
-  { title: "Riwayat Stok", url: "/stock-history", icon: History, roles: ["owner"] },
-  { title: "Member", url: "/members", icon: UserCheck, roles: ["owner", "cashier"] },
-  { title: "Diskon", url: "/discounts", icon: Tag, roles: ["owner"] },
-  { title: "Riwayat Transaksi", url: "/transaction-history", icon: Receipt, roles: ["owner", "cashier"] },
-  { title: "Setoran Kas", url: "/cash-deposits", icon: Wallet, roles: ["owner", "cashier"] },
-  { title: "Belanja Toko", url: "/store-expenses", icon: ShoppingBag, roles: ["owner", "cashier"] },
-  { title: "Penjualan Lain-lain", url: "/other-sales", icon: Coins, roles: ["owner", "cashier"] },
-  { title: "Kehadiran", url: "/attendance", icon: UserCheck, roles: ["owner", "cashier"] },
-  { title: "Laporan", url: "/reports", icon: BarChart3, roles: ["owner"] },
-  { title: "Pengguna", url: "/users", icon: Users, roles: ["owner"] },
-  { title: "Pengaturan", url: "/settings", icon: Settings, roles: ["owner", "cashier"] },
+  { title: "Dasbor", url: "/", icon: LayoutDashboard, roles: ["owner"], group: "Operasional" },
+  { title: "Penjualan", url: "/sales", icon: ShoppingCart, roles: ["owner", "cashier"], group: "Operasional" },
+  { title: "Riwayat Transaksi", url: "/transaction-history", icon: Receipt, roles: ["owner", "cashier"], group: "Operasional" },
+  { title: "Kehadiran", url: "/attendance", icon: UserCheck, roles: ["owner", "cashier"], group: "Operasional" },
+
+  { title: "Produk", url: "/products", icon: Package, roles: ["owner"], group: "Inventori" },
+  { title: "Inventori", url: "/inventory", icon: Warehouse, roles: ["owner"], group: "Inventori" },
+  { title: "Laporan Pembelian", url: "/purchase-report", icon: FileText, roles: ["owner"], group: "Inventori" },
+  { title: "Mutasi Stok", url: "/stock-transfer", icon: ArrowRightLeft, roles: ["owner"], group: "Inventori" },
+  { title: "Audit Penyesuaian", url: "/stock-adjustment-report", icon: ClipboardList, roles: ["owner"], group: "Inventori" },
+  { title: "Riwayat Stok", url: "/stock-history", icon: History, roles: ["owner"], group: "Inventori" },
+
+  { title: "Setoran Kas", url: "/cash-deposits", icon: Wallet, roles: ["owner", "cashier"], group: "Keuangan & Laporan" },
+  { title: "Belanja Toko", url: "/store-expenses", icon: ShoppingBag, roles: ["owner", "cashier"], group: "Keuangan & Laporan" },
+  { title: "Penjualan Lain-lain", url: "/other-sales", icon: Coins, roles: ["owner", "cashier"], group: "Keuangan & Laporan" },
+  { title: "Laporan", url: "/reports", icon: BarChart3, roles: ["owner"], group: "Keuangan & Laporan" },
+
+  { title: "Member", url: "/members", icon: UserCheck, roles: ["owner", "cashier"], group: "Administrasi" },
+  { title: "Diskon", url: "/discounts", icon: Tag, roles: ["owner"], group: "Administrasi" },
+  { title: "Pengguna", url: "/users", icon: Users, roles: ["owner"], group: "Administrasi" },
+  { title: "Pengaturan", url: "/settings", icon: Settings, roles: ["owner", "cashier"], group: "Administrasi" },
 ]
+
+const GROUP_ORDER = ["Operasional", "Inventori", "Keuangan & Laporan", "Administrasi"]
 
 export function AppSidebar() {
   const { state } = useSidebar()
@@ -60,6 +65,11 @@ export function AppSidebar() {
     }
   }, [userStoreRole]);
 
+  const groupedItems = GROUP_ORDER
+    .map((group) => ({ group, items: menuItems.filter((item) => item.group === group) }))
+    .filter((g) => g.items.length > 0)
+
+
   const handleLogout = async () => {
     try {
       await signOut()
@@ -77,19 +87,19 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarContent className="bg-gradient-card border-r border-border/50">
+      <SidebarContent className="bg-sidebar border-r border-sidebar-border">
         {/* Store Switcher */}
-        <div className="p-4 border-b border-border/50">
+        <div className="p-3 border-b border-sidebar-border">
           <DropdownMenu>
-            <DropdownMenuTrigger className="w-full">
-              <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+            <DropdownMenuTrigger className="w-full rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring" aria-label="Ganti toko">
+              <div className="flex items-center gap-3 p-2 rounded-md hover:bg-sidebar-accent transition-colors duration-150">
+                <div className="w-9 h-9 bg-primary/15 rounded-md flex items-center justify-center flex-shrink-0">
                   <Store className="w-5 h-5 text-primary" />
                 </div>
                 {!collapsed && (
                   <>
                     <div className="flex-1 text-left min-w-0">
-                      <p className="text-sm font-semibold text-foreground truncate">
+                      <p className="text-sm font-semibold text-sidebar-accent-foreground truncate">
                         {currentStore?.name || "Pilih Toko"}
                       </p>
                       <p className="text-xs text-muted-foreground">
@@ -122,33 +132,41 @@ export function AppSidebar() {
         </div>
 
         {/* Navigation */}
-        <SidebarGroup>
-          <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>
-            Navigasi Utama
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-1">
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <NavLink
-                    to={item.url}
-                    className={({ isActive }) =>
-                      `${isActive
-                        ? "bg-gradient-primary text-white font-medium shadow-elegant"
-                        : "text-white/80 hover:text-white hover:bg-white/10"} flex items-center w-full px-3 py-2 rounded-md transition-all duration-200`
-                    }
-                  >
-                    <item.icon className="w-5 h-5 flex-shrink-0" />
-                    {!collapsed && <span className="ml-3">{item.title}</span>}
-                  </NavLink>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {groupedItems.map(({ group, items }) => (
+          <SidebarGroup key={group} className="py-1">
+            <SidebarGroupLabel className={collapsed ? "sr-only" : "text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"}>
+              {group}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu className="space-y-0.5">
+                {items.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <NavLink
+                      to={item.url}
+                      title={collapsed ? item.title : undefined}
+                      className={({ isActive }) =>
+                        `${isActive
+                          ? "bg-primary/15 text-primary font-medium border-l-2 border-primary"
+                          : "text-sidebar-foreground border-l-2 border-transparent hover:text-sidebar-accent-foreground hover:bg-sidebar-accent"} flex items-center w-full min-h-10 px-3 py-2 rounded-md transition-colors duration-150`
+                      }
+                    >
+                      <item.icon className="w-[18px] h-[18px] flex-shrink-0" aria-hidden="true" />
+                      {collapsed ? (
+                        <span className="sr-only">{item.title}</span>
+                      ) : (
+                        <span className="ml-3 text-sm truncate">{item.title}</span>
+                      )}
+                    </NavLink>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
+
 
         {/* Footer */}
-        <div className="mt-auto p-4 border-t border-border/50">
+        <div className="mt-auto p-3 border-t border-sidebar-border">
           <div className={collapsed ? "space-y-2" : "space-y-3"}>
             {!collapsed && user && (
               <div className="px-2">

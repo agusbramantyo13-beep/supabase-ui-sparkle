@@ -488,15 +488,15 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <div className="text-sm text-muted-foreground">Total Item</div>
-                  <div className="text-2xl font-bold">{totals.totalItems}</div>
+                  <div className="num text-2xl font-semibold">{totals.totalItems}</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Total Produk</div>
-                  <div className="text-2xl font-bold">{totals.totalProducts}</div>
+                  <div className="num text-2xl font-semibold">{totals.totalProducts}</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Total Modal</div>
-                  <div className="text-2xl font-bold">
+                  <div className="num text-2xl font-semibold">
                     Rp {totals.totalCost.toLocaleString('id-ID')}
                   </div>
                 </div>

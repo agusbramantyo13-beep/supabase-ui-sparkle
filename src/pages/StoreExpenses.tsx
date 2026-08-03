@@ -276,7 +276,7 @@ export default function StoreExpenses() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
+          <h1 className="num text-2xl font-semibold flex items-center gap-2">
             <ShoppingBag className="w-7 h-7 text-primary" /> Belanja Toko
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -346,7 +346,7 @@ export default function StoreExpenses() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatRupiah(todayApproved)}</div>
+            <div className="num text-2xl font-semibold">{formatRupiah(todayApproved)}</div>
           </CardContent>
         </Card>
         <Card>
@@ -356,7 +356,7 @@ export default function StoreExpenses() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">
+            <div className="num text-2xl font-semibold text-destructive">
               {formatRupiah(totalApproved)}
             </div>
           </CardContent>
@@ -368,7 +368,7 @@ export default function StoreExpenses() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
+            <div className="num text-2xl font-semibold text-yellow-600">
               {formatRupiah(totalPending)}
             </div>
           </CardContent>

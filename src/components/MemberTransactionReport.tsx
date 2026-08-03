@@ -149,7 +149,7 @@ export default function MemberTransactionReport() {
   return (
     <div className="space-y-6">
       {/* Member Selection */}
-      <Card className="bg-gradient-card border-border/50">
+      <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="text-foreground flex items-center gap-2">
             <Users className="w-5 h-5" />
@@ -180,7 +180,7 @@ export default function MemberTransactionReport() {
       {/* Member Info & Summary */}
       {selectedMember && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="bg-gradient-card border-border/50">
+          <Card className="bg-card border-border">
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -195,7 +195,7 @@ export default function MemberTransactionReport() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-card border-border/50">
+          <Card className="bg-card border-border">
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center">
@@ -212,7 +212,7 @@ export default function MemberTransactionReport() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-card border-border/50">
+          <Card className="bg-card border-border">
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-warning/10 flex items-center justify-center">
@@ -233,7 +233,7 @@ export default function MemberTransactionReport() {
 
       {/* Transactions Table */}
       {selectedMemberId && (
-        <Card className="bg-gradient-card border-border/50">
+        <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-foreground">Riwayat Transaksi</CardTitle>
           </CardHeader>

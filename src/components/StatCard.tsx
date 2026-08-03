@@ -11,31 +11,62 @@ interface StatCardProps {
     value: string
     isPositive: boolean
   }
+  /** "compact" keeps rows dense on data-heavy screens */
+  size?: "default" | "compact"
+  /** Status accent — use only when the number carries a status meaning */
+  status?: "none" | "success" | "warning" | "destructive"
   className?: string
 }
 
-export function StatCard({ 
-  title, 
-  value, 
-  subtitle, 
-  icon, 
-  trend, 
-  className 
+const statusRing: Record<string, string> = {
+  none: "border-border",
+  success: "border-success/40",
+  warning: "border-warning/40",
+  destructive: "border-destructive/40",
+}
+
+const statusText: Record<string, string> = {
+  none: "text-foreground",
+  success: "text-success",
+  warning: "text-warning",
+  destructive: "text-destructive",
+}
+
+export function StatCard({
+  title,
+  value,
+  subtitle,
+  icon,
+  trend,
+  size = "default",
+  status = "none",
+  className
 }: StatCardProps) {
+  const compact = size === "compact"
+
   return (
     <Card className={cn(
-      "bg-gradient-card border-border/50 hover:shadow-card transition-all duration-300",
+      "bg-card border shadow-card transition-colors duration-150 hover:border-border/80",
+      statusRing[status],
       className
     )}>
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <div className="flex items-baseline gap-2 mt-2">
-              <h3 className="text-2xl font-bold text-foreground">{value}</h3>
+      <CardContent className={compact ? "p-3" : "p-4"}>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground truncate">
+              {title}
+            </p>
+            <div className="mt-1.5 flex items-baseline gap-2">
+              <h3 className={cn(
+                "num font-semibold tracking-tight truncate",
+                compact ? "text-lg" : "text-2xl",
+                statusText[status]
+              )}>
+                {value}
+              </h3>
               {trend && (
                 <span className={cn(
-                  "text-sm font-medium",
+                  "num text-xs font-medium",
                   trend.isPositive ? "text-success" : "text-destructive"
                 )}>
                   {trend.value}
@@ -43,11 +74,17 @@ export function StatCard({
               )}
             </div>
             {subtitle && (
-              <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
+              <p className="text-xs text-muted-foreground mt-1 truncate">{subtitle}</p>
             )}
           </div>
           {icon && (
-            <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center">
+            <div
+              aria-hidden="true"
+              className={cn(
+                "rounded-md bg-muted flex items-center justify-center flex-shrink-0 text-muted-foreground",
+                compact ? "w-8 h-8" : "w-10 h-10"
+              )}
+            >
               {icon}
             </div>
           )}

@@ -112,7 +112,7 @@ export default function Inventory() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Inventori</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">Inventori</h1>
           <p className="text-muted-foreground">Pantau dan kelola level stok Anda</p>
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -170,24 +170,24 @@ export default function Inventory() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="bg-gradient-card border-border/50">
+        <Card className="bg-card border-border">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Item</p>
-                <p className="text-2xl font-bold text-foreground">{inventory.length}</p>
+                <p className="num text-2xl font-semibold text-foreground">{inventory.length}</p>
               </div>
               <Warehouse className="w-8 h-8 text-primary" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-card border-border/50">
+        <Card className="bg-card border-border">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Tersedia</p>
-                <p className="text-2xl font-bold text-success">
+                <p className="num text-2xl font-semibold text-success">
                   {inventory.filter(item => (item.quantity || 0) > 10).length}
                 </p>
               </div>
@@ -196,24 +196,24 @@ export default function Inventory() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-card border-border/50">
+        <Card className="bg-card border-border">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Stok Rendah</p>
-                <p className="text-2xl font-bold text-warning">{lowStockItems.length}</p>
+                <p className="num text-2xl font-semibold text-warning">{lowStockItems.length}</p>
               </div>
               <TrendingDown className="w-8 h-8 text-warning" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-card border-border/50">
+        <Card className="bg-card border-border">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Stok Habis</p>
-                <p className="text-2xl font-bold text-destructive">{outOfStockItems.length}</p>
+                <p className="num text-2xl font-semibold text-destructive">{outOfStockItems.length}</p>
               </div>
               <AlertTriangle className="w-8 h-8 text-destructive" />
             </div>
@@ -222,7 +222,7 @@ export default function Inventory() {
       </div>
 
       {/* Inventory List */}
-      <Card className="bg-gradient-card border-border/50">
+      <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="text-foreground">Inventori Saat Ini</CardTitle>
         </CardHeader>

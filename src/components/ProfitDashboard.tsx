@@ -112,7 +112,7 @@ function SummaryCard({
   return (
     <Card
       className={cn(
-        "bg-gradient-card border-border/50 transition-all",
+        "bg-card border-border transition-all",
         onClick && "cursor-pointer hover:shadow-md hover:border-primary/40",
         highlight && "ring-2 ring-primary/40"
       )}
@@ -125,7 +125,7 @@ function SummaryCard({
             {loading ? (
               <Skeleton className="h-7 w-32 mt-1" />
             ) : (
-              <p className="text-lg sm:text-2xl font-bold text-foreground truncate">{value}</p>
+              <p className="text-lg sm:num text-2xl font-semibold text-foreground truncate">{value}</p>
             )}
             {sub && <p className="text-xs text-muted-foreground mt-1 truncate">{sub}</p>}
           </div>
@@ -525,7 +525,7 @@ export default function ProfitDashboard() {
       </div>
 
       {/* Chart */}
-      <Card className="bg-gradient-card border-border/50">
+      <Card className="bg-card border-border">
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle className="text-foreground">Grafik Profit</CardTitle>
           <Select value={groupBy} onValueChange={(v) => setGroupBy(v as any)}>
@@ -591,7 +591,7 @@ export default function ProfitDashboard() {
       </Card>
 
       {/* Top products */}
-      <Card className="bg-gradient-card border-border/50">
+      <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="text-foreground">Analisis Produk</CardTitle>
         </CardHeader>
@@ -657,7 +657,7 @@ export default function ProfitDashboard() {
 
       {/* Category & cashier */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-gradient-card border-border/50">
+        <Card className="bg-card border-border">
           <CardHeader><CardTitle className="text-foreground">Profit per Kategori</CardTitle></CardHeader>
           <CardContent>
             {otherLoading ? (
@@ -693,7 +693,7 @@ export default function ProfitDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-card border-border/50">
+        <Card className="bg-card border-border">
           <CardHeader><CardTitle className="text-foreground">Performa Kasir</CardTitle></CardHeader>
           <CardContent>
             {otherLoading ? (
@@ -731,7 +731,7 @@ export default function ProfitDashboard() {
       </div>
 
       {/* Detail table */}
-      <Card className="bg-gradient-card border-border/50">
+      <Card className="bg-card border-border">
         <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <CardTitle className="text-foreground">Detail Profit per Item</CardTitle>
           <div className="flex flex-wrap gap-2">
