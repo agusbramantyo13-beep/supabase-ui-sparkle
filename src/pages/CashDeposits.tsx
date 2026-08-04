@@ -1,15 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStore } from "@/contexts/StoreContext";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { CurrencyKeypadInput } from "@/components/CurrencyKeypadInput";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import {
+  PeriodFilter,
+  PeriodPreset,
+  resolvePeriod,
+  formatPeriodLabel,
+} from "@/components/PeriodFilter";
 import {
   Dialog,
   DialogContent,
@@ -27,7 +32,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Wallet, Plus, CheckCircle2, XCircle, Clock, Banknote, TrendingDown, ShoppingBag } from "lucide-react";
+import {
+  Wallet,
+  Plus,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  Banknote,
+  TrendingDown,
+  ShoppingBag,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
 interface CashDeposit {
   id: string;
@@ -44,14 +60,28 @@ interface CashDeposit {
   approver_name?: string;
 }
 
+interface Summary {
+  total_cash_sales: number;
+  total_other_sales: number;
+  total_approved_deposits: number;
+  total_pending_deposits: number;
+  total_approved_expenses: number;
+  today_cash: number;
+}
+
+const EMPTY_SUMMARY: Summary = {
+  total_cash_sales: 0,
+  total_other_sales: 0,
+  total_approved_deposits: 0,
+  total_pending_deposits: 0,
+  total_approved_expenses: 0,
+  today_cash: 0,
+};
+
+const PAGE_SIZE = 20;
+
 const formatRupiah = (n: number) =>
   "Rp " + Math.round(n).toLocaleString("id-ID");
-
-const formatPriceInput = (v: string) => {
-  const digits = v.replace(/\D/g, "");
-  if (!digits) return "";
-  return parseInt(digits, 10).toLocaleString("id-ID");
-};
 
 const parsePriceInput = (v: string) => {
   const digits = v.replace(/\D/g, "");
@@ -64,12 +94,20 @@ export default function CashDeposits() {
   const { toast } = useToast();
   const isOwner = userStoreRole === "owner";
 
+  // Period filter
+  const [preset, setPreset] = useState<PeriodPreset>("this_month");
+  const [customStart, setCustomStart] = useState<Date | null>(null);
+  const [customEnd, setCustomEnd] = useState<Date | null>(null);
+  const range = useMemo(
+    () => resolvePeriod(preset, customStart, customEnd),
+    [preset, customStart, customEnd]
+  );
+  const periodLabel = formatPeriodLabel(preset, range);
+
+  const [summary, setSummary] = useState<Summary>(EMPTY_SUMMARY);
   const [deposits, setDeposits] = useState<CashDeposit[]>([]);
-  const [totalCashSales, setTotalCashSales] = useState(0);
-  const [totalApproved, setTotalApproved] = useState(0);
-  const [totalPending, setTotalPending] = useState(0);
-  const [todayCashSales, setTodayCashSales] = useState(0);
-  const [totalExpenses, setTotalExpenses] = useState(0);
+  const [totalRows, setTotalRows] = useState(0);
+  const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
 
   // Submit dialog
@@ -83,141 +121,89 @@ export default function CashDeposits() {
   const [rejectTarget, setRejectTarget] = useState<CashDeposit | null>(null);
   const [rejectReason, setRejectReason] = useState("");
 
+  const startIso = range.start ? range.start.toISOString() : null;
+  const endIso = range.end ? range.end.toISOString() : null;
+
+  const loadSummary = async () => {
+    if (!currentStore?.id) return;
+    const { data, error } = await supabase.rpc("get_cash_deposit_summary", {
+      p_store_id: currentStore.id,
+      p_start: startIso,
+      p_end: endIso,
+    });
+    if (error) throw error;
+    const row = (data as unknown as Summary[])?.[0];
+    setSummary(
+      row
+        ? {
+            total_cash_sales: Number(row.total_cash_sales || 0),
+            total_other_sales: Number(row.total_other_sales || 0),
+            total_approved_deposits: Number(row.total_approved_deposits || 0),
+            total_pending_deposits: Number(row.total_pending_deposits || 0),
+            total_approved_expenses: Number(row.total_approved_expenses || 0),
+            today_cash: Number(row.today_cash || 0),
+          }
+        : EMPTY_SUMMARY
+    );
+  };
+
+  const loadDeposits = async () => {
+    if (!currentStore?.id) return;
+    let q = supabase
+      .from("cash_deposits")
+      .select("*", { count: "exact" })
+      .eq("store_id", currentStore.id);
+    if (startIso) q = q.gte("submitted_at", startIso);
+    if (endIso) q = q.lt("submitted_at", endIso);
+
+    const { data, error, count } = await q
+      .order("submitted_at", { ascending: false })
+      .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+    if (error) throw error;
+
+    setTotalRows(count || 0);
+
+    const rows = data || [];
+    const userIds = new Set<string>();
+    rows.forEach((d: any) => {
+      if (d.submitted_by) userIds.add(d.submitted_by);
+      if (d.approved_by) userIds.add(d.approved_by);
+    });
+
+    const profilesMap: Record<string, string> = {};
+    if (userIds.size > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, name, email")
+        .in("id", Array.from(userIds));
+      (profiles || []).forEach((p: any) => {
+        profilesMap[p.id] = p.name || p.email || "Pengguna";
+      });
+    }
+
+    setDeposits(
+      rows.map((d: any) => ({
+        ...d,
+        submitter_name: d.submitted_by
+          ? profilesMap[d.submitted_by] || "Pengguna"
+          : "-",
+        approver_name: d.approved_by
+          ? profilesMap[d.approved_by] || "Pengguna"
+          : undefined,
+      }))
+    );
+  };
+
   const loadData = async () => {
     if (!currentStore?.id) return;
     setLoading(true);
-
     try {
-      // Load deposits
-      const { data: depositsData, error: depErr } = await supabase
-        .from("cash_deposits")
-        .select("*")
-        .eq("store_id", currentStore.id)
-        .order("submitted_at", { ascending: false });
-
-      if (depErr) throw depErr;
-
-      // Get profile names
-      const userIds = new Set<string>();
-      (depositsData || []).forEach((d: any) => {
-        if (d.submitted_by) userIds.add(d.submitted_by);
-        if (d.approved_by) userIds.add(d.approved_by);
-      });
-
-      let profilesMap: Record<string, string> = {};
-      if (userIds.size > 0) {
-        const { data: profiles } = await supabase
-          .from("profiles")
-          .select("id, name, email")
-          .in("id", Array.from(userIds));
-        (profiles || []).forEach((p: any) => {
-          profilesMap[p.id] = p.name || p.email || "Pengguna";
-        });
-      }
-
-      const enriched: CashDeposit[] = (depositsData || []).map((d: any) => ({
-        ...d,
-        submitter_name: d.submitted_by ? profilesMap[d.submitted_by] || "Pengguna" : "-",
-        approver_name: d.approved_by ? profilesMap[d.approved_by] || "Pengguna" : undefined,
-      }));
-
-      setDeposits(enriched);
-
-      // Compute totals
-      const approved = enriched
-        .filter((d) => d.status === "approved")
-        .reduce((s, d) => s + Number(d.amount), 0);
-      const pending = enriched
-        .filter((d) => d.status === "pending")
-        .reduce((s, d) => s + Number(d.amount), 0);
-      setTotalApproved(approved);
-      setTotalPending(pending);
-
-      // Load ALL cash-bearing sales (cash + split) with pagination.
-      // Supabase caps a single request at 1000 rows — without paging we silently
-      // drop rows past the cap, which understates "Belum Disetor".
-      // Also filter status client-side (server-side `.neq("status","returned")`
-      // drops rows where status IS NULL because NULL <> 'returned' is unknown).
-      const PAGE = 1000;
-      let salesDataRaw: any[] = [];
-      let from = 0;
-      // eslint-disable-next-line no-constant-condition
-      while (true) {
-        const { data, error } = await supabase
-          .from("sales")
-          .select("total, payment_method, payment_details, created_at, status")
-          .eq("store_id", currentStore.id)
-          .in("payment_method", ["cash", "split"])
-          .order("created_at", { ascending: true })
-          .range(from, from + PAGE - 1);
-        if (error) throw error;
-        const chunk = data || [];
-        salesDataRaw = salesDataRaw.concat(chunk);
-        if (chunk.length < PAGE) break;
-        from += PAGE;
-      }
-
-      const salesData = salesDataRaw.filter(
-        (r: any) => r.status !== "returned"
-      );
-
-      // Extract cash portion — full total for 'cash', payment_details.cash_amount for 'split'
-      const cashPortion = (r: any): number => {
-        if (r.payment_method === "split") {
-          const d = r.payment_details || {};
-          return Number(d.cash_amount || 0);
-        }
-        return Number(r.total || 0);
-      };
-
-      // Load other sales (Penjualan Lain-lain) — treated as cash income
-      const { data: otherSalesData, error: otherErr } = await supabase
-        .from("other_sales")
-        .select("amount, sale_date, created_at")
-        .eq("store_id", currentStore.id);
-
-      if (otherErr) throw otherErr;
-
-      const salesSum = (salesData || []).reduce(
-        (s: number, r: any) => s + cashPortion(r),
-        0
-      );
-      const otherSalesSum = (otherSalesData || []).reduce(
-        (s: number, r: any) => s + Number(r.amount || 0),
-        0
-      );
-      setTotalCashSales(salesSum + otherSalesSum);
-
-      // Today's cash sales (regular sales + other sales)
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const todaySales = (salesData || [])
-        .filter((s: any) => new Date(s.created_at) >= today)
-        .reduce((s: number, r: any) => s + cashPortion(r), 0);
-      const todayOtherSales = (otherSalesData || [])
-        .filter((s: any) => {
-          const d = s.sale_date ? new Date(s.sale_date) : new Date(s.created_at);
-          return d >= today;
-        })
-        .reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
-      setTodayCashSales(todaySales + todayOtherSales);
-
-      // Load approved store expenses (Belanja Toko) - reduce from undeposited cash
-      const { data: expensesData } = await supabase
-        .from("store_expenses")
-        .select("amount")
-        .eq("store_id", currentStore.id)
-        .eq("status", "approved");
-      const expensesSum = (expensesData || []).reduce(
-        (s: number, r: any) => s + Number(r.amount || 0),
-        0
-      );
-      setTotalExpenses(expensesSum);
+      await Promise.all([loadSummary(), loadDeposits()]);
     } catch (err: any) {
       console.error(err);
       toast({
         title: "Gagal",
-        description: "Gagal memuat data setoran",
+        description: err?.message || "Gagal memuat data setoran",
         variant: "destructive",
       });
     } finally {
@@ -225,10 +211,16 @@ export default function CashDeposits() {
     }
   };
 
+  // Reset pagination whenever the period changes
+  useEffect(() => {
+    setPage(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preset, customStart, customEnd, currentStore?.id]);
+
   useEffect(() => {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStore?.id]);
+  }, [currentStore?.id, startIso, endIso, page]);
 
   const handleSubmit = async () => {
     const amount = parsePriceInput(amountInput);
@@ -322,7 +314,13 @@ export default function CashDeposits() {
     }
   };
 
-  const undeposited = totalCashSales - totalApproved - totalExpenses;
+  const totalCashSales = summary.total_cash_sales + summary.total_other_sales;
+  const undeposited =
+    totalCashSales -
+    summary.total_approved_deposits -
+    summary.total_approved_expenses;
+
+  const totalPages = Math.max(1, Math.ceil(totalRows / PAGE_SIZE));
 
   const statusBadge = (status: string) => {
     if (status === "approved")
@@ -348,11 +346,11 @@ export default function CashDeposits() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="num text-2xl font-semibold flex items-center gap-2">
-            <Wallet className="w-7 h-7 text-primary" /> Setoran Kas
+          <h1 className="text-xl font-semibold tracking-tight flex items-center gap-2">
+            <Wallet className="w-6 h-6 text-primary" /> Setoran Kas
           </h1>
           <p className="text-sm text-muted-foreground">
-            Kelola setoran uang tunai dari penjualan harian
+            Kelola setoran uang tunai dari penjualan
           </p>
         </div>
 
@@ -378,7 +376,6 @@ export default function CashDeposits() {
                   label="Nominal Setoran"
                   placeholder="0"
                 />
-
               </div>
               <div>
                 <Label>Catatan (opsional)</Label>
@@ -389,7 +386,7 @@ export default function CashDeposits() {
                 />
               </div>
               <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md">
-                Saldo kas belum disetor saat ini:{" "}
+                Saldo kas belum disetor ({periodLabel}):{" "}
                 <span className="font-semibold text-foreground">
                   {formatRupiah(undeposited)}
                 </span>
@@ -407,6 +404,22 @@ export default function CashDeposits() {
         </Dialog>
       </div>
 
+      {/* Period filter */}
+      <Card>
+        <CardContent className="pt-4">
+          <PeriodFilter
+            preset={preset}
+            onPresetChange={setPreset}
+            customStart={customStart}
+            customEnd={customEnd}
+            onCustomChange={(s, e) => {
+              setCustomStart(s);
+              setCustomEnd(e);
+            }}
+          />
+        </CardContent>
+      </Card>
+
       {/* Summary cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
@@ -416,9 +429,12 @@ export default function CashDeposits() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="num text-2xl font-semibold">{formatRupiah(todayCashSales)}</div>
+            <div className="num text-2xl font-semibold">
+              {formatRupiah(summary.today_cash)}
+            </div>
             <p className="text-[11px] text-muted-foreground mt-1 leading-snug">
-              Termasuk penjualan tunai, bagian tunai dari split payment, dan penjualan lain-lain (kas).
+              Selalu hari ini. Termasuk penjualan tunai, bagian tunai dari split
+              payment, dan penjualan lain-lain.
             </p>
           </CardContent>
         </Card>
@@ -429,7 +445,10 @@ export default function CashDeposits() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="num text-2xl font-semibold">{formatRupiah(totalCashSales)}</div>
+            <div className="num text-2xl font-semibold">
+              {formatRupiah(totalCashSales)}
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1">{periodLabel}</p>
           </CardContent>
         </Card>
         <Card>
@@ -440,11 +459,12 @@ export default function CashDeposits() {
           </CardHeader>
           <CardContent>
             <div className="num text-2xl font-semibold text-green-600">
-              {formatRupiah(totalApproved)}
+              {formatRupiah(summary.total_approved_deposits)}
             </div>
-            {totalPending > 0 && (
+            {summary.total_pending_deposits > 0 && (
               <p className="text-xs text-muted-foreground mt-1">
-                + {formatRupiah(totalPending)} menunggu persetujuan
+                + {formatRupiah(summary.total_pending_deposits)} menunggu
+                persetujuan
               </p>
             )}
           </CardContent>
@@ -459,9 +479,11 @@ export default function CashDeposits() {
             <div className="num text-2xl font-semibold text-primary">
               {formatRupiah(undeposited)}
             </div>
-            {totalExpenses > 0 && (
+            <p className="text-[11px] text-muted-foreground mt-1">{periodLabel}</p>
+            {summary.total_approved_expenses > 0 && (
               <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                <ShoppingBag className="w-3 h-3" /> Belanja toko: -{formatRupiah(totalExpenses)}
+                <ShoppingBag className="w-3 h-3" /> Belanja toko: -
+                {formatRupiah(summary.total_approved_expenses)}
               </p>
             )}
           </CardContent>
@@ -471,94 +493,125 @@ export default function CashDeposits() {
       {/* Deposits table */}
       <Card>
         <CardHeader>
-          <CardTitle>Riwayat Pengajuan Setoran</CardTitle>
+          <CardTitle>Riwayat Pengajuan Setoran — {periodLabel}</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
             <p className="text-center text-muted-foreground py-8">Memuat...</p>
           ) : deposits.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">
-              Belum ada pengajuan setoran
+              Belum ada pengajuan setoran pada periode ini
             </p>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tanggal</TableHead>
-                    <TableHead>Diajukan Oleh</TableHead>
-                    <TableHead>Nominal</TableHead>
-                    <TableHead>Catatan</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Disetujui Oleh</TableHead>
-                    <TableHead className="text-right">Aksi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {deposits.map((d) => (
-                    <TableRow key={d.id}>
-                      <TableCell className="whitespace-nowrap">
-                        {new Date(d.submitted_at).toLocaleString("id-ID", {
-                          dateStyle: "short",
-                          timeStyle: "short",
-                        })}
-                      </TableCell>
-                      <TableCell>{d.submitter_name}</TableCell>
-                      <TableCell className="font-semibold">
-                        {formatRupiah(Number(d.amount))}
-                      </TableCell>
-                      <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">
-                        {d.notes || "-"}
-                      </TableCell>
-                      <TableCell>
-                        {statusBadge(d.status)}
-                        {d.status === "rejected" && d.rejection_reason && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Alasan: {d.rejection_reason}
-                          </p>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {d.approver_name || "-"}
-                        {d.approved_at && (
-                          <p className="text-xs">
-                            {new Date(d.approved_at).toLocaleString("id-ID", {
-                              dateStyle: "short",
-                              timeStyle: "short",
-                            })}
-                          </p>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {isOwner && d.status === "pending" ? (
-                          <div className="flex gap-2 justify-end">
-                            <Button
-                              size="sm"
-                              variant="default"
-                              onClick={() => handleApprove(d)}
-                            >
-                              <CheckCircle2 className="w-4 h-4 mr-1" /> ACC
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => {
-                                setRejectTarget(d);
-                                setRejectOpen(true);
-                              }}
-                            >
-                              <XCircle className="w-4 h-4 mr-1" /> Tolak
-                            </Button>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Tanggal</TableHead>
+                      <TableHead>Diajukan Oleh</TableHead>
+                      <TableHead>Nominal</TableHead>
+                      <TableHead>Catatan</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Disetujui Oleh</TableHead>
+                      <TableHead className="text-right">Aksi</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {deposits.map((d) => (
+                      <TableRow key={d.id}>
+                        <TableCell className="whitespace-nowrap">
+                          {new Date(d.submitted_at).toLocaleString("id-ID", {
+                            dateStyle: "short",
+                            timeStyle: "short",
+                          })}
+                        </TableCell>
+                        <TableCell>{d.submitter_name}</TableCell>
+                        <TableCell className="num font-semibold">
+                          {formatRupiah(Number(d.amount))}
+                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">
+                          {d.notes || "-"}
+                        </TableCell>
+                        <TableCell>
+                          {statusBadge(d.status)}
+                          {d.status === "rejected" && d.rejection_reason && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Alasan: {d.rejection_reason}
+                            </p>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {d.approver_name || "-"}
+                          {d.approved_at && (
+                            <p className="text-xs">
+                              {new Date(d.approved_at).toLocaleString("id-ID", {
+                                dateStyle: "short",
+                                timeStyle: "short",
+                              })}
+                            </p>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {isOwner && d.status === "pending" ? (
+                            <div className="flex gap-2 justify-end">
+                              <Button
+                                size="sm"
+                                variant="default"
+                                onClick={() => handleApprove(d)}
+                              >
+                                <CheckCircle2 className="w-4 h-4 mr-1" /> ACC
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => {
+                                  setRejectTarget(d);
+                                  setRejectOpen(true);
+                                }}
+                              >
+                                <XCircle className="w-4 h-4 mr-1" /> Tolak
+                              </Button>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="flex items-center justify-between pt-4">
+                <p className="text-sm text-muted-foreground">
+                  Menampilkan {page * PAGE_SIZE + 1}–
+                  {Math.min((page + 1) * PAGE_SIZE, totalRows)} dari {totalRows}{" "}
+                  pengajuan
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page === 0}
+                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <span className="text-sm num">
+                    {page + 1} / {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page + 1 >= totalPages}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
