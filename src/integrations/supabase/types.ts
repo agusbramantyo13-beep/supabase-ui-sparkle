@@ -1720,6 +1720,17 @@ export type Database = {
         Returns: undefined
       }
       generate_member_code: { Args: never; Returns: string }
+      get_cash_deposit_summary: {
+        Args: { p_end?: string; p_start?: string; p_store_id: string }
+        Returns: {
+          today_cash: number
+          total_approved_deposits: number
+          total_approved_expenses: number
+          total_cash_sales: number
+          total_other_sales: number
+          total_pending_deposits: number
+        }[]
+      }
       get_profit_by_cashier: {
         Args: { p_end: string; p_start: string; p_store_id: string }
         Returns: {
