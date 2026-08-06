@@ -10,6 +10,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStore } from "@/contexts/StoreContext";
 import MemberTransactionReport from "@/components/MemberTransactionReport";
+import {
+  ResponsiveContainer, ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip,
+} from "recharts";
+
+const compactIDR = (v: number) => {
+  const n = Number(v || 0);
+  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}M`;
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}jt`;
+  if (n >= 1_000) return `${Math.round(n / 1_000)}rb`;
+  return `${n}`;
+};
 
 interface ReportData {
   totalSales: number;
