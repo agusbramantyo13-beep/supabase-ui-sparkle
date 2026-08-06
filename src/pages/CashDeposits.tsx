@@ -509,22 +509,26 @@ export default function CashDeposits() {
         <Card className="border-primary/30">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <TrendingDown className="w-4 h-4" /> Belum Disetor
+              <TrendingDown className="w-4 h-4" /> Belum Disetor (Keseluruhan)
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="num text-2xl font-semibold text-primary">
               {formatRupiah(undeposited)}
             </div>
-            <p className="text-[11px] text-muted-foreground mt-1">{periodLabel}</p>
-            {summary.total_approved_expenses > 0 && (
+            <p className="text-[11px] text-muted-foreground mt-1 leading-snug">
+              Saldo kas keseluruhan (semua periode). Tidak mengikuti filter
+              periode.
+            </p>
+            {allTimeSummary.total_approved_expenses > 0 && (
               <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                 <ShoppingBag className="w-3 h-3" /> Belanja toko: -
-                {formatRupiah(summary.total_approved_expenses)}
+                {formatRupiah(allTimeSummary.total_approved_expenses)}
               </p>
             )}
           </CardContent>
         </Card>
+
       </div>
 
       {/* Deposits table */}
