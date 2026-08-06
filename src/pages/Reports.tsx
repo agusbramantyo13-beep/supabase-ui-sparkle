@@ -46,6 +46,15 @@ export default function Reports() {
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState("30");
 
+  const chartData = [...(reportData.salesByDate || [])]
+    .filter((d: any) => d?.day)
+    .sort((a: any, b: any) => new Date(a.day).getTime() - new Date(b.day).getTime())
+    .map((d: any) => ({
+      label: new Date(d.day).toLocaleDateString("id-ID", { day: "2-digit", month: "short" }),
+      total: Number(d.total_sales || 0),
+      receipts: Number(d.receipts || 0),
+    }));
+
   useEffect(() => {
     fetchReportData();
   }, [dateRange, currentStoreId, isOwner]);
