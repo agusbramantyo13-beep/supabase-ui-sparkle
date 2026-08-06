@@ -239,15 +239,85 @@ export default function Reports() {
           <Card className="bg-card border-border">
             <CardHeader>
               <CardTitle className="text-foreground">Sales Overview</CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Penjualan harian ({dateRange} hari terakhir)
+              </p>
             </CardHeader>
             <CardContent>
-              <div className="h-64 flex items-center justify-center text-muted-foreground">
-                <div className="text-center">
-                  <BarChart3 className="w-12 h-12 mx-auto mb-4" />
-                  <p>Sales chart visualization would go here</p>
-                  <p className="text-sm">Integration with chart library needed</p>
+              {chartData.length > 0 ? (
+                <div className="h-64 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="salesFill" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.45} />
+                          <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.04} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                      <XAxis
+                        dataKey="label"
+                        stroke="hsl(var(--muted-foreground))"
+                        tick={{ fontSize: 11 }}
+                        tickLine={false}
+                        axisLine={false}
+                        minTickGap={16}
+                      />
+                      <YAxis
+                        stroke="hsl(var(--muted-foreground))"
+                        tick={{ fontSize: 11 }}
+                        tickLine={false}
+                        axisLine={false}
+                        width={64}
+                        tickFormatter={(v: number) => compactIDR(v)}
+                      />
+                      <Tooltip
+                        cursor={{ stroke: "hsl(var(--primary))", strokeOpacity: 0.25 }}
+                        contentStyle={{
+                          background: "hsl(var(--popover))",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: 8,
+                          color: "hsl(var(--popover-foreground))",
+                          fontSize: 12,
+                        }}
+                        labelStyle={{ color: "hsl(var(--muted-foreground))" }}
+                        formatter={(value: any, name: any) =>
+                          name === "Penjualan"
+                            ? [`Rp ${Number(value).toLocaleString("id-ID")}`, "Penjualan"]
+                            : [`${Number(value).toLocaleString("id-ID")} transaksi`, "Transaksi"]
+                        }
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="total"
+                        name="Penjualan"
+                        stroke="hsl(var(--primary))"
+                        strokeWidth={2}
+                        fill="url(#salesFill)"
+                        dot={false}
+                        activeDot={{ r: 4 }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="receipts"
+                        name="Transaksi"
+                        stroke="hsl(var(--muted-foreground))"
+                        strokeWidth={1}
+                        strokeDasharray="4 4"
+                        dot={false}
+                        hide
+                      />
+                    </ComposedChart>
+                  </ResponsiveContainer>
                 </div>
-              </div>
+              ) : (
+                <div className="h-64 flex items-center justify-center text-center">
+                  <div>
+                    <BarChart3 className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
+                    <p className="text-muted-foreground">Belum ada penjualan pada periode ini</p>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
