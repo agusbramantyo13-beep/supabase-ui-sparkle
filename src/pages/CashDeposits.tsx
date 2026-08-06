@@ -219,11 +219,15 @@ export default function CashDeposits() {
     );
   };
 
-  const loadData = async () => {
+  const loadData = async (includeAllTime = false) => {
     if (!currentStore?.id) return;
     setLoading(true);
     try {
-      await Promise.all([loadSummary(), loadDeposits()]);
+      await Promise.all([
+        loadSummary(),
+        loadDeposits(),
+        ...(includeAllTime ? [loadAllTimeSummary()] : []),
+      ]);
     } catch (err: any) {
       console.error(err);
       toast({
@@ -246,6 +250,12 @@ export default function CashDeposits() {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStore?.id, startIso, endIso, page]);
+
+  // All-time balance: fetched once per store, refreshed only after mutations
+  useEffect(() => {
+    loadAllTimeSummary().catch((e) => console.error(e));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStore?.id]);
 
   const handleSubmit = async () => {
     const amount = parsePriceInput(amountInput);
