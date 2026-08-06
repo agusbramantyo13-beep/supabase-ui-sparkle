@@ -350,10 +350,12 @@ export default function CashDeposits() {
   };
 
   const totalCashSales = summary.total_cash_sales + summary.total_other_sales;
+  // Always all-time (ignores the period filter) — true running cash balance
   const undeposited =
-    totalCashSales -
-    summary.total_approved_deposits -
-    summary.total_approved_expenses;
+    allTimeSummary.total_cash_sales +
+    allTimeSummary.total_other_sales -
+    allTimeSummary.total_approved_deposits -
+    allTimeSummary.total_approved_expenses;
 
   const totalPages = Math.max(1, Math.ceil(totalRows / PAGE_SIZE));
 
