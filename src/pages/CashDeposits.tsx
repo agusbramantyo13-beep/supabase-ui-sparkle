@@ -287,7 +287,7 @@ export default function CashDeposits() {
       setSubmitOpen(false);
       setAmountInput("");
       setNotesInput("");
-      loadData();
+      loadData(true);
     } catch (err: any) {
       toast({
         title: "Gagal",
@@ -312,7 +312,7 @@ export default function CashDeposits() {
         .eq("id", deposit.id);
       if (error) throw error;
       toast({ title: "Berhasil", description: "Setoran disetujui" });
-      loadData();
+      loadData(true);
     } catch (err: any) {
       toast({
         title: "Gagal",
@@ -339,7 +339,7 @@ export default function CashDeposits() {
       setRejectOpen(false);
       setRejectTarget(null);
       setRejectReason("");
-      loadData();
+      loadData(true);
     } catch (err: any) {
       toast({
         title: "Gagal",
