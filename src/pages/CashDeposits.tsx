@@ -423,7 +423,7 @@ export default function CashDeposits() {
                 />
               </div>
               <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md">
-                Saldo kas belum disetor ({periodLabel}):{" "}
+                Saldo kas belum disetor (keseluruhan):{" "}
                 <span className="font-semibold text-foreground">
                   {formatRupiah(undeposited)}
                 </span>
