@@ -105,6 +105,7 @@ export default function CashDeposits() {
   const periodLabel = formatPeriodLabel(preset, range);
 
   const [summary, setSummary] = useState<Summary>(EMPTY_SUMMARY);
+  const [allTimeSummary, setAllTimeSummary] = useState<Summary>(EMPTY_SUMMARY);
   const [deposits, setDeposits] = useState<CashDeposit[]>([]);
   const [totalRows, setTotalRows] = useState(0);
   const [page, setPage] = useState(0);
@@ -134,6 +135,30 @@ export default function CashDeposits() {
     if (error) throw error;
     const row = (data as unknown as Summary[])?.[0];
     setSummary(
+      row
+        ? {
+            total_cash_sales: Number(row.total_cash_sales || 0),
+            total_other_sales: Number(row.total_other_sales || 0),
+            total_approved_deposits: Number(row.total_approved_deposits || 0),
+            total_pending_deposits: Number(row.total_pending_deposits || 0),
+            total_approved_expenses: Number(row.total_approved_expenses || 0),
+            today_cash: Number(row.today_cash || 0),
+          }
+        : EMPTY_SUMMARY
+    );
+  };
+
+  // All-time summary (ignores the period filter) — powers "Belum Disetor"
+  const loadAllTimeSummary = async () => {
+    if (!currentStore?.id) return;
+    const { data, error } = await supabase.rpc("get_cash_deposit_summary", {
+      p_store_id: currentStore.id,
+      p_start: null,
+      p_end: null,
+    });
+    if (error) throw error;
+    const row = (data as unknown as Summary[])?.[0];
+    setAllTimeSummary(
       row
         ? {
             total_cash_sales: Number(row.total_cash_sales || 0),
@@ -194,11 +219,15 @@ export default function CashDeposits() {
     );
   };
 
-  const loadData = async () => {
+  const loadData = async (includeAllTime = false) => {
     if (!currentStore?.id) return;
     setLoading(true);
     try {
-      await Promise.all([loadSummary(), loadDeposits()]);
+      await Promise.all([
+        loadSummary(),
+        loadDeposits(),
+        ...(includeAllTime ? [loadAllTimeSummary()] : []),
+      ]);
     } catch (err: any) {
       console.error(err);
       toast({
@@ -221,6 +250,12 @@ export default function CashDeposits() {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStore?.id, startIso, endIso, page]);
+
+  // All-time balance: fetched once per store, refreshed only after mutations
+  useEffect(() => {
+    loadAllTimeSummary().catch((e) => console.error(e));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStore?.id]);
 
   const handleSubmit = async () => {
     const amount = parsePriceInput(amountInput);
@@ -252,7 +287,7 @@ export default function CashDeposits() {
       setSubmitOpen(false);
       setAmountInput("");
       setNotesInput("");
-      loadData();
+      loadData(true);
     } catch (err: any) {
       toast({
         title: "Gagal",
@@ -277,7 +312,7 @@ export default function CashDeposits() {
         .eq("id", deposit.id);
       if (error) throw error;
       toast({ title: "Berhasil", description: "Setoran disetujui" });
-      loadData();
+      loadData(true);
     } catch (err: any) {
       toast({
         title: "Gagal",
@@ -304,7 +339,7 @@ export default function CashDeposits() {
       setRejectOpen(false);
       setRejectTarget(null);
       setRejectReason("");
-      loadData();
+      loadData(true);
     } catch (err: any) {
       toast({
         title: "Gagal",
@@ -315,10 +350,12 @@ export default function CashDeposits() {
   };
 
   const totalCashSales = summary.total_cash_sales + summary.total_other_sales;
+  // Always all-time (ignores the period filter) — true running cash balance
   const undeposited =
-    totalCashSales -
-    summary.total_approved_deposits -
-    summary.total_approved_expenses;
+    allTimeSummary.total_cash_sales +
+    allTimeSummary.total_other_sales -
+    allTimeSummary.total_approved_deposits -
+    allTimeSummary.total_approved_expenses;
 
   const totalPages = Math.max(1, Math.ceil(totalRows / PAGE_SIZE));
 
@@ -386,7 +423,7 @@ export default function CashDeposits() {
                 />
               </div>
               <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md">
-                Saldo kas belum disetor ({periodLabel}):{" "}
+                Saldo kas belum disetor (keseluruhan):{" "}
                 <span className="font-semibold text-foreground">
                   {formatRupiah(undeposited)}
                 </span>
@@ -472,22 +509,26 @@ export default function CashDeposits() {
         <Card className="border-primary/30">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <TrendingDown className="w-4 h-4" /> Belum Disetor
+              <TrendingDown className="w-4 h-4" /> Belum Disetor (Keseluruhan)
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="num text-2xl font-semibold text-primary">
               {formatRupiah(undeposited)}
             </div>
-            <p className="text-[11px] text-muted-foreground mt-1">{periodLabel}</p>
-            {summary.total_approved_expenses > 0 && (
+            <p className="text-[11px] text-muted-foreground mt-1 leading-snug">
+              Saldo kas keseluruhan (semua periode). Tidak mengikuti filter
+              periode.
+            </p>
+            {allTimeSummary.total_approved_expenses > 0 && (
               <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                 <ShoppingBag className="w-3 h-3" /> Belanja toko: -
-                {formatRupiah(summary.total_approved_expenses)}
+                {formatRupiah(allTimeSummary.total_approved_expenses)}
               </p>
             )}
           </CardContent>
         </Card>
+
       </div>
 
       {/* Deposits table */}
