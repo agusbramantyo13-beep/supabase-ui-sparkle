@@ -105,6 +105,7 @@ export default function CashDeposits() {
   const periodLabel = formatPeriodLabel(preset, range);
 
   const [summary, setSummary] = useState<Summary>(EMPTY_SUMMARY);
+  const [allTimeSummary, setAllTimeSummary] = useState<Summary>(EMPTY_SUMMARY);
   const [deposits, setDeposits] = useState<CashDeposit[]>([]);
   const [totalRows, setTotalRows] = useState(0);
   const [page, setPage] = useState(0);
@@ -134,6 +135,30 @@ export default function CashDeposits() {
     if (error) throw error;
     const row = (data as unknown as Summary[])?.[0];
     setSummary(
+      row
+        ? {
+            total_cash_sales: Number(row.total_cash_sales || 0),
+            total_other_sales: Number(row.total_other_sales || 0),
+            total_approved_deposits: Number(row.total_approved_deposits || 0),
+            total_pending_deposits: Number(row.total_pending_deposits || 0),
+            total_approved_expenses: Number(row.total_approved_expenses || 0),
+            today_cash: Number(row.today_cash || 0),
+          }
+        : EMPTY_SUMMARY
+    );
+  };
+
+  // All-time summary (ignores the period filter) — powers "Belum Disetor"
+  const loadAllTimeSummary = async () => {
+    if (!currentStore?.id) return;
+    const { data, error } = await supabase.rpc("get_cash_deposit_summary", {
+      p_store_id: currentStore.id,
+      p_start: null,
+      p_end: null,
+    });
+    if (error) throw error;
+    const row = (data as unknown as Summary[])?.[0];
+    setAllTimeSummary(
       row
         ? {
             total_cash_sales: Number(row.total_cash_sales || 0),
