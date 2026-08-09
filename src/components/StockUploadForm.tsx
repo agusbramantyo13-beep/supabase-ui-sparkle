@@ -96,6 +96,8 @@ export function StockUploadForm({ open, onOpenChange, onSuccess }: StockUploadFo
         if (!variantName) errors.push('Varian kosong')
         if (isNaN(quantity) || quantity < 0) errors.push('Jumlah tidak valid')
         if (isNaN(sellingPrice) || sellingPrice < 0) errors.push('Harga jual tidak valid')
+        if (!isNaN(sellingPrice) && !isNaN(costPrice) && costPrice > 0 && sellingPrice < costPrice)
+          errors.push(PRICE_BELOW_COST_MESSAGE)
 
         return {
           product_name: productName,
