@@ -94,13 +94,16 @@ export default function Inventory() {
     try {
       const excelData = inventory.map(item => ({
         'Nama Produk': item.product_name,
-        'Varian': item.variant_name,
         'Kategori': item.category_name,
+        'Varian': item.variant_name,
+        'Harga Beli': item.cost_price || 0,
+        'Harga Jual': item.price || 0,
         'Jumlah Stok': item.quantity || 0,
-        'Status': getStockStatus(item.quantity || 0).label
       }))
 
-      const ws = XLSX.utils.json_to_sheet(excelData)
+      const ws = XLSX.utils.json_to_sheet(excelData, {
+        header: ['Nama Produk', 'Kategori', 'Varian', 'Harga Beli', 'Harga Jual', 'Jumlah Stok'],
+      })
       const wb = XLSX.utils.book_new()
       XLSX.utils.book_append_sheet(wb, ws, 'Inventori')
       
