@@ -149,6 +149,7 @@ export default function Products() {
       variant_name: variant.name,
       variant_price: variant.price,
       variant_cost_price: variant.cost_price,
+      variant_average_cost: variant.average_cost,
       variant_sku: variant.sku,
       quantity: variant.inventory?.[0]?.quantity || 0
     })
