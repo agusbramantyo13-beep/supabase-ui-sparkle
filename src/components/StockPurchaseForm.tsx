@@ -254,6 +254,17 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
       return;
     }
 
+    for (const item of validItems) {
+      if (!item.selling_price) continue;
+      const err = validateSellingPrice(item.selling_price, item.cost_price, item.variant_name);
+      if (err) {
+        toast({ title: "Error", description: err, variant: "destructive" });
+        return;
+      }
+    }
+
+
+
     setLoading(true);
 
     try {
