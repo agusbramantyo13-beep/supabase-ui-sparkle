@@ -12,6 +12,7 @@ import { useStore } from "@/contexts/StoreContext";
 import { Plus, Trash2, Check, ChevronsUpDown } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { validateSellingPrice } from "@/lib/priceValidation";
 
 interface ProductVariant {
   id: string;
