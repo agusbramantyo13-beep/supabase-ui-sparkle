@@ -72,6 +72,16 @@ export function AddVariantDialog({ open, onOpenChange, onSuccess, productId, pro
       return;
     }
 
+    for (const v of validVariants) {
+      const err = validateSellingPrice(parseFloat(v.price), v.cost_price ? parseFloat(v.cost_price) : 0, v.name);
+      if (err) {
+        toast({ title: "Gagal", description: err, variant: "destructive" });
+        return;
+      }
+    }
+
+
+
     setLoading(true);
     try {
       for (const v of validVariants) {
