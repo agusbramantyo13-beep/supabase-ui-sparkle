@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useStore } from "@/contexts/StoreContext";
 import { applyInventoryChange } from "@/lib/stockHistory";
+import { validateSellingPrice } from "@/lib/priceValidation";
 
 const formatPriceInput = (value: string): string => {
   const num = value.replace(/\D/g, "");
