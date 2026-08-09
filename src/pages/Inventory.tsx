@@ -46,7 +46,21 @@ export default function Inventory() {
         .order('quantity', { ascending: true })
 
       if (error) throw error
-      setInventory(data || [])
+
+      const { data: variantData } = await supabase
+        .from('variants')
+        .select('id, price, cost_price, average_cost')
+        .eq('store_id', currentStoreId)
+
+      const priceMap = new Map(
+        (variantData || []).map(v => [v.id, { price: Number(v.price) || 0, cost: Number(v.average_cost ?? v.cost_price) || 0 }])
+      )
+
+      setInventory((data || []).map(item => ({
+        ...item,
+        price: priceMap.get(item.variant_id)?.price ?? 0,
+        cost_price: priceMap.get(item.variant_id)?.cost ?? 0,
+      })))
     } catch (error) {
       console.error('Error fetching inventory:', error)
     } finally {
