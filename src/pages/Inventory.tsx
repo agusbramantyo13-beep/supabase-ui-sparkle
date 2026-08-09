@@ -18,6 +18,8 @@ interface InventoryItem {
   product_name: string
   variant_name: string
   category_name: string
+  cost_price?: number
+  price?: number
 }
 
 export default function Inventory() {
@@ -44,7 +46,21 @@ export default function Inventory() {
         .order('quantity', { ascending: true })
 
       if (error) throw error
-      setInventory(data || [])
+
+      const { data: variantData } = await supabase
+        .from('variants')
+        .select('id, price, cost_price, average_cost')
+        .eq('store_id', currentStoreId)
+
+      const priceMap = new Map(
+        (variantData || []).map(v => [v.id, { price: Number(v.price) || 0, cost: Number(v.average_cost ?? v.cost_price) || 0 }])
+      )
+
+      setInventory((data || []).map(item => ({
+        ...item,
+        price: priceMap.get(item.variant_id)?.price ?? 0,
+        cost_price: priceMap.get(item.variant_id)?.cost ?? 0,
+      })))
     } catch (error) {
       console.error('Error fetching inventory:', error)
     } finally {
@@ -78,13 +94,16 @@ export default function Inventory() {
     try {
       const excelData = inventory.map(item => ({
         'Nama Produk': item.product_name,
-        'Varian': item.variant_name,
         'Kategori': item.category_name,
+        'Varian': item.variant_name,
+        'Harga Beli': item.cost_price || 0,
+        'Harga Jual': item.price || 0,
         'Jumlah Stok': item.quantity || 0,
-        'Status': getStockStatus(item.quantity || 0).label
       }))
 
-      const ws = XLSX.utils.json_to_sheet(excelData)
+      const ws = XLSX.utils.json_to_sheet(excelData, {
+        header: ['Nama Produk', 'Kategori', 'Varian', 'Harga Beli', 'Harga Jual', 'Jumlah Stok'],
+      })
       const wb = XLSX.utils.book_new()
       XLSX.utils.book_append_sheet(wb, ws, 'Inventori')
       
