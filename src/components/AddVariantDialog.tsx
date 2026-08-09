@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useStore } from "@/contexts/StoreContext";
 import { applyInventoryChange } from "@/lib/stockHistory";
+import { validateSellingPrice } from "@/lib/priceValidation";
 
 const formatPriceInput = (value: string): string => {
   const num = value.replace(/\D/g, "");
@@ -70,6 +71,16 @@ export function AddVariantDialog({ open, onOpenChange, onSuccess, productId, pro
       toast({ title: "Gagal", description: "Minimal 1 varian harus diisi (nama & harga)", variant: "destructive" });
       return;
     }
+
+    for (const v of validVariants) {
+      const err = validateSellingPrice(parseFloat(v.price), v.cost_price ? parseFloat(v.cost_price) : 0, v.name);
+      if (err) {
+        toast({ title: "Gagal", description: err, variant: "destructive" });
+        return;
+      }
+    }
+
+
 
     setLoading(true);
     try {

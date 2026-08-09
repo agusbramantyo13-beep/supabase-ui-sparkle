@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useStore } from "@/contexts/StoreContext";
 import { applyInventoryChange } from "@/lib/stockHistory";
+import { validateSellingPrice } from "@/lib/priceValidation";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -265,6 +266,19 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
       });
       return;
     }
+
+    // Harga jual tidak boleh lebih rendah dari harga beli/modal
+    const storedAvgCost = isEditMode ? Number(product?.variant_average_cost) || 0 : 0;
+    for (const v of validVariants) {
+      const inputCost = v.cost_price ? parseFloat(v.cost_price) : 0;
+      const refCost = Math.max(inputCost, storedAvgCost);
+      const err = validateSellingPrice(parseFloat(v.price), refCost, hasVariantsToggle ? v.name : undefined);
+      if (err) {
+        toast({ title: "Error", description: err, variant: "destructive" });
+        return;
+      }
+    }
+
 
     setLoading(true);
 

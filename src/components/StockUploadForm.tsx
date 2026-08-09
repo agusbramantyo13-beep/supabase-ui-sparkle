@@ -1,4 +1,5 @@
 import { useState, useRef } from "react"
+import { PRICE_BELOW_COST_MESSAGE } from "@/lib/priceValidation"
 import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, Loader2, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -96,6 +97,8 @@ export function StockUploadForm({ open, onOpenChange, onSuccess }: StockUploadFo
         if (!variantName) errors.push('Varian kosong')
         if (isNaN(quantity) || quantity < 0) errors.push('Jumlah tidak valid')
         if (isNaN(sellingPrice) || sellingPrice < 0) errors.push('Harga jual tidak valid')
+        if (!isNaN(sellingPrice) && !isNaN(costPrice) && costPrice > 0 && sellingPrice < costPrice)
+          errors.push(PRICE_BELOW_COST_MESSAGE)
 
         return {
           product_name: productName,
