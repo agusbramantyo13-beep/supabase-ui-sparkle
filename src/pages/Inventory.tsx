@@ -18,6 +18,8 @@ interface InventoryItem {
   product_name: string
   variant_name: string
   category_name: string
+  cost_price?: number
+  price?: number
 }
 
 export default function Inventory() {
