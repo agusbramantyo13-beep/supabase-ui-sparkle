@@ -426,17 +426,31 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
               {items.map((item, index) => (
                 <Card key={index}>
                   <CardContent className="pt-4">
-                    <div className="grid grid-cols-12 gap-3">
-                      <div className="col-span-4">
+                    <div className="grid grid-cols-2 md:grid-cols-12 gap-3">
+                      <div className="col-span-2 md:col-span-3">
                         <Label className="text-xs">Produk</Label>
-                        <ProductCombobox
-                          variants={variants}
-                          value={item.variant_id}
-                          onChange={(value) => updateItem(index, 'variant_id', value)}
+                        <SearchCombobox
+                          options={productOptions}
+                          value={item.product_id}
+                          onChange={(value) => selectProduct(index, value)}
+                          placeholder="Pilih produk..."
+                          emptyText="Produk tidak ditemukan."
                         />
                       </div>
 
-                      <div className="col-span-2">
+                      <div className="col-span-2 md:col-span-3">
+                        <Label className="text-xs">Variasi</Label>
+                        <SearchCombobox
+                          options={item.product_id ? variantOptionsFor(item.product_id) : []}
+                          value={item.variant_id}
+                          onChange={(value) => selectVariant(index, value)}
+                          placeholder={item.product_id ? "Pilih variasi..." : "Pilih produk dulu"}
+                          emptyText="Variasi tidak ditemukan."
+                          disabled={!item.product_id}
+                        />
+                      </div>
+
+                      <div className="col-span-1 md:col-span-1">
                         <Label className="text-xs">Jumlah</Label>
                         <Input
                           type="number"
@@ -448,7 +462,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
                         />
                       </div>
 
-                      <div className="col-span-2">
+                      <div className="col-span-1 md:col-span-2">
                         <Label className="text-xs">Harga Beli</Label>
                         <Input
                           type="number"
@@ -460,7 +474,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
                         />
                       </div>
 
-                      <div className="col-span-2">
+                      <div className="col-span-1 md:col-span-2">
                         <Label className="text-xs">Harga Jual</Label>
                         <Input
                           type="number"
@@ -472,28 +486,26 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
                         />
                       </div>
 
-                      <div className="col-span-1 flex items-end">
-                        <Label className="text-xs mb-2 block w-full">
+                      <div className="col-span-1 md:col-span-1 flex items-end justify-between gap-2">
+                        <Label className="text-xs mb-2 block">
                           Total: <br/>
-                          <span className="font-semibold">
+                          <span className="num font-semibold">
                             {item.total_cost.toLocaleString('id-ID')}
                           </span>
                         </Label>
-                      </div>
-
-                      <div className="col-span-1 flex items-end justify-end">
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
                           onClick={() => removeItem(index)}
                           disabled={items.length === 1}
-                          className="h-9 w-9"
+                          className="h-9 w-9 shrink-0"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
+
                   </CardContent>
                 </Card>
               ))}
