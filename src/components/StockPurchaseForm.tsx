@@ -111,14 +111,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
   const [supplier, setSupplier] = useState("");
   const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState("");
-  const [items, setItems] = useState<StockItem[]>([{
-    variant_id: "",
-    variant_name: "",
-    quantity: 0,
-    cost_price: 0,
-    selling_price: 0,
-    total_cost: 0
-  }]);
+  const [items, setItems] = useState<StockItem[]>([emptyItem()]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { currentStoreId } = useStore();
@@ -139,14 +132,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
     setSupplier("");
     setPurchaseDate(new Date().toISOString().split('T')[0]);
     setNotes("");
-    setItems([{
-      variant_id: "",
-      variant_name: "",
-      quantity: 0,
-      cost_price: 0,
-      selling_price: 0,
-      total_cost: 0
-    }]);
+    setItems([emptyItem()]);
   };
 
   const fetchVariants = async () => {
@@ -157,6 +143,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
         name,
         price,
         cost_price,
+        product_id,
         products!inner(name)
       `)
       .eq('store_id', currentStoreId)
@@ -174,6 +161,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
     const formattedVariants = data?.map(variant => ({
       id: variant.id.toString(),
       name: variant.name,
+      product_id: String(variant.product_id ?? ''),
       product_name: variant.products.name,
       price: variant.price,
       cost_price: variant.cost_price
@@ -182,15 +170,22 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
     setVariants(formattedVariants);
   };
 
+  const productOptions = Array.from(
+    new Map(
+      variants
+        .filter((v) => v.product_id)
+        .map((v) => [v.product_id, { value: v.product_id, label: v.product_name }])
+    ).values()
+  ).sort((a, b) => a.label.localeCompare(b.label));
+
+  const variantOptionsFor = (productId: string) =>
+    variants
+      .filter((v) => v.product_id === productId)
+      .map((v) => ({ value: v.id, label: v.name }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+
   const addItem = () => {
-    setItems([...items, {
-      variant_id: "",
-      variant_name: "",
-      quantity: 0,
-      cost_price: 0,
-      selling_price: 0,
-      total_cost: 0
-    }]);
+    setItems([...items, emptyItem()]);
   };
 
   const removeItem = (index: number) => {
@@ -199,23 +194,44 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
     }
   };
 
+  const selectProduct = (index: number, productId: string) => {
+    const newItems = [...items];
+    newItems[index] = {
+      ...emptyItem(),
+      quantity: newItems[index].quantity,
+      product_id: productId,
+    };
+    const options = variantOptionsFor(productId);
+    setItems(newItems);
+    if (options.length === 1) {
+      // auto-select the only variant
+      setTimeout(() => selectVariantIn(newItems, index, options[0].value), 0);
+    }
+  };
+
+  const selectVariantIn = (base: StockItem[], index: number, variantId: string) => {
+    const variant = variants.find((v) => v.id === variantId);
+    if (!variant) return;
+    const newItems = [...base];
+    newItems[index] = {
+      ...newItems[index],
+      variant_id: variantId,
+      variant_name: `${variant.product_name} - ${variant.name}`,
+      cost_price: variant.cost_price,
+      selling_price: variant.price,
+      total_cost: newItems[index].quantity * variant.cost_price,
+    };
+    setItems(newItems);
+  };
+
+  const selectVariant = (index: number, variantId: string) => selectVariantIn(items, index, variantId);
+
   const updateItem = (index: number, field: keyof StockItem, value: string | number) => {
     const newItems = [...items];
-    
-    if (field === 'variant_id' && typeof value === 'string') {
-      const variant = variants.find(v => v.id === value);
-      if (variant) {
-        newItems[index] = {
-          ...newItems[index],
-          variant_id: value,
-          variant_name: `${variant.product_name} - ${variant.name}`,
-          cost_price: variant.cost_price,
-          selling_price: variant.price
-        };
-      }
-    } else if (field === 'quantity' || field === 'cost_price' || field === 'selling_price' || field === 'total_cost') {
+
+    if (field === 'quantity' || field === 'cost_price' || field === 'selling_price' || field === 'total_cost') {
       newItems[index][field] = typeof value === 'number' ? value : 0;
-    } else if (field === 'variant_name') {
+    } else if (field === 'variant_name' || field === 'variant_id' || field === 'product_id') {
       newItems[index][field] = typeof value === 'string' ? value : '';
     }
 
@@ -226,6 +242,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
 
     setItems(newItems);
   };
+
 
   const getTotals = () => {
     const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
