@@ -17,12 +17,14 @@ import { validateSellingPrice } from "@/lib/priceValidation";
 interface ProductVariant {
   id: string;
   name: string;
+  product_id: string;
   product_name: string;
   price: number;
   cost_price: number;
 }
 
 interface StockItem {
+  product_id: string;
   variant_id: string;
   variant_name: string;
   quantity: number;
@@ -31,17 +33,23 @@ interface StockItem {
   total_cost: number;
 }
 
-function ProductCombobox({
-  variants,
+function SearchCombobox({
+  options,
   value,
   onChange,
+  placeholder,
+  emptyText = "Tidak ditemukan.",
+  disabled,
 }: {
-  variants: ProductVariant[];
+  options: { value: string; label: string }[];
   value: string;
   onChange: (value: string) => void;
+  placeholder: string;
+  emptyText?: string;
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const selected = variants.find((v) => v.id === value);
+  const selected = options.find((o) => o.value === value);
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -50,45 +58,39 @@ function ProductCombobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          disabled={disabled}
           className="h-9 w-full justify-between font-normal"
         >
-          <span className="truncate">
-            {selected ? `${selected.product_name} - ${selected.name}` : "Pilih atau ketik produk..."}
-          </span>
+          <span className="truncate">{selected ? selected.label : placeholder}</span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
         <Command
-          filter={(value, search) => {
-            return value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
-          }}
+          filter={(value, search) => (value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0)}
         >
-          <CommandInput placeholder="Ketik nama produk..." />
+          <CommandInput placeholder="Ketik untuk mencari..." />
           <CommandList>
-            <CommandEmpty>Produk tidak ditemukan.</CommandEmpty>
+            <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
-              {variants.map((variant) => {
-                const label = `${variant.product_name} - ${variant.name}`;
-                return (
-                  <CommandItem
-                    key={variant.id}
-                    value={label}
-                    onSelect={() => {
-                      onChange(variant.id);
-                      setOpen(false);
-                    }}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        value === variant.id ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    {label}
-                  </CommandItem>
-                );
-              })}
+              {options.map((option) => (
+                <CommandItem
+                  key={option.value}
+                  value={option.label}
+                  onSelect={() => {
+                    onChange(option.value);
+                    setOpen(false);
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      value === option.value ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  {option.label}
+                </CommandItem>
+              ))}
             </CommandGroup>
           </CommandList>
         </Command>
@@ -96,6 +98,19 @@ function ProductCombobox({
     </Popover>
   );
 }
+
+const emptyItem = (): StockItem => ({
+  product_id: "",
+  variant_id: "",
+  variant_name: "",
+  quantity: 0,
+  cost_price: 0,
+  selling_price: 0,
+  total_cost: 0,
+});
+
+
+
 
 interface StockPurchaseFormProps {
   open: boolean;
@@ -108,14 +123,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
   const [supplier, setSupplier] = useState("");
   const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState("");
-  const [items, setItems] = useState<StockItem[]>([{
-    variant_id: "",
-    variant_name: "",
-    quantity: 0,
-    cost_price: 0,
-    selling_price: 0,
-    total_cost: 0
-  }]);
+  const [items, setItems] = useState<StockItem[]>([emptyItem()]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { currentStoreId } = useStore();
@@ -136,14 +144,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
     setSupplier("");
     setPurchaseDate(new Date().toISOString().split('T')[0]);
     setNotes("");
-    setItems([{
-      variant_id: "",
-      variant_name: "",
-      quantity: 0,
-      cost_price: 0,
-      selling_price: 0,
-      total_cost: 0
-    }]);
+    setItems([emptyItem()]);
   };
 
   const fetchVariants = async () => {
@@ -154,6 +155,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
         name,
         price,
         cost_price,
+        product_id,
         products!inner(name)
       `)
       .eq('store_id', currentStoreId)
@@ -171,6 +173,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
     const formattedVariants = data?.map(variant => ({
       id: variant.id.toString(),
       name: variant.name,
+      product_id: String(variant.product_id ?? ''),
       product_name: variant.products.name,
       price: variant.price,
       cost_price: variant.cost_price
@@ -179,15 +182,22 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
     setVariants(formattedVariants);
   };
 
+  const productOptions = Array.from(
+    new Map(
+      variants
+        .filter((v) => v.product_id)
+        .map((v) => [v.product_id, { value: v.product_id, label: v.product_name }])
+    ).values()
+  ).sort((a, b) => a.label.localeCompare(b.label));
+
+  const variantOptionsFor = (productId: string) =>
+    variants
+      .filter((v) => v.product_id === productId)
+      .map((v) => ({ value: v.id, label: v.name }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+
   const addItem = () => {
-    setItems([...items, {
-      variant_id: "",
-      variant_name: "",
-      quantity: 0,
-      cost_price: 0,
-      selling_price: 0,
-      total_cost: 0
-    }]);
+    setItems([...items, emptyItem()]);
   };
 
   const removeItem = (index: number) => {
@@ -196,23 +206,44 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
     }
   };
 
+  const selectProduct = (index: number, productId: string) => {
+    const newItems = [...items];
+    newItems[index] = {
+      ...emptyItem(),
+      quantity: newItems[index].quantity,
+      product_id: productId,
+    };
+    const options = variantOptionsFor(productId);
+    setItems(newItems);
+    if (options.length === 1) {
+      // auto-select the only variant
+      setTimeout(() => selectVariantIn(newItems, index, options[0].value), 0);
+    }
+  };
+
+  const selectVariantIn = (base: StockItem[], index: number, variantId: string) => {
+    const variant = variants.find((v) => v.id === variantId);
+    if (!variant) return;
+    const newItems = [...base];
+    newItems[index] = {
+      ...newItems[index],
+      variant_id: variantId,
+      variant_name: `${variant.product_name} - ${variant.name}`,
+      cost_price: variant.cost_price,
+      selling_price: variant.price,
+      total_cost: newItems[index].quantity * variant.cost_price,
+    };
+    setItems(newItems);
+  };
+
+  const selectVariant = (index: number, variantId: string) => selectVariantIn(items, index, variantId);
+
   const updateItem = (index: number, field: keyof StockItem, value: string | number) => {
     const newItems = [...items];
-    
-    if (field === 'variant_id' && typeof value === 'string') {
-      const variant = variants.find(v => v.id === value);
-      if (variant) {
-        newItems[index] = {
-          ...newItems[index],
-          variant_id: value,
-          variant_name: `${variant.product_name} - ${variant.name}`,
-          cost_price: variant.cost_price,
-          selling_price: variant.price
-        };
-      }
-    } else if (field === 'quantity' || field === 'cost_price' || field === 'selling_price' || field === 'total_cost') {
+
+    if (field === 'quantity' || field === 'cost_price' || field === 'selling_price' || field === 'total_cost') {
       newItems[index][field] = typeof value === 'number' ? value : 0;
-    } else if (field === 'variant_name') {
+    } else if (field === 'variant_name' || field === 'variant_id' || field === 'product_id') {
       newItems[index][field] = typeof value === 'string' ? value : '';
     }
 
@@ -223,6 +254,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
 
     setItems(newItems);
   };
+
 
   const getTotals = () => {
     const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -339,14 +371,8 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
       // Jangan tutup dialog otomatis. User harus menutup secara manual
       // agar bisa menambah item lain dalam sesi pembelian yang sama
       // tanpa kehilangan konteks. Reset hanya daftar item.
-      setItems([{
-        variant_id: "",
-        variant_name: "",
-        quantity: 0,
-        cost_price: 0,
-        selling_price: 0,
-        total_cost: 0
-      }]);
+      setItems([emptyItem()]);
+
     } catch (error: any) {
       toast({
         title: "Error",
@@ -400,17 +426,31 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
               {items.map((item, index) => (
                 <Card key={index}>
                   <CardContent className="pt-4">
-                    <div className="grid grid-cols-12 gap-3">
-                      <div className="col-span-4">
+                    <div className="grid grid-cols-2 md:grid-cols-12 gap-3">
+                      <div className="col-span-2 md:col-span-3">
                         <Label className="text-xs">Produk</Label>
-                        <ProductCombobox
-                          variants={variants}
-                          value={item.variant_id}
-                          onChange={(value) => updateItem(index, 'variant_id', value)}
+                        <SearchCombobox
+                          options={productOptions}
+                          value={item.product_id}
+                          onChange={(value) => selectProduct(index, value)}
+                          placeholder="Pilih produk..."
+                          emptyText="Produk tidak ditemukan."
                         />
                       </div>
 
-                      <div className="col-span-2">
+                      <div className="col-span-2 md:col-span-3">
+                        <Label className="text-xs">Variasi</Label>
+                        <SearchCombobox
+                          options={item.product_id ? variantOptionsFor(item.product_id) : []}
+                          value={item.variant_id}
+                          onChange={(value) => selectVariant(index, value)}
+                          placeholder={item.product_id ? "Pilih variasi..." : "Pilih produk dulu"}
+                          emptyText="Variasi tidak ditemukan."
+                          disabled={!item.product_id}
+                        />
+                      </div>
+
+                      <div className="col-span-1 md:col-span-1">
                         <Label className="text-xs">Jumlah</Label>
                         <Input
                           type="number"
@@ -422,7 +462,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
                         />
                       </div>
 
-                      <div className="col-span-2">
+                      <div className="col-span-1 md:col-span-2">
                         <Label className="text-xs">Harga Beli</Label>
                         <Input
                           type="number"
@@ -434,7 +474,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
                         />
                       </div>
 
-                      <div className="col-span-2">
+                      <div className="col-span-1 md:col-span-2">
                         <Label className="text-xs">Harga Jual</Label>
                         <Input
                           type="number"
@@ -446,28 +486,26 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
                         />
                       </div>
 
-                      <div className="col-span-1 flex items-end">
-                        <Label className="text-xs mb-2 block w-full">
+                      <div className="col-span-1 md:col-span-1 flex items-end justify-between gap-2">
+                        <Label className="text-xs mb-2 block">
                           Total: <br/>
-                          <span className="font-semibold">
+                          <span className="num font-semibold">
                             {item.total_cost.toLocaleString('id-ID')}
                           </span>
                         </Label>
-                      </div>
-
-                      <div className="col-span-1 flex items-end justify-end">
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
                           onClick={() => removeItem(index)}
                           disabled={items.length === 1}
-                          className="h-9 w-9"
+                          className="h-9 w-9 shrink-0"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
+
                   </CardContent>
                 </Card>
               ))}
