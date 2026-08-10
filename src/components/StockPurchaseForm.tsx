@@ -17,12 +17,14 @@ import { validateSellingPrice } from "@/lib/priceValidation";
 interface ProductVariant {
   id: string;
   name: string;
+  product_id: string;
   product_name: string;
   price: number;
   cost_price: number;
 }
 
 interface StockItem {
+  product_id: string;
   variant_id: string;
   variant_name: string;
   quantity: number;
@@ -31,17 +33,23 @@ interface StockItem {
   total_cost: number;
 }
 
-function ProductCombobox({
-  variants,
+function SearchCombobox({
+  options,
   value,
   onChange,
+  placeholder,
+  emptyText = "Tidak ditemukan.",
+  disabled,
 }: {
-  variants: ProductVariant[];
+  options: { value: string; label: string }[];
   value: string;
   onChange: (value: string) => void;
+  placeholder: string;
+  emptyText?: string;
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const selected = variants.find((v) => v.id === value);
+  const selected = options.find((o) => o.value === value);
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -50,45 +58,39 @@ function ProductCombobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          disabled={disabled}
           className="h-9 w-full justify-between font-normal"
         >
-          <span className="truncate">
-            {selected ? `${selected.product_name} - ${selected.name}` : "Pilih atau ketik produk..."}
-          </span>
+          <span className="truncate">{selected ? selected.label : placeholder}</span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
         <Command
-          filter={(value, search) => {
-            return value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
-          }}
+          filter={(value, search) => (value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0)}
         >
-          <CommandInput placeholder="Ketik nama produk..." />
+          <CommandInput placeholder="Ketik untuk mencari..." />
           <CommandList>
-            <CommandEmpty>Produk tidak ditemukan.</CommandEmpty>
+            <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
-              {variants.map((variant) => {
-                const label = `${variant.product_name} - ${variant.name}`;
-                return (
-                  <CommandItem
-                    key={variant.id}
-                    value={label}
-                    onSelect={() => {
-                      onChange(variant.id);
-                      setOpen(false);
-                    }}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        value === variant.id ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    {label}
-                  </CommandItem>
-                );
-              })}
+              {options.map((option) => (
+                <CommandItem
+                  key={option.value}
+                  value={option.label}
+                  onSelect={() => {
+                    onChange(option.value);
+                    setOpen(false);
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      value === option.value ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  {option.label}
+                </CommandItem>
+              ))}
             </CommandGroup>
           </CommandList>
         </Command>
@@ -96,6 +98,7 @@ function ProductCombobox({
     </Popover>
   );
 }
+
 
 interface StockPurchaseFormProps {
   open: boolean;
