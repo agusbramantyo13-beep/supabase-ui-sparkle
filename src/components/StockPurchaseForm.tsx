@@ -371,14 +371,8 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
       // Jangan tutup dialog otomatis. User harus menutup secara manual
       // agar bisa menambah item lain dalam sesi pembelian yang sama
       // tanpa kehilangan konteks. Reset hanya daftar item.
-      setItems([{
-        variant_id: "",
-        variant_name: "",
-        quantity: 0,
-        cost_price: 0,
-        selling_price: 0,
-        total_cost: 0
-      }]);
+      setItems([emptyItem()]);
+
     } catch (error: any) {
       toast({
         title: "Error",
