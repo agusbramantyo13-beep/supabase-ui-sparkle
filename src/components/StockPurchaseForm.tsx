@@ -99,6 +99,18 @@ function SearchCombobox({
   );
 }
 
+const emptyItem = (): StockItem => ({
+  product_id: "",
+  variant_id: "",
+  variant_name: "",
+  quantity: 0,
+  cost_price: 0,
+  selling_price: 0,
+  total_cost: 0,
+});
+
+
+
 
 interface StockPurchaseFormProps {
   open: boolean;
