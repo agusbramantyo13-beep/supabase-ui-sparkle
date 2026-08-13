@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useTheme, THEMES } from "@/contexts/ThemeContext";
+import { Check } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -335,12 +337,13 @@ export default function Settings() {
       </Card>
 
       <Tabs defaultValue="store" className="space-y-6">
-        <TabsList className="grid grid-cols-5 w-full max-w-2xl">
+        <TabsList className="grid grid-cols-6 w-full max-w-3xl">
           <TabsTrigger value="store">Toko</TabsTrigger>
           <TabsTrigger value="printer">Printer</TabsTrigger>
           <TabsTrigger value="notifications">Notifikasi</TabsTrigger>
           <TabsTrigger value="security">Keamanan</TabsTrigger>
           <TabsTrigger value="system">Sistem</TabsTrigger>
+          <TabsTrigger value="appearance">Tampilan</TabsTrigger>
         </TabsList>
 
         <TabsContent value="store" className="space-y-6">
@@ -739,6 +742,49 @@ export default function Settings() {
                   checked={settings.enableAuditLog}
                   onCheckedChange={(checked) => handleSettingChange('enableAuditLog', checked)}
                 />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="appearance" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Tema Warna</CardTitle>
+              <CardDescription>
+                Pilih skema warna aplikasi. Preferensi disimpan pada akun Anda.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {THEMES.map((t) => {
+                  const active = theme === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setTheme(t.id)}
+                      className={`text-left rounded-lg border p-4 transition-colors ${
+                        active ? "border-primary ring-2 ring-ring" : "border-border hover:bg-accent"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-3">
+                        {t.swatch.map((c, i) => (
+                          <span
+                            key={i}
+                            className="h-6 w-6 rounded-full border border-border"
+                            style={{ backgroundColor: c }}
+                          />
+                        ))}
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-medium">{t.name}</span>
+                        {active && <Check className="h-4 w-4 text-primary" />}
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">{t.description}</p>
+                    </button>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>

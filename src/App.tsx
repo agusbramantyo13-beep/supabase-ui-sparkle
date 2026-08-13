@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { StoreProvider } from "@/contexts/StoreContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { BluetoothPrinterProvider } from "@/contexts/BluetoothPrinterContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { StoreRequiredRoute } from "@/components/StoreRequiredRoute";
@@ -41,6 +42,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
+        <ThemeProvider>
         <StoreProvider>
           <BluetoothPrinterProvider>
           <Toaster />
@@ -177,6 +179,7 @@ const App = () => (
           </BrowserRouter>
           </BluetoothPrinterProvider>
         </StoreProvider>
+        </ThemeProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
