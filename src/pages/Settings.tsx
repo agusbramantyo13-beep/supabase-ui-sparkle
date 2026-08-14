@@ -19,6 +19,8 @@ const RECEIPT_SETTINGS_KEY = "receipt_design_settings";
 
 export default function Settings() {
   const [loading, setLoading] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const [themeSaving, setThemeSaving] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const [userProfile, setUserProfile] = useState<any>(null);
