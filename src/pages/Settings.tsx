@@ -19,6 +19,8 @@ const RECEIPT_SETTINGS_KEY = "receipt_design_settings";
 
 export default function Settings() {
   const [loading, setLoading] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const [themeSaving, setThemeSaving] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -763,10 +765,29 @@ export default function Settings() {
                     <button
                       key={t.id}
                       type="button"
-                      onClick={() => setTheme(t.id)}
+                      disabled={themeSaving}
+                      onClick={async () => {
+                        if (active) return;
+                        setThemeSaving(true);
+                        try {
+                          await setTheme(t.id);
+                          toast({
+                            title: "Tema Diperbarui",
+                            description: `${t.name} aktif dan tersimpan.`,
+                          });
+                        } catch (e: any) {
+                          toast({
+                            title: "Gagal Mengubah Tema",
+                            description: e?.message || "Tidak bisa menyimpan preferensi tema.",
+                            variant: "destructive",
+                          });
+                        } finally {
+                          setThemeSaving(false);
+                        }
+                      }}
                       className={`text-left rounded-lg border p-4 transition-colors ${
                         active ? "border-primary ring-2 ring-ring" : "border-border hover:bg-accent"
-                      }`}
+                      } ${themeSaving ? "opacity-70 cursor-wait" : ""}`}
                     >
                       <div className="flex items-center gap-2 mb-3">
                         {t.swatch.map((c, i) => (
