@@ -28,6 +28,8 @@ interface Transaction {
   status: string | null;
   member_name: string | null;
   member_code: string | null;
+  member_points_after?: number | null;
+
   subtotal?: number;
   discount_total?: number;
   tax_total?: number;
@@ -77,7 +79,7 @@ export default function TransactionHistory() {
         .from('sales')
         .select(`
           id, receipt_number, total, subtotal, discount_total, tax_total,
-          created_at, payment_method, payment_details, user_id, status, member_id,
+          created_at, payment_method, payment_details, user_id, status, member_id, member_points_after,
           profiles:user_id(name, email),
           members:member_id(name, member_code)
         `)
@@ -139,6 +141,8 @@ export default function TransactionHistory() {
         status: sale.status,
         member_name: (sale.members as any)?.name || null,
         member_code: (sale.members as any)?.member_code || null,
+        member_points_after: sale.member_points_after ?? null,
+
         type: 'sale',
       }));
 
@@ -246,6 +250,11 @@ export default function TransactionHistory() {
         member: detailTx.member_name
           ? `${detailTx.member_name}${detailTx.member_code ? ` (${detailTx.member_code})` : ""}`
           : undefined,
+        memberPoints:
+          detailTx.member_name && detailTx.member_points_after != null
+            ? Number(detailTx.member_points_after)
+            : undefined,
+
         paymentMethod: detailTx.payment_method || undefined,
         items: detailItems.map((it) => {
           const snap = it.product_snapshot || {};
