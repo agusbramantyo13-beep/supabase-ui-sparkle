@@ -425,6 +425,9 @@ function buildReceiptBytes(data: ReceiptData, logoBytes?: Uint8Array | null): Ui
   parts.push(enc("Tgl  : " + data.dateTime + "\n"));
   if (data.cashier) parts.push(enc("Kasir: " + data.cashier + "\n"));
   if (data.member) parts.push(enc("Member: " + data.member + "\n"));
+  if (data.member && data.memberPoints != null)
+    parts.push(enc("Poin  : " + Math.round(data.memberPoints).toLocaleString("id-ID") + "\n"));
+
   parts.push(enc(SEP + "\n"));
 
   // --- items ---
