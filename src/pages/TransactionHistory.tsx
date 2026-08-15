@@ -28,6 +28,8 @@ interface Transaction {
   status: string | null;
   member_name: string | null;
   member_code: string | null;
+  member_points_after?: number | null;
+
   subtotal?: number;
   discount_total?: number;
   tax_total?: number;
