@@ -239,6 +239,8 @@ export type ReceiptData = {
   dateTime: string;
   cashier?: string;
   member?: string;
+  memberPoints?: number;
+
   paymentMethod?: string;
   items: ReceiptItem[];
   subtotal: number;
