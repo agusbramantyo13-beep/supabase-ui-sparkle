@@ -935,6 +935,7 @@ export type Database = {
           discount_total: number
           id: string
           member_id: string | null
+          member_points_after: number | null
           payment_details: Json | null
           payment_method: string | null
           receipt_number: string | null
@@ -953,6 +954,7 @@ export type Database = {
           discount_total?: number
           id?: string
           member_id?: string | null
+          member_points_after?: number | null
           payment_details?: Json | null
           payment_method?: string | null
           receipt_number?: string | null
@@ -971,6 +973,7 @@ export type Database = {
           discount_total?: number
           id?: string
           member_id?: string | null
+          member_points_after?: number | null
           payment_details?: Json | null
           payment_method?: string | null
           receipt_number?: string | null
