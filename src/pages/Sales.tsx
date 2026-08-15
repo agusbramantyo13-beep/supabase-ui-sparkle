@@ -727,23 +727,37 @@ export default function Sales() {
       }
 
       // Update member points if member is selected
-      if (selectedMemberId && selectedMemberId !== "none" && pointsChange !== 0) {
+      if (selectedMemberId && selectedMemberId !== "none") {
         const selectedMember = members.find(m => m.id === selectedMemberId);
         if (selectedMember) {
           const newPoints = Math.max(0, (selectedMember.points || 0) + pointsChange);
-          const { error: memberError } = await supabase
-            .from('members')
-            .update({ 
-              points: newPoints,
-              total_purchases: (selectedMember.total_purchases || 0) + total
-            })
-            .eq('id', selectedMemberId);
 
-          if (memberError) {
-            console.error("Error updating member points:", memberError);
+          if (pointsChange !== 0) {
+            const { error: memberError } = await supabase
+              .from('members')
+              .update({ 
+                points: newPoints,
+                total_purchases: (selectedMember.total_purchases || 0) + total
+              })
+              .eq('id', selectedMemberId);
+
+            if (memberError) {
+              console.error("Error updating member points:", memberError);
+            }
+          }
+
+          // Snapshot member points after this transaction onto the sale record
+          const { error: snapshotError } = await supabase
+            .from('sales')
+            .update({ member_points_after: newPoints })
+            .eq('id', saleData.id);
+
+          if (snapshotError) {
+            console.error("Error saving member points snapshot:", snapshotError);
           }
         }
       }
+
 
       const successMessage = paymentMethod === 'cash' 
         ? `Penjualan berhasil! Struk: ${receiptNumber}\nKembalian: Rp ${change.toLocaleString('id-ID')}`
