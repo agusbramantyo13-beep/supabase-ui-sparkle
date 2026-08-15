@@ -79,7 +79,7 @@ export default function TransactionHistory() {
         .from('sales')
         .select(`
           id, receipt_number, total, subtotal, discount_total, tax_total,
-          created_at, payment_method, payment_details, user_id, status, member_id,
+          created_at, payment_method, payment_details, user_id, status, member_id, member_points_after,
           profiles:user_id(name, email),
           members:member_id(name, member_code)
         `)
