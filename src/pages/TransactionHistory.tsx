@@ -250,6 +250,11 @@ export default function TransactionHistory() {
         member: detailTx.member_name
           ? `${detailTx.member_name}${detailTx.member_code ? ` (${detailTx.member_code})` : ""}`
           : undefined,
+        memberPoints:
+          detailTx.member_name && detailTx.member_points_after != null
+            ? Number(detailTx.member_points_after)
+            : undefined,
+
         paymentMethod: detailTx.payment_method || undefined,
         items: detailItems.map((it) => {
           const snap = it.product_snapshot || {};
