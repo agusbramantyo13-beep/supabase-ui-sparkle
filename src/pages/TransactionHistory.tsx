@@ -141,6 +141,8 @@ export default function TransactionHistory() {
         status: sale.status,
         member_name: (sale.members as any)?.name || null,
         member_code: (sale.members as any)?.member_code || null,
+        member_points_after: sale.member_points_after ?? null,
+
         type: 'sale',
       }));
 
