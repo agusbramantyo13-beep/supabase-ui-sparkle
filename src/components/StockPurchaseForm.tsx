@@ -441,7 +441,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
                         />
                       </div>
 
-                      <div className="col-span-2 md:col-span-2">
+                      <div className="col-span-2 md:col-span-1">
                         <Label className="text-xs">Variasi</Label>
                         <SearchCombobox
                           options={item.product_id ? variantOptionsFor(item.product_id) : []}
