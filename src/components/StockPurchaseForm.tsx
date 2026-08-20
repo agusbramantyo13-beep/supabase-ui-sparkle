@@ -489,23 +489,23 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
                         />
                       </div>
 
-                      <div className="col-span-2 md:col-span-1 flex items-end justify-between gap-2">
-                        <Label className="text-xs mb-2 block">
-                          Total: <br/>
-                          <span className="num font-semibold">
+                      <div className="col-span-2 md:col-span-1">
+                        <Label className="text-xs">Total</Label>
+                        <div className="flex h-9 items-center justify-between rounded-md border border-input bg-background px-2">
+                          <span className="num text-sm font-semibold">
                             {item.total_cost.toLocaleString('id-ID')}
                           </span>
-                        </Label>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeItem(index)}
-                          disabled={items.length === 1}
-                          className="h-9 w-9 shrink-0"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeItem(index)}
+                            disabled={items.length === 1}
+                            className="h-7 w-7 shrink-0"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
 
