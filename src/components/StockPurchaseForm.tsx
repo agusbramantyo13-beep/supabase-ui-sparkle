@@ -392,7 +392,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-4xl max-h-[90vh] overflow-y-auto"
+        className="max-w-5xl max-h-[90vh] overflow-y-auto"
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
@@ -441,7 +441,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
                         />
                       </div>
 
-                      <div className="col-span-2 md:col-span-2">
+                      <div className="col-span-2 md:col-span-1">
                         <Label className="text-xs">Variasi</Label>
                         <SearchCombobox
                           options={item.product_id ? variantOptionsFor(item.product_id) : []}
@@ -489,12 +489,14 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
                         />
                       </div>
 
-                      <div className="col-span-2 md:col-span-1">
+                      <div className="col-span-2 md:col-span-2">
                         <Label className="text-xs">Total</Label>
-                        <div className="flex h-9 items-center justify-between rounded-md border border-input bg-background px-2">
-                          <span className="num text-sm font-semibold">
-                            {item.total_cost.toLocaleString('id-ID')}
-                          </span>
+                        <div className="flex h-9 items-center gap-1">
+                          <div className="flex h-9 flex-1 items-center rounded-md border border-input bg-background px-2">
+                            <span className="num text-sm font-semibold">
+                              {item.total_cost.toLocaleString('id-ID')}
+                            </span>
+                          </div>
                           <Button
                             type="button"
                             variant="ghost"
