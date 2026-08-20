@@ -59,9 +59,12 @@ function SearchCombobox({
           role="combobox"
           aria-expanded={open}
           disabled={disabled}
-          className="h-9 w-full justify-between font-normal"
+          title={selected ? selected.label : placeholder}
+          className="h-auto min-h-9 w-full justify-between py-1 font-normal"
         >
-          <span className="truncate">{selected ? selected.label : placeholder}</span>
+          <span className="whitespace-normal break-words line-clamp-2 text-left">
+            {selected ? selected.label : placeholder}
+          </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -427,7 +430,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
                 <Card key={index}>
                   <CardContent className="pt-4">
                     <div className="grid grid-cols-2 md:grid-cols-12 gap-3">
-                      <div className="col-span-2 md:col-span-3">
+                      <div className="col-span-2 md:col-span-4">
                         <Label className="text-xs">Produk</Label>
                         <SearchCombobox
                           options={productOptions}
@@ -462,7 +465,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
                         />
                       </div>
 
-                      <div className="col-span-1 md:col-span-2">
+                      <div className="col-span-1 md:col-span-1">
                         <Label className="text-xs">Harga Beli</Label>
                         <Input
                           type="number"
@@ -474,7 +477,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
                         />
                       </div>
 
-                      <div className="col-span-1 md:col-span-2">
+                      <div className="col-span-1 md:col-span-1">
                         <Label className="text-xs">Harga Jual</Label>
                         <Input
                           type="number"
@@ -486,7 +489,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
                         />
                       </div>
 
-                      <div className="col-span-1 md:col-span-1 flex items-end justify-between gap-2">
+                      <div className="col-span-2 md:col-span-2 flex items-end justify-between gap-2">
                         <Label className="text-xs mb-2 block">
                           Total: <br/>
                           <span className="num font-semibold">
