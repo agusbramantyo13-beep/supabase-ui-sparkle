@@ -430,7 +430,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
                 <Card key={index}>
                   <CardContent className="pt-4">
                     <div className="grid grid-cols-2 md:grid-cols-12 gap-3">
-                      <div className="col-span-2 md:col-span-3">
+                      <div className="col-span-2 md:col-span-4">
                         <Label className="text-xs">Produk</Label>
                         <SearchCombobox
                           options={productOptions}
@@ -465,7 +465,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
                         />
                       </div>
 
-                      <div className="col-span-1 md:col-span-2">
+                      <div className="col-span-1 md:col-span-1">
                         <Label className="text-xs">Harga Beli</Label>
                         <Input
                           type="number"
@@ -477,7 +477,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
                         />
                       </div>
 
-                      <div className="col-span-1 md:col-span-2">
+                      <div className="col-span-1 md:col-span-1">
                         <Label className="text-xs">Harga Jual</Label>
                         <Input
                           type="number"
@@ -489,7 +489,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
                         />
                       </div>
 
-                      <div className="col-span-1 md:col-span-1 flex items-end justify-between gap-2">
+                      <div className="col-span-2 md:col-span-2 flex items-end justify-between gap-2">
                         <Label className="text-xs mb-2 block">
                           Total: <br/>
                           <span className="num font-semibold">
