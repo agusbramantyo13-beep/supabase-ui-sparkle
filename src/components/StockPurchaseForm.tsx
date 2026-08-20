@@ -60,12 +60,12 @@ function SearchCombobox({
           aria-expanded={open}
           disabled={disabled}
           title={selected ? selected.label : placeholder}
-          className="h-auto min-h-9 w-full justify-between py-1 font-normal"
+          className="h-auto min-h-9 w-full justify-between px-2 py-1 font-normal"
         >
           <span className="whitespace-normal break-words line-clamp-2 text-left">
             {selected ? selected.label : placeholder}
           </span>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDown className="ml-1 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
@@ -430,7 +430,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
                 <Card key={index}>
                   <CardContent className="pt-4">
                     <div className="grid grid-cols-2 md:grid-cols-12 gap-3">
-                      <div className="col-span-2 md:col-span-4">
+                      <div className="col-span-2 md:col-span-7">
                         <Label className="text-xs">Produk</Label>
                         <SearchCombobox
                           options={productOptions}
@@ -441,7 +441,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
                         />
                       </div>
 
-                      <div className="col-span-2 md:col-span-1">
+                      <div className="col-span-2 md:col-span-5">
                         <Label className="text-xs">Variasi</Label>
                         <SearchCombobox
                           options={item.product_id ? variantOptionsFor(item.product_id) : []}
@@ -452,8 +452,10 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
                           disabled={!item.product_id}
                         />
                       </div>
+                    </div>
 
-                      <div className="col-span-1 md:col-span-1">
+                    <div className="grid grid-cols-2 md:grid-cols-12 gap-3 mt-3">
+                      <div className="col-span-1 md:col-span-3">
                         <Label className="text-xs">Jumlah</Label>
                         <Input
                           type="number"
@@ -465,7 +467,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
                         />
                       </div>
 
-                      <div className="col-span-1 md:col-span-2">
+                      <div className="col-span-1 md:col-span-3">
                         <Label className="text-xs">Harga Beli</Label>
                         <Input
                           type="number"
@@ -477,7 +479,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
                         />
                       </div>
 
-                      <div className="col-span-1 md:col-span-2">
+                      <div className="col-span-1 md:col-span-3">
                         <Label className="text-xs">Harga Jual</Label>
                         <Input
                           type="number"
@@ -489,7 +491,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
                         />
                       </div>
 
-                      <div className="col-span-2 md:col-span-2">
+                      <div className="col-span-2 md:col-span-3">
                         <Label className="text-xs">Total</Label>
                         <div className="flex h-9 items-center gap-1">
                           <div className="flex h-9 flex-1 items-center rounded-md border border-input bg-background px-2">
@@ -510,7 +512,6 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
                         </div>
                       </div>
                     </div>
-
                   </CardContent>
                 </Card>
               ))}
