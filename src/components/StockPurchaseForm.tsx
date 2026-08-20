@@ -60,12 +60,12 @@ function SearchCombobox({
           aria-expanded={open}
           disabled={disabled}
           title={selected ? selected.label : placeholder}
-          className="h-auto min-h-9 w-full justify-between py-1 font-normal"
+          className="h-auto min-h-9 w-full justify-between px-2 py-1 font-normal"
         >
           <span className="whitespace-normal break-words line-clamp-2 text-left">
             {selected ? selected.label : placeholder}
           </span>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDown className="ml-1 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
