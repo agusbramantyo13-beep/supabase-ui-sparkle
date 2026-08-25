@@ -280,7 +280,7 @@ export default function Products() {
               <Card key={product.id} className="bg-card border-border overflow-hidden">
                 {/* Product Header Row */}
                 <div
-                  className={`flex items-center justify-between p-4 transition-colors ${isSimple ? "" : "cursor-pointer hover:bg-muted/30"}`}
+                  className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 transition-colors ${isSimple ? "" : "cursor-pointer hover:bg-muted/30"}`}
                   onClick={isSimple ? undefined : () => toggleExpanded(product.id)}
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -316,7 +316,7 @@ export default function Products() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 shrink-0">
+                  <div className="flex items-center justify-between sm:justify-end gap-3 sm:shrink-0">
                     <Badge
                       variant={totalStock > 10 ? "default" : totalStock > 0 ? "outline" : "destructive"}
                       className="text-xs"
@@ -330,9 +330,10 @@ export default function Products() {
                           size="sm"
                           onClick={() => handleEditVariant(product, soleVariant)}
                           title="Ubah Produk"
+                          className="h-9 w-9 sm:w-auto px-0 sm:px-3"
                         >
-                          <Edit className="w-3 h-3 mr-1" />
-                          Ubah
+                          <Edit className="w-3 h-3 sm:mr-1" />
+                          <span className="hidden sm:inline">Ubah</span>
                         </Button>
                       )}
                       <Button
@@ -343,15 +344,17 @@ export default function Products() {
                           setAddVariantOpen(true)
                         }}
                         title="Tambah Varian"
+                        className="h-9 w-9 sm:w-auto px-0 sm:px-3"
                       >
-                        <PackagePlus className="w-3 h-3 mr-1" />
-                        Varian
+                        <PackagePlus className="w-3 h-3 sm:mr-1" />
+                        <span className="hidden sm:inline">Varian</span>
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => openDeleteDialog(product)}
-                        className="text-destructive hover:text-destructive"
+                        className="text-destructive hover:text-destructive h-9 w-9 px-0"
+                        title="Hapus Produk"
                       >
                         <Trash2 className="w-3 h-3" />
                       </Button>
