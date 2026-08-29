@@ -15,10 +15,17 @@ interface StoreContextType {
   currentStore: Store | null;
   currentStoreId: string | null;
   loading: boolean;
+  /** True once the first fetch cycle has completed (success or failure). */
+  initialized: boolean;
+  /** True when we have positively determined the user's role for the store. */
+  roleResolved: boolean;
+  /** True when the last role/stores fetch failed (network/RLS error). */
+  roleError: boolean;
   setCurrentStore: (store: Store) => void | Promise<void>;
   refreshStores: () => Promise<void>;
   userStoreRole: string | null;
 }
+
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
@@ -37,6 +44,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [stores, setStores] = useState<Store[]>([]);
   const [currentStore, setCurrentStoreState] = useState<Store | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
+  const [roleResolved, setRoleResolved] = useState(false);
+  const [roleError, setRoleError] = useState(false);
   const [userStoreRole, setUserStoreRole] = useState<string | null>(null);
 
   const fetchStores = async () => {
@@ -44,17 +54,29 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setStores([]);
       setCurrentStoreState(null);
       setUserStoreRole(null);
+      setRoleResolved(false);
+      setRoleError(false);
       setLoading(false);
+      setInitialized(true);
       return;
     }
 
     setLoading(true);
 
-    const { data: profileData } = await supabase
+    const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .maybeSingle();
+
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
+      setRoleError(true);
+      setLoading(false);
+      setInitialized(true);
+      return;
+    }
+
     const isDev = profileData?.role === 'developer';
 
     const { data: storesData, error: storesError } = await supabase
@@ -64,9 +86,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     if (storesError) {
       console.error('Error fetching stores:', storesError);
+      // Keep whatever we already had; a failed refetch must not log the user
+      // out of the current page or clear the resolved role.
+      setRoleError(true);
       setLoading(false);
+      setInitialized(true);
       return;
     }
+
+    setRoleError(false);
 
     const unique = (storesData || []).filter((s, i, arr) => arr.findIndex(x => x.id === s.id) === i);
     setStores(unique);
@@ -74,7 +102,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (unique.length === 0) {
       setCurrentStoreState(null);
       setUserStoreRole(null);
+      setRoleResolved(true);
       setLoading(false);
+      setInitialized(true);
       return;
     }
 
@@ -87,17 +117,26 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     if (isDev) {
       setUserStoreRole('owner');
+      setRoleResolved(true);
     } else {
-      const { data: membership } = await supabase
+      const { data: membership, error: membershipError } = await supabase
         .from('store_members')
         .select('role')
         .eq('user_id', user.id)
         .eq('store_id', selectedStore.id)
         .maybeSingle();
-      setUserStoreRole(membership?.role || null);
+
+      if (membershipError) {
+        console.error('Error fetching membership:', membershipError);
+        setRoleError(true);
+      } else {
+        setUserStoreRole(membership?.role || null);
+        setRoleResolved(true);
+      }
     }
 
     setLoading(false);
+    setInitialized(true);
   };
 
   useEffect(() => {
@@ -117,16 +156,26 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       .maybeSingle();
     if (profileData?.role === 'developer') {
       setUserStoreRole('owner');
+      setRoleResolved(true);
       return;
     }
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('store_members')
       .select('role')
       .eq('user_id', user.id)
       .eq('store_id', store.id)
       .maybeSingle();
+
+    if (error) {
+      console.error('Error fetching membership:', error);
+      setRoleError(true);
+      return;
+    }
+
+    setRoleError(false);
     setUserStoreRole(data?.role || null);
+    setRoleResolved(true);
   };
 
   const value: StoreContextType = {
@@ -134,10 +183,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     currentStore,
     currentStoreId: currentStore?.id || null,
     loading,
+    initialized,
+    roleResolved,
+    roleError,
     setCurrentStore,
     refreshStores: fetchStores,
     userStoreRole,
   };
+
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

@@ -5,6 +5,8 @@ import { useAuth } from "@/contexts/AuthContext"
 import { useStore } from "@/contexts/StoreContext"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
+import { hasUnsavedChanges } from "@/lib/unsavedChanges"
+
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 import {
@@ -79,11 +81,19 @@ export function AppSidebar() {
     }
   }
 
-  const handleSwitchStore = (store: any) => {
-    setCurrentStore(store);
+  const handleSwitchStore = async (store: any) => {
+    if (store?.id === currentStore?.id) return;
+    if (hasUnsavedChanges()) {
+      const ok = window.confirm(
+        "Ada data yang belum disimpan di halaman ini. Ganti toko sekarang?"
+      );
+      if (!ok) return;
+    }
+    // No hard reload: the store context change re-renders pages with the new store.
+    await setCurrentStore(store);
     navigate("/");
-    window.location.reload();
   }
+
 
   return (
     <Sidebar collapsible="icon">
