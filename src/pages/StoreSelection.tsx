@@ -38,6 +38,7 @@ export default function StoreSelection() {
     }
   }, [user]);
 
+  const canCreateStore = profileRole === 'developer' || profileRole === 'owner';
   const isDeveloper = profileRole === 'developer';
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -172,7 +173,7 @@ export default function StoreSelection() {
           </div>
         )}
 
-        {stores.length === 0 && !isDeveloper && (
+        {stores.length === 0 && !canCreateStore && (
           <Card>
             <CardContent className="p-6 text-center text-muted-foreground">
               Anda belum terdaftar di toko manapun. Hubungi pemilik toko untuk menambahkan Anda.
@@ -180,7 +181,7 @@ export default function StoreSelection() {
           </Card>
         )}
 
-        {isDeveloper && !showCreateForm ? (
+        {canCreateStore && !showCreateForm ? (
           <div className="flex gap-3 justify-center">
             <Button onClick={() => setShowCreateForm(true)} variant="outline">
               <Plus className="w-4 h-4 mr-2" />
@@ -191,7 +192,7 @@ export default function StoreSelection() {
               Keluar
             </Button>
           </div>
-        ) : isDeveloper && showCreateForm ? (
+        ) : canCreateStore && showCreateForm ? (
           <Card>
             <CardHeader>
               <CardTitle>Buat Toko Baru</CardTitle>
