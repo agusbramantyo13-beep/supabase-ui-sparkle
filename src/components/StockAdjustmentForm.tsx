@@ -357,7 +357,7 @@ export function StockAdjustmentForm({ open, onOpenChange, onSuccess }: StockAdju
                     <div className="p-2 bg-background rounded border">
                       <span className="text-muted-foreground">Selisih Qty:</span>
                       <span className={`ml-2 font-semibold ${(item.new_quantity - item.old_quantity) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {(item.new_quantity - item.old_quantity) >= 0 ? '+' : ''}{(item.new_quantity - item.old_quantity).toFixed(2)}
+                        {(item.new_quantity - item.old_quantity) >= 0 ? '+' : ''}{item.new_quantity - item.old_quantity}
                       </span>
                     </div>
                     <div className="p-2 bg-background rounded border">
