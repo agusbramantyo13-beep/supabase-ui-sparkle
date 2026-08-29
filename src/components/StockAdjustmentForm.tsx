@@ -100,7 +100,7 @@ export function StockAdjustmentForm({ open, onOpenChange, onSuccess }: StockAdju
       .eq('variant_id', parseInt(variantId))
       .maybeSingle();
 
-    const currentQty = inventory?.quantity || 0;
+      const currentQty = Math.round(inventory?.quantity || 0);
 
     const newItems = [...items];
     newItems[index] = {
@@ -117,7 +117,8 @@ export function StockAdjustmentForm({ open, onOpenChange, onSuccess }: StockAdju
 
   const handleNewQuantityChange = (index: number, value: string) => {
     const newItems = [...items];
-    newItems[index].new_quantity = parseFloat(value) || 0;
+    const parsed = parseFloat(value);
+    newItems[index].new_quantity = isNaN(parsed) ? 0 : Math.round(parsed);
     setItems(newItems);
   };
 
@@ -153,6 +154,17 @@ export function StockAdjustmentForm({ open, onOpenChange, onSuccess }: StockAdju
       toast({
         title: "Error",
         description: "Tambahkan minimal satu item untuk disesuaikan",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Safety net: stok harus selalu bilangan bulat agar laporan audit
+    // konsisten dengan stok riil di tabel inventory
+    if (validItems.some(item => !Number.isInteger(item.new_quantity) || !Number.isInteger(item.old_quantity))) {
+      toast({
+        title: "Error",
+        description: "Stok harus berupa bilangan bulat",
         variant: "destructive"
       });
       return;
@@ -323,7 +335,7 @@ export function StockAdjustmentForm({ open, onOpenChange, onSuccess }: StockAdju
                       <Input
                         type="number"
                         min="0"
-                        step="0.01"
+                        step="1"
                         value={item.new_quantity}
                         onChange={(e) => handleNewQuantityChange(index, e.target.value)}
                         placeholder="Masukkan stok baru"
@@ -345,7 +357,7 @@ export function StockAdjustmentForm({ open, onOpenChange, onSuccess }: StockAdju
                     <div className="p-2 bg-background rounded border">
                       <span className="text-muted-foreground">Selisih Qty:</span>
                       <span className={`ml-2 font-semibold ${(item.new_quantity - item.old_quantity) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {(item.new_quantity - item.old_quantity) >= 0 ? '+' : ''}{(item.new_quantity - item.old_quantity).toFixed(2)}
+                        {(item.new_quantity - item.old_quantity) >= 0 ? '+' : ''}{item.new_quantity - item.old_quantity}
                       </span>
                     </div>
                     <div className="p-2 bg-background rounded border">
