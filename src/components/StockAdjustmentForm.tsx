@@ -100,7 +100,7 @@ export function StockAdjustmentForm({ open, onOpenChange, onSuccess }: StockAdju
       .eq('variant_id', parseInt(variantId))
       .maybeSingle();
 
-    const currentQty = inventory?.quantity || 0;
+      const currentQty = Math.round(inventory?.quantity || 0);
 
     const newItems = [...items];
     newItems[index] = {
@@ -154,6 +154,17 @@ export function StockAdjustmentForm({ open, onOpenChange, onSuccess }: StockAdju
       toast({
         title: "Error",
         description: "Tambahkan minimal satu item untuk disesuaikan",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Safety net: stok harus selalu bilangan bulat agar laporan audit
+    // konsisten dengan stok riil di tabel inventory
+    if (validItems.some(item => !Number.isInteger(item.new_quantity) || !Number.isInteger(item.old_quantity))) {
+      toast({
+        title: "Error",
+        description: "Stok harus berupa bilangan bulat",
         variant: "destructive"
       });
       return;
@@ -324,7 +335,7 @@ export function StockAdjustmentForm({ open, onOpenChange, onSuccess }: StockAdju
                       <Input
                         type="number"
                         min="0"
-                        step="0.01"
+                        step="1"
                         value={item.new_quantity}
                         onChange={(e) => handleNewQuantityChange(index, e.target.value)}
                         placeholder="Masukkan stok baru"
