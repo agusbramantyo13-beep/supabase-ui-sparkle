@@ -15,10 +15,17 @@ interface StoreContextType {
   currentStore: Store | null;
   currentStoreId: string | null;
   loading: boolean;
+  /** True once the first fetch cycle has completed (success or failure). */
+  initialized: boolean;
+  /** True when we have positively determined the user's role for the store. */
+  roleResolved: boolean;
+  /** True when the last role/stores fetch failed (network/RLS error). */
+  roleError: boolean;
   setCurrentStore: (store: Store) => void | Promise<void>;
   refreshStores: () => Promise<void>;
   userStoreRole: string | null;
 }
+
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
