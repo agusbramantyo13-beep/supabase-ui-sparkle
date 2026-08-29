@@ -1,46 +1,40 @@
-# Hasil Verifikasi Lanjutan — RLS INSERT `public.stores`
+# Investigasi: ubah role Faruk jadi Pemilik di toko SALSA
 
-## Catatan penting soal uji insert ter-rollback
+## Kesimpulan: hipotesis TIDAK terbukti
 
-Uji `BEGIN … INSERT … ROLLBACK` dengan impersonasi (`set_config('request.jwt.claims', …)` + `SET LOCAL ROLE authenticated`) **tidak bisa dijalankan** di lingkungan ini:
+Kebijakan RLS `public.store_members` **sudah punya bypass `is_developer()`** di semua perintah tulis. Ini bukan pengulangan bug tabel `stores`.
 
-- `psql` tidak tersedia (tidak ada variabel `PG*`, koneksi socket lokal gagal).
-- Tool query database yang tersedia hanya SELECT (read-only) dan tidak mendukung transaksi/`SET ROLE`; tool tulis berjalan tanpa autentikasi (`auth.uid()` NULL) dan perubahannya permanen — jadi tidak dipakai sesuai instruksi Anda.
+Kebijakan aktif saat ini (semua untuk role `authenticated`):
 
-Sebagai gantinya saya memverifikasi semua komponen yang menentukan hasil evaluasi policy tersebut satu per satu.
+- `store_members_insert` (WITH CHECK): `is_developer(auth.uid()) OR (is_store_owner(auth.uid(), store_id) AND role = 'cashier')`
+- `store_members_update` (USING + WITH CHECK): sama persis seperti di atas
+- `store_members_delete` (USING): sama persis seperti di atas
+- `store_members_select` (USING): `is_developer(auth.uid()) OR user_id = auth.uid() OR store_id IN (SELECT get_user_store_ids(auth.uid()))`
 
-## Hasil pengecekan (semua diverifikasi langsung ke database)
+Artinya akun developer (Bram, `agusbramantyo13@gmail.com`) boleh insert/update/delete baris keanggotaan di toko mana pun, termasuk membuat baris dengan `role = 'owner'`. Yang dibatasi hanya owner biasa: owner cuma boleh mengelola baris ber-role `cashier`.
 
-| Yang dicek | Hasil |
-|---|---|
-| `is_developer` SECURITY DEFINER | ya (`prosecdef = true`) |
-| `search_path` pada fungsi | `search_path=public` (di-set) |
-| Owner fungsi | `postgres` (sama dengan owner tabel `stores`) |
-| Tipe `profiles.id` | `uuid` |
-| Tipe hasil `auth.uid()` | `uuid` |
-| Mismatch text/uuid | **tidak ada** — kedua sisi `uuid`, perbandingan `id = _user_id` valid |
-| Baris developer | `id = e77110d3-…2260`, `role = 'developer'` → cocok (1 baris) |
-| RLS pada `stores` | aktif, `FORCE RLS` tidak aktif |
-| Policy `stores_insert` | `FOR INSERT TO authenticated WITH CHECK is_developer(auth.uid())` |
-| Grant tabel untuk `authenticated` | `INSERT` ✔, `SELECT` ✔ (juga `store_members` INSERT ✔) |
-| EXECUTE `is_developer` untuk `authenticated` | ✔ (revoke hanya mengenai `public`/`anon`) |
-| Trigger pada INSERT `stores` | tidak ada |
+## Kondisi data saat ini
 
-Satu catatan: pemanggilan `is_developer()` oleh role read-only saya sendiri ditolak (`permission denied for function`) — itu efek `REVOKE … FROM public` di migrasi 18 Juli dan **tidak** memengaruhi role `authenticated`.
+- Toko `SALSA` ada, id `2ca2b8e1-a980-43c3-849a-742960c3eb47`, dibuat 29 Agu 2026 09:38 UTC oleh developer.
+- **Faruk (`farukwidjayanto96@gmail.com`) TIDAK punya baris `store_members` sama sekali** — bukan di SALSA, bukan di toko lain.
 
-## Kesimpulan
+Jadi langkah DELETE sudah berhasil (atau baris itu memang belum pernah ada). Yang belum terjadi adalah INSERT baris baru ber-role `owner`.
 
-Secara struktural tidak ada yang salah: untuk user id `e77110d3-…2260`, `is_developer(auth.uid())` pasti mengembalikan true selama `auth.uid()` benar-benar berisi id tersebut saat request. Artinya penyebab error hampir pasti ada di **sisi sesi/identitas request**, bukan di definisi policy, tipe kolom, atau fungsi:
+## Dugaan penyebab sebenarnya (belum dikonfirmasi)
 
-1. `auth.uid()` NULL/berbeda saat insert — sesi kedaluwarsa, token belum ter-refresh, atau request terkirim sebagai `anon`.
-2. Akun yang menekan tombol bukan akun developer tersebut (5 akun lain ber-role `staff`), sementara state `profileRole` di halaman berasal dari sesi sebelumnya tanpa reload.
+`fetchAllStores()` di `src/pages/Users.tsx` hanya dijalankan sekali saat halaman dimuat (`useEffect` dengan dependency kosong). Toko SALSA baru dibuat 09:38, beberapa menit sebelum laporan ini. Kalau halaman Pengguna sudah terbuka sebelum SALSA dibuat, dropdown toko tidak akan memuat SALSA sehingga tidak ada yang bisa dipilih — bukan error RLS, tapi daftar toko basi.
 
-## Langkah berikutnya yang saya usulkan (butuh persetujuan Anda)
+Constraint dan opsi UI sendiri sudah cocok: `store_members.role` hanya menerima `owner`/`cashier`, dan dropdown mengirim persis nilai itu (`Karyawan` = cashier, `Pemilik` = owner).
 
-Pilih salah satu:
+## Langkah verifikasi berikutnya (belum dijalankan, tidak ada perubahan)
 
-- **A. Uji live di aplikasi (tanpa ubah kode permanen):** minta user yang error membuka halaman itu, lalu kita cek nilai `auth.uid()` dari sesi aktif (mis. lewat query `select auth.uid()` dari klien) dan bandingkan dengan id developer. Ini membuktikan hipotesis 1 vs 2 secara definitif.
-- **B. Uji insert nyata:** saya lakukan satu insert toko uji lewat sesi terautentikasi, lalu hapus lagi — ini menghasilkan perubahan data sementara, jadi hanya saya lakukan kalau Anda setuju.
-- **C. Perbaikan defensif di frontend** (setelah penyebab pasti diketahui): validasi ulang sesi sebelum insert dan tampilkan pesan error yang jelas ("sesi kedaluwarsa, silakan login ulang") alih-alih pesan RLS mentah.
+1. Refresh keras halaman Pengguna, buka dialog edit Faruk, cek apakah SALSA muncul di dropdown toko.
+2. Kalau SALSA muncul: pilih SALSA + Pemilik, simpan. Jika gagal, mohon kirim pesan error persis dari toast.
+3. Kalau setelah refresh SALSA tetap tidak muncul, masalahnya ada di pengambilan daftar toko, dan perbaikannya adalah me-refresh `allStores` saat dialog dibuka.
 
-Belum ada perubahan kode maupun data yang dilakukan.
+## Usulan perbaikan (menunggu persetujuan)
+
+- **Refresh daftar toko** — panggil `fetchAllStores()` juga saat dialog Edit/Tambah pengguna dibuka, agar toko yang baru dibuat langsung tersedia.
+- **Kontrol ubah role langsung** — tambahkan dropdown role pada tiap baris keanggotaan yang melakukan `UPDATE` pada `store_members` (sudah diizinkan RLS untuk developer), sehingga tidak perlu lagi hapus-lalu-tambah ulang.
+
+Keduanya murni perubahan frontend; tidak perlu migrasi database.
