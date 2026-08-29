@@ -117,7 +117,8 @@ export function StockAdjustmentForm({ open, onOpenChange, onSuccess }: StockAdju
 
   const handleNewQuantityChange = (index: number, value: string) => {
     const newItems = [...items];
-    newItems[index].new_quantity = parseFloat(value) || 0;
+    const parsed = parseFloat(value);
+    newItems[index].new_quantity = isNaN(parsed) ? 0 : Math.round(parsed);
     setItems(newItems);
   };
 
