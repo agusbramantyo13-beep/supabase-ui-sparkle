@@ -484,7 +484,27 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
           <DialogTitle>Input Stok Pembelian</DialogTitle>
         </DialogHeader>
 
+        {draftRestored && (
+          <div className="flex items-center justify-between gap-3 rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-sm">
+            <span>Draft sebelumnya dipulihkan.</span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                resetForm();
+                if (draftKey) {
+                  try { localStorage.removeItem(draftKey); } catch { /* ignore */ }
+                }
+              }}
+            >
+              Mulai baru
+            </Button>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="supplier">Supplier *</Label>
