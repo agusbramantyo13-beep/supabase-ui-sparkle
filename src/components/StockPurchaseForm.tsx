@@ -446,10 +446,19 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
       });
 
       onSuccess();
+
+      // Draft hanya dihapus setelah berhasil tersimpan ke database.
+      if (draftKey) {
+        try { localStorage.removeItem(draftKey); } catch { /* ignore */ }
+      }
+      clearUnsavedChanges("stock-purchase-form");
+      setDraftRestored(false);
+
       // Jangan tutup dialog otomatis. User harus menutup secara manual
       // agar bisa menambah item lain dalam sesi pembelian yang sama
       // tanpa kehilangan konteks. Reset hanya daftar item.
       setItems([emptyItem()]);
+
 
     } catch (error: any) {
       toast({
