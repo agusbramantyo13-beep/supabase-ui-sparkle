@@ -71,6 +71,12 @@ export default function Users() {
     fetchAllStores();
   }, []);
 
+  useEffect(() => {
+    if (addDialogOpen) {
+      fetchAllStores();
+    }
+  }, [addDialogOpen]);
+
   const fetchAllStores = async () => {
     const { data } = await supabase.from('stores').select('id, name').order('name');
     // Deduplicate stores (multiple RLS policies may return duplicates)
