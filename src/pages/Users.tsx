@@ -71,6 +71,12 @@ export default function Users() {
     fetchAllStores();
   }, []);
 
+  useEffect(() => {
+    if (addDialogOpen) {
+      fetchAllStores();
+    }
+  }, [addDialogOpen]);
+
   const fetchAllStores = async () => {
     const { data } = await supabase.from('stores').select('id, name').order('name');
     // Deduplicate stores (multiple RLS policies may return duplicates)
@@ -147,6 +153,7 @@ export default function Users() {
     setEditStoreId("");
     setEditStoreRole("cashier");
     setEditDialogOpen(true);
+    await fetchAllStores();
     await fetchUserMemberships(user.id);
   };
 
@@ -179,6 +186,17 @@ export default function Users() {
       return;
     }
     toast({ title: "Berhasil", description: "Pengguna dihapus dari toko" });
+    if (selectedUser) await fetchUserMemberships(selectedUser.id);
+    await fetchAllUserMemberships();
+  };
+
+  const updateStoreMembershipRole = async (membershipId: string, newRole: string) => {
+    const { error } = await supabase.from('store_members').update({ role: newRole }).eq('id', membershipId);
+    if (error) {
+      toast({ title: "Gagal", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Berhasil", description: "Peran di toko diperbarui" });
     if (selectedUser) await fetchUserMemberships(selectedUser.id);
     await fetchAllUserMemberships();
   };
@@ -385,9 +403,15 @@ export default function Users() {
                 <div className="flex items-center gap-2">
                   <Store className="w-4 h-4 text-primary" />
                   <span className="text-sm font-medium">{m.store_name}</span>
-                  <Badge variant="outline" className="text-xs">
-                    {m.role === 'owner' ? 'Pemilik' : 'Karyawan'}
-                  </Badge>
+                  <Select value={m.role} onValueChange={(value) => updateStoreMembershipRole(m.id, value)}>
+                    <SelectTrigger className="h-7 w-28 text-xs border-border bg-background">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cashier">Karyawan</SelectItem>
+                      <SelectItem value="owner">Pemilik</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => removeStoreMembership(m.id)} className="h-7 w-7 p-0 text-destructive hover:text-destructive">
                   <X className="w-4 h-4" />
