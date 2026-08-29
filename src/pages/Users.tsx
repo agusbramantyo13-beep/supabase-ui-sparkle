@@ -397,9 +397,15 @@ export default function Users() {
                 <div className="flex items-center gap-2">
                   <Store className="w-4 h-4 text-primary" />
                   <span className="text-sm font-medium">{m.store_name}</span>
-                  <Badge variant="outline" className="text-xs">
-                    {m.role === 'owner' ? 'Pemilik' : 'Karyawan'}
-                  </Badge>
+                  <Select value={m.role} onValueChange={(value) => updateStoreMembershipRole(m.id, value)}>
+                    <SelectTrigger className="h-7 w-28 text-xs border-border bg-background">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cashier">Karyawan</SelectItem>
+                      <SelectItem value="owner">Pemilik</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => removeStoreMembership(m.id)} className="h-7 w-7 p-0 text-destructive hover:text-destructive">
                   <X className="w-4 h-4" />
