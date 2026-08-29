@@ -38,6 +38,7 @@ export default function StoreSelection() {
     }
   }, [user]);
 
+  const canCreateStore = profileRole === 'developer' || profileRole === 'owner';
   const isDeveloper = profileRole === 'developer';
   const navigate = useNavigate();
   const { toast } = useToast();
