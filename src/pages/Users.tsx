@@ -147,6 +147,7 @@ export default function Users() {
     setEditStoreId("");
     setEditStoreRole("cashier");
     setEditDialogOpen(true);
+    await fetchAllStores();
     await fetchUserMemberships(user.id);
   };
 
