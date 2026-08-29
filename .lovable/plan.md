@@ -1,54 +1,52 @@
-# Fitur Tema Warna (Theme Switcher)
+# Investigasi: "new row violates row-level security policy for table stores"
 
-Menambahkan pilihan skema warna per-user, tersimpan di database, berlaku real-time. Hanya warna yang berubah — layout, ukuran, posisi, font, dan logika bisnis tidak disentuh.
+## Temuan (diverifikasi langsung ke database, bukan dugaan)
 
-## 1. Rencana implementasi
+### 1. Policy INSERT pada `public.stores` saat ini
+Setelah semua migrasi diterapkan berurutan, policy final berasal dari migrasi `20260718093322` (yang men-DROP semua policy lama termasuk "Owners can create stores"):
 
-**Definisi tema (CSS variables)**
-- Semua tema didefinisikan di `src/index.css` sebagai blok `[data-theme="..."]` yang hanya meng-override token warna HSL yang sudah ada (`--background`, `--card`, `--primary`, `--accent`, `--border`, `--muted`, `--sidebar-*`, dst).
-- Tema "Default" = nilai `:root` sekarang, tidak diubah sama sekali.
-- Tidak ada perubahan pada `tailwind.config.ts` — semua utility sudah membaca variabel ini, jadi seluruh app ikut berubah otomatis.
-
-**Penerapan runtime**
-- Context baru `src/contexts/ThemeContext.tsx`: menyimpan tema aktif, menulis `document.documentElement.setAttribute("data-theme", theme)` → perubahan instan tanpa reload.
-- Urutan pembacaan: `localStorage` (instan, anti-flicker) → lalu sinkron dari database saat sesi siap → saat user memilih tema, simpan ke keduanya.
-- Provider dipasang di `src/App.tsx` di dalam `AuthProvider` (satu baris pembungkus, tidak mengubah struktur route).
-
-**UI**
-- Tab baru **"Tampilan"** di `src/pages/Settings.tsx` (`TabsList` jadi 6 kolom).
-- Isi tab: kartu berisi grid pilihan tema, tiap opsi menampilkan swatch warna + nama; klik = langsung aktif dan tersimpan.
-
-**File yang tersentuh**: `src/index.css`, `src/contexts/ThemeContext.tsx` (baru), `src/App.tsx` (1 provider), `src/pages/Settings.tsx` (1 tab baru). Tidak ada halaman lain yang diubah.
-
-## 2. Struktur database
-
-Menambah satu kolom ke tabel `profiles` yang sudah ada (per-user, ikut ke device manapun):
-
-```sql
-ALTER TABLE public.profiles
-  ADD COLUMN theme text NOT NULL DEFAULT 'default';
+```
+stores_insert  INSERT  TO authenticated  WITH CHECK: is_developer(auth.uid())
+stores_select  SELECT  USING: id IN (SELECT get_user_store_ids(auth.uid()))
+stores_update  UPDATE  is_developer(auth.uid()) OR is_store_owner(auth.uid(), id)
+stores_delete  DELETE  is_developer(auth.uid())
 ```
 
-- Punya default, jadi baris lama aman dan tidak ada backfill.
-- Tidak perlu tabel baru maupun policy baru: `profiles` sudah punya RLS di mana user bisa membaca dan memperbarui barisnya sendiri. Saat implementasi akan diverifikasi ulang bahwa policy UPDATE untuk diri sendiri memang ada; kalau ternyata terbatas, akan ditambahkan policy update kolom milik sendiri.
+Jadi hanya akun ber-role `developer` yang boleh insert. Policy lama `WITH CHECK (auth.uid() IS NOT NULL)` sudah tidak ada lagi.
 
-## 3. Risiko terhadap fitur yang sedang dipakai harian
+### 2. Nilai role yang valid di database
+Enum `public.user_role` saat ini hanya punya **dua** nilai:
 
-- **Risiko rendah secara fungsional**: perubahan bersifat CSS + satu kolom baru bernilai default. Tidak ada query penjualan/stok/kas yang disentuh.
-- **Warna hardcoded**: jika di beberapa halaman masih ada kelas seperti `text-white`/`bg-green-500`, halaman itu tidak ikut berubah tema (tampak tidak konsisten, bukan rusak). Akan dicek dan diperbaiki hanya jika sepele; selebihnya dilaporkan.
-- **Flicker tema saat load**: dicegah dengan membaca `localStorage` sebelum render.
-- **Kontras/aksesibilitas**: setiap tema disusun agar `foreground` di atas `background`/`primary` memenuhi kontras ≥ 4.5:1, dan status (sukses/peringatan/destruktif) tetap dapat dibedakan. Diverifikasi dengan screenshot halaman Penjualan dan tabel Riwayat Transaksi per tema.
-- **Cetak struk**: printer termal tidak terpengaruh warna layar.
-- **Rollback**: cukup set tema kembali ke Default; kolom database tidak mengganggu apa pun.
+```
+developer, staff
+```
 
-## 4. Usulan tema
+Nilai lama (`owner`, `shopkeeper`, `cashier`, `warehouse_admin`) tidak ada lagi di enum `profiles.role`. Jadi `'developer'` memang valid dan cocok dengan yang dicek frontend.
 
-Semua tema tetap gelap (nyaman untuk shift panjang), kecuali tema ke-5 yang terang untuk siang hari.
+`is_developer(_user_id)` = `EXISTS (SELECT 1 FROM profiles WHERE id=_user_id AND role='developer')` — cocok persis.
 
-1. **Default (Teal Gelap)** — seperti sekarang. bg `222 24% 8%`, primary teal `184 62% 40%`.
-2. **Dark Ocean** — biru laut tenang. bg `217 33% 9%`, card `217 30% 12%`, primary `210 90% 55%`, border `217 20% 22%`, teks `210 20% 96%`.
-3. **Warm Amber** — hangat, kontras tinggi. bg `28 18% 8%`, card `28 16% 12%`, primary `36 92% 52%` dengan teks tombol gelap `30 40% 10%`, border `28 14% 22%`.
-4. **Slate Mono** — netral abu, minim distraksi. bg `220 16% 9%`, card `220 14% 13%`, primary `220 12% 62%` dengan teks tombol gelap, border `220 10% 24%`.
-5. **Light Teal** — tema terang untuk siang hari. bg `210 40% 98%` (putih kebiruan), card `0 0% 100%` (putih bersih), foreground `222 24% 12%` (teks gelap), muted-foreground `215 16% 47%`, primary `184 72% 38%` (teal lebih jenuh supaya tetap terbaca di atas putih), primary-foreground `210 40% 98%` (teks putih di tombol), secondary `210 30% 94%`, accent `185 30% 90%`, border `210 25% 88%`, sidebar-background `210 40% 96%`, sidebar-foreground `222 24% 18%`, sidebar-accent `210 30% 92%`, sidebar-border `210 25% 86%`. Warna status tetap kontras: success `152 60% 32%`, warning `38 92% 45%`, destructive `0 72% 45%`.
+Isi tabel `profiles` saat ini: **1 baris role `developer`** (agusbramantyo13@gmail.com), 5 baris role `staff`.
 
-Warna status (sukses hijau, peringatan kuning, destruktif merah) sedikit disesuaikan per tema agar tetap kontras, tapi maknanya tidak berubah.
+### 3. Trigger pada INSERT `stores`
+Tidak ada trigger non-internal sama sekali pada `public.stores` (0 trigger). Jadi penolakan murni datang dari RLS.
+
+### 4. Catatan tentang role di `store_members`
+`store_members.role` adalah kolom text terpisah (bukan enum `user_role`) dan policy `store_members_insert` mengizinkan developer insert apa pun; kode mengirim `role: 'owner'` — ini tidak menyebabkan error pada tabel `stores`.
+
+## Kesimpulan sementara (belum terkonfirmasi 100%)
+
+Secara DB, akun dengan `profiles.role = 'developer'` **seharusnya bisa** insert ke `stores`. Karena itu penyebab paling mungkin dari error tersebut adalah salah satu dari:
+
+1. Akun yang dipakai saat error bukan akun developer tersebut (mis. login dengan akun `staff` lain, atau ada dua akun auth dengan email mirip). Tombol memang di-gate frontend, tapi state `profileRole` bisa berasal dari sesi lain jika sesi berganti tanpa reload.
+2. Sesi kedaluwarsa/anon: `auth.uid()` bernilai NULL saat request dijalankan, sehingga `is_developer(NULL)` = false.
+3. Error yang dilihat berasal dari cache aplikasi/build lama sebelum migrasi 18 Juli diterapkan (kurang mungkin, karena policy lama justru lebih longgar).
+
+Diagnosis pastinya belum bisa saya klaim tanpa mengetahui akun (user id) yang menghasilkan error.
+
+## Langkah verifikasi yang saya usulkan (jika Anda setuju melanjutkan)
+
+1. Jalankan uji insert terimpersonasi di DB sebagai user id developer (`e77110d3-...`) untuk membuktikan policy lolos untuk akun itu — di transaksi yang di-rollback, tanpa mengubah data.
+2. Minta user yang error menjalankan cek cepat di aplikasi: bandingkan `auth.uid()` sesi aktif dengan id baris `profiles` yang role-nya `developer`.
+3. Kalau ternyata akun itu bukan developer, keputusannya jadi soal kebijakan: ubah role akun tersebut, atau longgarkan policy insert (mis. izinkan juga pemilik toko) — ini butuh persetujuan Anda karena menyangkut keamanan.
+
+Belum ada perubahan kode maupun database yang dilakukan.
