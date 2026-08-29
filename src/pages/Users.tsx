@@ -184,6 +184,17 @@ export default function Users() {
     await fetchAllUserMemberships();
   };
 
+  const updateStoreMembershipRole = async (membershipId: string, newRole: string) => {
+    const { error } = await supabase.from('store_members').update({ role: newRole }).eq('id', membershipId);
+    if (error) {
+      toast({ title: "Gagal", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Berhasil", description: "Peran di toko diperbarui" });
+    if (selectedUser) await fetchUserMemberships(selectedUser.id);
+    await fetchAllUserMemberships();
+  };
+
   const handleAddStoreInEdit = async () => {
     if (!selectedUser || !editStoreId) return;
     const success = await addStoreMembership(selectedUser.id, editStoreId, editStoreRole);
