@@ -173,7 +173,7 @@ export default function StoreSelection() {
           </div>
         )}
 
-        {stores.length === 0 && !isDeveloper && (
+        {stores.length === 0 && !canCreateStore && (
           <Card>
             <CardContent className="p-6 text-center text-muted-foreground">
               Anda belum terdaftar di toko manapun. Hubungi pemilik toko untuk menambahkan Anda.
