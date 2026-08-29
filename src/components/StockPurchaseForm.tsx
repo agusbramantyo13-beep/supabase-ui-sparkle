@@ -13,6 +13,8 @@ import { Plus, Trash2, Check, ChevronsUpDown } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { validateSellingPrice } from "@/lib/priceValidation";
+import { setUnsavedChanges, clearUnsavedChanges } from "@/lib/unsavedChanges";
+
 
 interface ProductVariant {
   id: string;
@@ -128,8 +130,16 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<StockItem[]>([emptyItem()]);
   const [loading, setLoading] = useState(false);
+  const [draftRestored, setDraftRestored] = useState(false);
   const { toast } = useToast();
   const { currentStoreId } = useStore();
+
+  const draftKey = currentStoreId ? `purchase_draft_${currentStoreId}` : null;
+
+  const isDirty =
+    supplier.trim() !== "" ||
+    notes.trim() !== "" ||
+    items.some((i) => i.variant_id || i.quantity > 0 || i.cost_price > 0);
 
   useEffect(() => {
     if (open) {
@@ -137,9 +147,72 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
     }
   }, [open]);
 
+  // Restore draft when the dialog opens
+  useEffect(() => {
+    if (!open || !draftKey) return;
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (!raw) return;
+      const draft = JSON.parse(raw);
+      if (!draft) return;
+      const hasContent =
+        (draft.supplier && draft.supplier.trim()) ||
+        (draft.notes && draft.notes.trim()) ||
+        (Array.isArray(draft.items) &&
+          draft.items.some((i: StockItem) => i.variant_id || i.quantity > 0));
+      if (!hasContent) return;
+      setSupplier(draft.supplier || "");
+      setPurchaseDate(draft.purchaseDate || new Date().toISOString().split('T')[0]);
+      setNotes(draft.notes || "");
+      setItems(Array.isArray(draft.items) && draft.items.length ? draft.items : [emptyItem()]);
+      setDraftRestored(true);
+      toast({ title: "Draft sebelumnya dipulihkan" });
+    } catch {
+      // ignore malformed draft
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, draftKey]);
+
+  // Persist draft on every change (debounced)
+  useEffect(() => {
+    if (!open || !draftKey) return;
+    const t = setTimeout(() => {
+      try {
+        if (!isDirty) {
+          localStorage.removeItem(draftKey);
+          return;
+        }
+        localStorage.setItem(
+          draftKey,
+          JSON.stringify({ supplier, purchaseDate, notes, items, savedAt: Date.now() })
+        );
+      } catch {
+        // storage full / unavailable — ignore
+      }
+    }, 400);
+    return () => clearTimeout(t);
+  }, [open, draftKey, supplier, purchaseDate, notes, items, isDirty]);
+
+  // Track unsaved changes globally + warn before tab close/reload
+  useEffect(() => {
+    const dirty = open && isDirty;
+    setUnsavedChanges("stock-purchase-form", dirty);
+    if (!dirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [open, isDirty]);
+
+  useEffect(() => () => clearUnsavedChanges("stock-purchase-form"), []);
+
+  // Draft is intentionally NOT cleared when the dialog closes — only after a
+  // successful save — so accidental closes/crashes don't lose the input.
   useEffect(() => {
     if (!open) {
-      resetForm();
+      setDraftRestored(false);
     }
   }, [open]);
 
@@ -148,7 +221,9 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
     setPurchaseDate(new Date().toISOString().split('T')[0]);
     setNotes("");
     setItems([emptyItem()]);
+    setDraftRestored(false);
   };
+
 
   const fetchVariants = async () => {
     const { data, error } = await supabase
