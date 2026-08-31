@@ -103,7 +103,7 @@ export default function Settings() {
     receiptCustomText: "",
   });
 
-  // Load store info from database for the active store
+  // Load store info + receipt design from database for the active store
   useEffect(() => {
     const fetchStore = async () => {
       if (!currentStoreId) {
@@ -113,7 +113,7 @@ export default function Settings() {
       setStoreLoading(true);
       const { data, error } = await supabase
         .from('stores')
-        .select('name, address, phone, email, tax_rate, currency, receipt_footer')
+        .select('name, address, phone, email, tax_rate, currency, receipt_footer, receipt_logo, receipt_phone, receipt_whatsapp, receipt_instagram, receipt_custom_text')
         .eq('id', currentStoreId)
         .maybeSingle();
 
@@ -129,6 +129,11 @@ export default function Settings() {
           taxRate: data.tax_rate != null ? String(data.tax_rate) : "0",
           currency: data.currency ?? "IDR",
           receiptFooter: data.receipt_footer ?? "",
+          receiptLogo: data.receipt_logo ?? "",
+          receiptPhone: data.receipt_phone ?? "",
+          receiptWhatsapp: data.receipt_whatsapp ?? "",
+          receiptInstagram: data.receipt_instagram ?? "",
+          receiptCustomText: data.receipt_custom_text ?? "",
         }));
       }
       setStoreLoading(false);
@@ -163,45 +168,31 @@ export default function Settings() {
 
 
   const btPrinter = useBluetoothPrinter();
+  const [receiptSaving, setReceiptSaving] = useState(false);
 
-  // Load saved receipt design settings from localStorage on mount
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(RECEIPT_SETTINGS_KEY);
-      if (raw) {
-        const saved = JSON.parse(raw);
-        // receiptFooter is stored per-store in the database, don't override it here
-        delete saved.receiptFooter;
-        setSettings(prev => ({ ...prev, ...saved }));
-      }
-    } catch (e) {
-      console.error("Failed to load receipt settings", e);
-    }
-  }, []);
+  const handleSaveReceiptDesign = async () => {
+    if (!currentStoreId || !canEditStore) return;
+    setReceiptSaving(true);
+    const { error } = await supabase
+      .from('stores')
+      .update({
+        receipt_logo: settings.receiptLogo || null,
+        receipt_phone: settings.receiptPhone || null,
+        receipt_whatsapp: settings.receiptWhatsapp || null,
+        receipt_instagram: settings.receiptInstagram || null,
+        receipt_custom_text: settings.receiptCustomText || null,
+      })
+      .eq('id', currentStoreId);
 
-  const handleSaveReceiptDesign = () => {
-    try {
-      const payload = {
-        receiptLogo: settings.receiptLogo,
-        receiptPhone: settings.receiptPhone,
-        receiptWhatsapp: settings.receiptWhatsapp,
-        receiptInstagram: settings.receiptInstagram,
-        receiptCustomText: settings.receiptCustomText,
-        receiptFooter: settings.receiptFooter,
-      };
-      localStorage.setItem(RECEIPT_SETTINGS_KEY, JSON.stringify(payload));
-      toast({
-        title: "Berhasil",
-        description: "Desain struk nota tersimpan",
-      });
-    } catch (e: any) {
-      toast({
-        title: "Gagal",
-        description: e?.message || "Tidak bisa menyimpan desain struk",
-        variant: "destructive",
-      });
+    if (error) {
+      toast({ title: "Gagal", description: error.message, variant: "destructive" });
+    } else {
+      await refreshStores();
+      toast({ title: "Berhasil", description: "Desain struk nota tersimpan" });
     }
+    setReceiptSaving(false);
   };
+
 
   const handleTestPrintReceipt = async () => {
     try {
