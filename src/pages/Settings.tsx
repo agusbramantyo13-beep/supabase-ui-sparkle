@@ -725,12 +725,16 @@ export default function Settings() {
                   <Printer className="w-4 h-4 mr-2" />
                   Tes Print Struk
                 </Button>
-                <Button
-                  onClick={handleSaveReceiptDesign}
-                  className="bg-gradient-primary hover:bg-primary/90"
-                >
-                  Simpan Perubahan
-                </Button>
+                {canEditStore && (
+                  <Button
+                    onClick={handleSaveReceiptDesign}
+                    disabled={receiptSaving || storeLoading || !currentStoreId}
+                    className="bg-gradient-primary hover:bg-primary/90"
+                  >
+                    {receiptSaving ? "Menyimpan..." : "Simpan Perubahan"}
+                  </Button>
+                )}
+
               </div>
             </CardContent>
           </Card>
