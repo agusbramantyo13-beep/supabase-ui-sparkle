@@ -81,6 +81,9 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
   const { currentStoreId } = useStore();
 
   const isEditMode = !!product?.variant_id;
+  // Product-only edit: edit name/category/image of a (multi-variant) product without touching variants
+  const isProductEditMode = !!product?.id && !product?.variant_id;
+  const isAnyEditMode = isEditMode || isProductEditMode;
 
   useEffect(() => {
     fetchCategories();
@@ -200,7 +203,7 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
       return;
     }
 
-    if (isEditMode && product?.id && currentStoreId) {
+    if (isAnyEditMode && product?.id && currentStoreId) {
       setImageBusy(true);
       try {
         const path = await uploadProductImage(currentStoreId, product.id, file);
@@ -222,7 +225,7 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
   };
 
   const handleRemoveImage = async () => {
-    if (isEditMode && product?.id && existingImagePath && currentStoreId) {
+    if (isAnyEditMode && product?.id && existingImagePath && currentStoreId) {
       setImageBusy(true);
       try {
         await deleteProductImage(currentStoreId, product.id);
@@ -246,6 +249,29 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
 
     if (!productName || !categoryId) {
       toast({ title: "Error", description: "Nama produk dan kategori wajib diisi", variant: "destructive" });
+      return;
+    }
+
+    // Product-only edit: update just the products table, never touch variants
+    if (isProductEditMode) {
+      setLoading(true);
+      try {
+        const { error: productError } = await supabase
+          .from('products')
+          .update({
+            name: productName,
+            category_id: parseInt(categoryId),
+          } as any)
+          .eq('id', product.id);
+        if (productError) throw productError;
+        toast({ title: "Berhasil", description: "Produk berhasil diperbarui" });
+        onSuccess();
+        onOpenChange(false);
+      } catch (error: any) {
+        toast({ title: "Error", description: error.message || "Gagal menyimpan produk", variant: "destructive" });
+      } finally {
+        setLoading(false);
+      }
       return;
     }
 
@@ -386,7 +412,7 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader className="shrink-0">
-          <DialogTitle>{isEditMode ? 'Edit Produk' : 'Tambah Produk Baru'}</DialogTitle>
+          <DialogTitle>{isAnyEditMode ? 'Edit Produk' : 'Tambah Produk Baru'}</DialogTitle>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto pr-1 min-h-0">
@@ -529,6 +555,7 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
             </div>
 
             {/* Variants toggle */}
+            {!isProductEditMode && (
             <div className="flex items-center justify-between rounded-lg border border-border p-3">
               <div className="space-y-0.5">
                 <Label className="text-sm font-medium">Produk ini memiliki varian</Label>
@@ -560,8 +587,10 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
                 />
               )}
             </div>
+            )}
 
             {/* Detail section */}
+            {!isProductEditMode && (
             <div className="space-y-3">
               {hasVariantsToggle && (
                 <div className="flex items-center justify-between">
@@ -651,6 +680,7 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
                 </div>
               ))}
             </div>
+            )}
           </form>
         </div>
 
@@ -659,7 +689,7 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
             Batal
           </Button>
           <Button type="submit" form="product-form" disabled={loading} className="flex-1 bg-gradient-primary">
-            {loading ? "Menyimpan..." : isEditMode ? "Perbarui" : "Simpan"}
+            {loading ? "Menyimpan..." : isAnyEditMode ? "Perbarui" : "Simpan"}
           </Button>
         </div>
       </DialogContent>

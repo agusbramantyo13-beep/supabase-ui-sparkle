@@ -156,6 +156,18 @@ export default function Products() {
     setProductFormOpen(true)
   }
 
+  const handleEditProductInfo = (product: Product) => {
+    setSelectedProduct({
+      id: product.id,
+      name: product.name,
+      category_id: product.category_id,
+      category_name: product.categories?.name,
+      image_path: product.image_path,
+      updated_at: product.updated_at,
+    })
+    setProductFormOpen(true)
+  }
+
   const handleDeleteVariant = async () => {
     if (!variantToDelete) return
     const { product, variant } = variantToDelete
@@ -329,6 +341,18 @@ export default function Products() {
                           variant="outline"
                           size="sm"
                           onClick={() => handleEditVariant(product, soleVariant)}
+                          title="Ubah Produk"
+                          className="h-9 w-9 sm:w-auto px-0 sm:px-3"
+                        >
+                          <Edit className="w-3 h-3 sm:mr-1" />
+                          <span className="hidden sm:inline">Ubah</span>
+                        </Button>
+                      )}
+                      {!isSimple && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditProductInfo(product)}
                           title="Ubah Produk"
                           className="h-9 w-9 sm:w-auto px-0 sm:px-3"
                         >
