@@ -57,6 +57,7 @@ export default function Users() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
+  const { currentStoreId } = useStore();
 
   // Store assignment states
   const [allStores, setAllStores] = useState<StoreInfo[]>([]);
