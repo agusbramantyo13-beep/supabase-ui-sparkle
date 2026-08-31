@@ -412,7 +412,7 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader className="shrink-0">
-          <DialogTitle>{isEditMode ? 'Edit Produk' : 'Tambah Produk Baru'}</DialogTitle>
+          <DialogTitle>{isAnyEditMode ? 'Edit Produk' : 'Tambah Produk Baru'}</DialogTitle>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto pr-1 min-h-0">
@@ -555,6 +555,7 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
             </div>
 
             {/* Variants toggle */}
+            {!isProductEditMode && (
             <div className="flex items-center justify-between rounded-lg border border-border p-3">
               <div className="space-y-0.5">
                 <Label className="text-sm font-medium">Produk ini memiliki varian</Label>
@@ -685,7 +686,7 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
             Batal
           </Button>
           <Button type="submit" form="product-form" disabled={loading} className="flex-1 bg-gradient-primary">
-            {loading ? "Menyimpan..." : isEditMode ? "Perbarui" : "Simpan"}
+            {loading ? "Menyimpan..." : isAnyEditMode ? "Perbarui" : "Simpan"}
           </Button>
         </div>
       </DialogContent>
