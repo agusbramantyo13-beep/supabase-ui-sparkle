@@ -16,7 +16,8 @@ import { Badge } from "@/components/ui/badge";
 import { useBluetoothPrinter } from "@/contexts/BluetoothPrinterContext";
 import { useStore } from "@/contexts/StoreContext";
 
-const RECEIPT_SETTINGS_KEY = "receipt_design_settings";
+
+
 
 export default function Settings() {
   const { theme, setTheme } = useTheme();
@@ -103,7 +104,7 @@ export default function Settings() {
     receiptCustomText: "",
   });
 
-  // Load store info from database for the active store
+  // Load store info + receipt design from database for the active store
   useEffect(() => {
     const fetchStore = async () => {
       if (!currentStoreId) {
@@ -113,7 +114,7 @@ export default function Settings() {
       setStoreLoading(true);
       const { data, error } = await supabase
         .from('stores')
-        .select('name, address, phone, email, tax_rate, currency, receipt_footer')
+        .select('name, address, phone, email, tax_rate, currency, receipt_footer, receipt_logo, receipt_phone, receipt_whatsapp, receipt_instagram, receipt_custom_text')
         .eq('id', currentStoreId)
         .maybeSingle();
 
@@ -129,6 +130,11 @@ export default function Settings() {
           taxRate: data.tax_rate != null ? String(data.tax_rate) : "0",
           currency: data.currency ?? "IDR",
           receiptFooter: data.receipt_footer ?? "",
+          receiptLogo: data.receipt_logo ?? "",
+          receiptPhone: data.receipt_phone ?? "",
+          receiptWhatsapp: data.receipt_whatsapp ?? "",
+          receiptInstagram: data.receipt_instagram ?? "",
+          receiptCustomText: data.receipt_custom_text ?? "",
         }));
       }
       setStoreLoading(false);
@@ -163,45 +169,31 @@ export default function Settings() {
 
 
   const btPrinter = useBluetoothPrinter();
+  const [receiptSaving, setReceiptSaving] = useState(false);
 
-  // Load saved receipt design settings from localStorage on mount
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(RECEIPT_SETTINGS_KEY);
-      if (raw) {
-        const saved = JSON.parse(raw);
-        // receiptFooter is stored per-store in the database, don't override it here
-        delete saved.receiptFooter;
-        setSettings(prev => ({ ...prev, ...saved }));
-      }
-    } catch (e) {
-      console.error("Failed to load receipt settings", e);
-    }
-  }, []);
+  const handleSaveReceiptDesign = async () => {
+    if (!currentStoreId || !canEditStore) return;
+    setReceiptSaving(true);
+    const { error } = await supabase
+      .from('stores')
+      .update({
+        receipt_logo: settings.receiptLogo || null,
+        receipt_phone: settings.receiptPhone || null,
+        receipt_whatsapp: settings.receiptWhatsapp || null,
+        receipt_instagram: settings.receiptInstagram || null,
+        receipt_custom_text: settings.receiptCustomText || null,
+      })
+      .eq('id', currentStoreId);
 
-  const handleSaveReceiptDesign = () => {
-    try {
-      const payload = {
-        receiptLogo: settings.receiptLogo,
-        receiptPhone: settings.receiptPhone,
-        receiptWhatsapp: settings.receiptWhatsapp,
-        receiptInstagram: settings.receiptInstagram,
-        receiptCustomText: settings.receiptCustomText,
-        receiptFooter: settings.receiptFooter,
-      };
-      localStorage.setItem(RECEIPT_SETTINGS_KEY, JSON.stringify(payload));
-      toast({
-        title: "Berhasil",
-        description: "Desain struk nota tersimpan",
-      });
-    } catch (e: any) {
-      toast({
-        title: "Gagal",
-        description: e?.message || "Tidak bisa menyimpan desain struk",
-        variant: "destructive",
-      });
+    if (error) {
+      toast({ title: "Gagal", description: error.message, variant: "destructive" });
+    } else {
+      await refreshStores();
+      toast({ title: "Berhasil", description: "Desain struk nota tersimpan" });
     }
+    setReceiptSaving(false);
   };
+
 
   const handleTestPrintReceipt = async () => {
     try {
@@ -592,6 +584,7 @@ export default function Settings() {
                     />
                     <Button 
                       variant="outline" 
+                      disabled={!canEditStore}
                       onClick={() => document.getElementById('logo')?.click()}
                     >
                       <Upload className="w-4 h-4 mr-2" />
@@ -612,6 +605,8 @@ export default function Settings() {
                     id="receiptPhone"
                     placeholder="Contoh: 0812-3456-7890"
                     value={settings.receiptPhone}
+                    readOnly={!canEditStore}
+                    disabled={storeLoading}
                     onChange={(e) => handleSettingChange('receiptPhone', e.target.value)}
                   />
                 </div>
@@ -622,6 +617,8 @@ export default function Settings() {
                     id="receiptWhatsapp"
                     placeholder="Contoh: 0812-3456-7890"
                     value={settings.receiptWhatsapp}
+                    readOnly={!canEditStore}
+                    disabled={storeLoading}
                     onChange={(e) => handleSettingChange('receiptWhatsapp', e.target.value)}
                   />
                 </div>
@@ -632,6 +629,8 @@ export default function Settings() {
                     id="receiptInstagram"
                     placeholder="Contoh: @namatoko"
                     value={settings.receiptInstagram}
+                    readOnly={!canEditStore}
+                    disabled={storeLoading}
                     onChange={(e) => handleSettingChange('receiptInstagram', e.target.value)}
                   />
                 </div>
@@ -642,9 +641,12 @@ export default function Settings() {
                     id="receiptCustomText"
                     placeholder="Contoh: Terima kasih atas kunjungan Anda!"
                     value={settings.receiptCustomText}
+                    readOnly={!canEditStore}
+                    disabled={storeLoading}
                     onChange={(e) => handleSettingChange('receiptCustomText', e.target.value)}
                   />
                 </div>
+
               </div>
 
               <Separator />
@@ -723,12 +725,16 @@ export default function Settings() {
                   <Printer className="w-4 h-4 mr-2" />
                   Tes Print Struk
                 </Button>
-                <Button
-                  onClick={handleSaveReceiptDesign}
-                  className="bg-gradient-primary hover:bg-primary/90"
-                >
-                  Simpan Perubahan
-                </Button>
+                {canEditStore && (
+                  <Button
+                    onClick={handleSaveReceiptDesign}
+                    disabled={receiptSaving || storeLoading || !currentStoreId}
+                    className="bg-gradient-primary hover:bg-primary/90"
+                  >
+                    {receiptSaving ? "Menyimpan..." : "Simpan Perubahan"}
+                  </Button>
+                )}
+
               </div>
             </CardContent>
           </Card>

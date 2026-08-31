@@ -1510,7 +1510,12 @@ export type Database = {
           id: string
           name: string
           phone: string | null
+          receipt_custom_text: string | null
           receipt_footer: string | null
+          receipt_instagram: string | null
+          receipt_logo: string | null
+          receipt_phone: string | null
+          receipt_whatsapp: string | null
           tax_rate: number
         }
         Insert: {
@@ -1522,7 +1527,12 @@ export type Database = {
           id?: string
           name: string
           phone?: string | null
+          receipt_custom_text?: string | null
           receipt_footer?: string | null
+          receipt_instagram?: string | null
+          receipt_logo?: string | null
+          receipt_phone?: string | null
+          receipt_whatsapp?: string | null
           tax_rate?: number
         }
         Update: {
@@ -1534,7 +1544,12 @@ export type Database = {
           id?: string
           name?: string
           phone?: string | null
+          receipt_custom_text?: string | null
           receipt_footer?: string | null
+          receipt_instagram?: string | null
+          receipt_logo?: string | null
+          receipt_phone?: string | null
+          receipt_whatsapp?: string | null
           tax_rate?: number
         }
         Relationships: []

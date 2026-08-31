@@ -240,10 +240,22 @@ export default function TransactionHistory() {
           return;
         }
       }
+      const design = (currentStore || {}) as any;
+      const contactParts: string[] = [];
+      if (design.receipt_whatsapp) contactParts.push(`WA: ${design.receipt_whatsapp}`);
+      if (design.receipt_instagram) contactParts.push(`IG: ${design.receipt_instagram}`);
+      const combinedFooter = [
+        design.receipt_footer,
+        design.receipt_custom_text,
+        contactParts.join(" | "),
+      ].filter(Boolean).join("\n");
+
       await btPrinter.printReceipt({
         storeName: currentStore?.name || "Toko",
+        logo: design.receipt_logo || undefined,
         storeAddress: (currentStore as any)?.address || undefined,
-        storePhone: (currentStore as any)?.phone || undefined,
+        storePhone: design.receipt_phone || (currentStore as any)?.phone || undefined,
+
         receiptNumber: detailTx.receipt_number || undefined,
         dateTime: format(new Date(detailTx.created_at), "dd/MM/yyyy HH:mm"),
         cashier: detailTx.user_name || undefined,
@@ -274,7 +286,7 @@ export default function TransactionHistory() {
         cash: cashAmount,
         card: cardAmount,
         change: changeAmount,
-        storeFooter: "Terima kasih atas kunjungan Anda!",
+        storeFooter: combinedFooter || "Terima kasih atas kunjungan Anda!",
       });
       toast({ title: "Berhasil", description: "Nota dikirim ke printer" });
     } catch (e: any) {
