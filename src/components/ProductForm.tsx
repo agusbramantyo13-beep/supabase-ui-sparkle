@@ -587,8 +587,10 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
                 />
               )}
             </div>
+            )}
 
             {/* Detail section */}
+            {!isProductEditMode && (
             <div className="space-y-3">
               {hasVariantsToggle && (
                 <div className="flex items-center justify-between">
