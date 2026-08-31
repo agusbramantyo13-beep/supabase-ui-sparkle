@@ -76,6 +76,9 @@ export default function Users() {
   useEffect(() => {
     if (addDialogOpen) {
       fetchAllStores();
+      if (currentStoreId) {
+        setNewUserStoreId(currentStoreId);
+      }
     }
   }, [addDialogOpen]);
 
