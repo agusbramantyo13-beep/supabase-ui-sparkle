@@ -16,7 +16,8 @@ import { Badge } from "@/components/ui/badge";
 import { useBluetoothPrinter } from "@/contexts/BluetoothPrinterContext";
 import { useStore } from "@/contexts/StoreContext";
 
-const RECEIPT_SETTINGS_KEY = "receipt_design_settings";
+
+
 
 export default function Settings() {
   const { theme, setTheme } = useTheme();
