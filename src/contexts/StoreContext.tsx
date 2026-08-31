@@ -8,7 +8,14 @@ interface Store {
   address: string | null;
   phone: string | null;
   created_at: string | null;
+  receipt_footer?: string | null;
+  receipt_logo?: string | null;
+  receipt_phone?: string | null;
+  receipt_whatsapp?: string | null;
+  receipt_instagram?: string | null;
+  receipt_custom_text?: string | null;
 }
+
 
 interface StoreContextType {
   stores: Store[];
