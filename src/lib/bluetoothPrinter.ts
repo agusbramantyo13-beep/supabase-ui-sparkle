@@ -261,19 +261,12 @@ export type ReceiptData = {
 // 58mm printers (Iware C-58BT, Xprinter, Goojprt, etc.) have 384 dots per
 // line. We render slightly narrower so the logo has a visual margin.
 const LOGO_MAX_DOTS = 360;
-const RECEIPT_SETTINGS_KEY = "receipt_design_settings";
 
 function resolveLogoSource(explicit?: string): string | null {
-  if (explicit) return explicit;
-  try {
-    const raw = localStorage.getItem(RECEIPT_SETTINGS_KEY);
-    if (!raw) return null;
-    const saved = JSON.parse(raw);
-    return saved?.receiptLogo || null;
-  } catch {
-    return null;
-  }
+  // Logo is stored per-store in the database and passed in explicitly.
+  return explicit || null;
 }
+
 
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
