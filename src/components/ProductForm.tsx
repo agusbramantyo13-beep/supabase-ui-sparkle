@@ -680,6 +680,7 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
                 </div>
               ))}
             </div>
+            )}
           </form>
         </div>
 
