@@ -363,10 +363,17 @@ export default function Users() {
     return memberships.map(m => m.store_name).filter(Boolean);
   };
 
-  const filteredUsers = users.filter(user =>
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = users.filter(user => {
+    const matchesSearch =
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.name?.toLowerCase().includes(searchTerm.toLowerCase());
+    if (!matchesSearch) return false;
+
+    if (user.role === 'developer') return true;
+
+    const memberships = userStoreMap[user.id] || [];
+    return memberships.some(m => m.store_id === currentStoreId);
+  });
 
   if (loading) {
     return (
