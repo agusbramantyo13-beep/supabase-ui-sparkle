@@ -81,6 +81,9 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
   const { currentStoreId } = useStore();
 
   const isEditMode = !!product?.variant_id;
+  // Product-only edit: edit name/category/image of a (multi-variant) product without touching variants
+  const isProductEditMode = !!product?.id && !product?.variant_id;
+  const isAnyEditMode = isEditMode || isProductEditMode;
 
   useEffect(() => {
     fetchCategories();
