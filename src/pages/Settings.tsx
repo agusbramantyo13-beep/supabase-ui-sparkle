@@ -14,11 +14,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { useBluetoothPrinter } from "@/contexts/BluetoothPrinterContext";
+import { useStore } from "@/contexts/StoreContext";
 
 const RECEIPT_SETTINGS_KEY = "receipt_design_settings";
 
 export default function Settings() {
-  const [loading, setLoading] = useState(false);
   const { theme, setTheme } = useTheme();
   const [themeSaving, setThemeSaving] = useState(false);
   const { toast } = useToast();
@@ -70,14 +70,19 @@ export default function Settings() {
     }
   };
 
+  const { currentStoreId, userStoreRole, refreshStores } = useStore();
+  const [storeLoading, setStoreLoading] = useState(true);
+  const [storeSaving, setStoreSaving] = useState(false);
+  const canEditStore = userProfile?.role === 'developer' || userStoreRole === 'owner';
+
   const [settings, setSettings] = useState({
-    storeName: "KENZHO Apps Store",
-    storeAddress: "123 Main Street, City, State 12345",
-    storePhone: "+1 (555) 123-4567",
-    storeEmail: "store@kenzho.com",
-    taxRate: "8.25",
-    currency: "IDR",
-    receiptFooter: "Terima kasih atas kunjungan Anda!",
+    storeName: "",
+    storeAddress: "",
+    storePhone: "",
+    storeEmail: "",
+    taxRate: "",
+    currency: "",
+    receiptFooter: "",
     
     // Notifications
     lowStockAlerts: true,
@@ -98,6 +103,65 @@ export default function Settings() {
     receiptCustomText: "",
   });
 
+  // Load store info from database for the active store
+  useEffect(() => {
+    const fetchStore = async () => {
+      if (!currentStoreId) {
+        setStoreLoading(false);
+        return;
+      }
+      setStoreLoading(true);
+      const { data, error } = await supabase
+        .from('stores')
+        .select('name, address, phone, email, tax_rate, currency, receipt_footer')
+        .eq('id', currentStoreId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching store info:', error);
+      } else if (data) {
+        setSettings(prev => ({
+          ...prev,
+          storeName: data.name ?? "",
+          storeAddress: data.address ?? "",
+          storePhone: data.phone ?? "",
+          storeEmail: data.email ?? "",
+          taxRate: data.tax_rate != null ? String(data.tax_rate) : "0",
+          currency: data.currency ?? "IDR",
+          receiptFooter: data.receipt_footer ?? "",
+        }));
+      }
+      setStoreLoading(false);
+    };
+    fetchStore();
+  }, [currentStoreId]);
+
+  const handleSaveStoreInfo = async () => {
+    if (!currentStoreId || !canEditStore) return;
+    setStoreSaving(true);
+    const { error } = await supabase
+      .from('stores')
+      .update({
+        name: settings.storeName,
+        address: settings.storeAddress || null,
+        phone: settings.storePhone || null,
+        email: settings.storeEmail || null,
+        tax_rate: settings.taxRate === "" ? 0 : Number(settings.taxRate),
+        currency: settings.currency || 'IDR',
+        receipt_footer: settings.receiptFooter || null,
+      })
+      .eq('id', currentStoreId);
+
+    if (error) {
+      toast({ title: "Gagal", description: error.message, variant: "destructive" });
+    } else {
+      await refreshStores();
+      toast({ title: "Berhasil", description: "Informasi toko tersimpan" });
+    }
+    setStoreSaving(false);
+  };
+
+
   const btPrinter = useBluetoothPrinter();
 
   // Load saved receipt design settings from localStorage on mount
@@ -106,6 +170,8 @@ export default function Settings() {
       const raw = localStorage.getItem(RECEIPT_SETTINGS_KEY);
       if (raw) {
         const saved = JSON.parse(raw);
+        // receiptFooter is stored per-store in the database, don't override it here
+        delete saved.receiptFooter;
         setSettings(prev => ({ ...prev, ...saved }));
       }
     } catch (e) {
@@ -186,20 +252,6 @@ export default function Settings() {
     }
   };
 
-  const handleSave = async () => {
-    setLoading(true);
-    
-    // Simulate save operation
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast({
-      title: "Berhasil",
-      description: "Pengaturan berhasil disimpan",
-    });
-    
-    setLoading(false);
-  };
-
   const handleSettingChange = (key: string, value: any) => {
     setSettings(prev => ({
       ...prev,
@@ -276,13 +328,6 @@ export default function Settings() {
           <h1 className="text-xl font-semibold tracking-tight text-foreground">Pengaturan</h1>
           <p className="text-muted-foreground">Konfigurasi toko dan preferensi aplikasi Anda</p>
         </div>
-        <Button 
-          className="bg-gradient-primary hover:bg-primary/90"
-          onClick={handleSave}
-          disabled={loading}
-        >
-          {loading ? "Menyimpan..." : "Simpan Perubahan"}
-        </Button>
       </div>
 
       {/* User Info Card */}
@@ -355,8 +400,17 @@ export default function Settings() {
                 <Store className="w-5 h-5 text-primary" />
                 <CardTitle>Informasi Toko</CardTitle>
               </div>
+              <CardDescription>
+                {canEditStore
+                  ? "Data ini tersimpan per toko dan berlaku untuk semua pengguna toko tersebut"
+                  : "Hanya pemilik toko atau developer yang dapat mengubah informasi ini"}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {storeLoading ? (
+                <p className="text-muted-foreground">Memuat informasi toko...</p>
+              ) : (
+              <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="storeName">Nama Toko</Label>
@@ -364,6 +418,7 @@ export default function Settings() {
                     id="storeName"
                     value={settings.storeName}
                     onChange={(e) => handleSettingChange('storeName', e.target.value)}
+                    disabled={!canEditStore}
                   />
                 </div>
                 <div>
@@ -373,6 +428,7 @@ export default function Settings() {
                     type="email"
                     value={settings.storeEmail}
                     onChange={(e) => handleSettingChange('storeEmail', e.target.value)}
+                    disabled={!canEditStore}
                   />
                 </div>
               </div>
@@ -383,6 +439,7 @@ export default function Settings() {
                   id="storeAddress"
                   value={settings.storeAddress}
                   onChange={(e) => handleSettingChange('storeAddress', e.target.value)}
+                  disabled={!canEditStore}
                 />
               </div>
 
@@ -393,6 +450,7 @@ export default function Settings() {
                     id="storePhone"
                     value={settings.storePhone}
                     onChange={(e) => handleSettingChange('storePhone', e.target.value)}
+                    disabled={!canEditStore}
                   />
                 </div>
                 <div>
@@ -401,6 +459,7 @@ export default function Settings() {
                     id="currency"
                     value={settings.currency}
                     onChange={(e) => handleSettingChange('currency', e.target.value)}
+                    disabled={!canEditStore}
                   />
                 </div>
               </div>
@@ -418,6 +477,7 @@ export default function Settings() {
                     step="0.01"
                     value={settings.taxRate}
                     onChange={(e) => handleSettingChange('taxRate', e.target.value)}
+                    disabled={!canEditStore}
                   />
                 </div>
 
@@ -428,9 +488,24 @@ export default function Settings() {
                     value={settings.receiptFooter}
                     onChange={(e) => handleSettingChange('receiptFooter', e.target.value)}
                     placeholder="Pesan yang ditampilkan di footer struk"
+                    disabled={!canEditStore}
                   />
                 </div>
               </div>
+
+              {canEditStore && (
+                <div className="flex justify-end pt-2">
+                  <Button
+                    className="bg-gradient-primary hover:bg-primary/90"
+                    onClick={handleSaveStoreInfo}
+                    disabled={storeSaving || !currentStoreId}
+                  >
+                    {storeSaving ? "Menyimpan..." : "Simpan Informasi Toko"}
+                  </Button>
+                </div>
+              )}
+              </>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
