@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useStore } from "@/contexts/StoreContext";
 
 interface UserProfile {
   id: string;
@@ -56,6 +57,7 @@ export default function Users() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
+  const { currentStoreId } = useStore();
 
   // Store assignment states
   const [allStores, setAllStores] = useState<StoreInfo[]>([]);
@@ -74,6 +76,9 @@ export default function Users() {
   useEffect(() => {
     if (addDialogOpen) {
       fetchAllStores();
+      if (currentStoreId) {
+        setNewUserStoreId(currentStoreId);
+      }
     }
   }, [addDialogOpen]);
 
@@ -358,10 +363,17 @@ export default function Users() {
     return memberships.map(m => m.store_name).filter(Boolean);
   };
 
-  const filteredUsers = users.filter(user =>
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = users.filter(user => {
+    const matchesSearch =
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.name?.toLowerCase().includes(searchTerm.toLowerCase());
+    if (!matchesSearch) return false;
+
+    if (user.role === 'developer') return true;
+
+    const memberships = userStoreMap[user.id] || [];
+    return memberships.some(m => m.store_id === currentStoreId);
+  });
 
   if (loading) {
     return (
