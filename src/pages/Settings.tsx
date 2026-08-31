@@ -584,6 +584,7 @@ export default function Settings() {
                     />
                     <Button 
                       variant="outline" 
+                      disabled={!canEditStore}
                       onClick={() => document.getElementById('logo')?.click()}
                     >
                       <Upload className="w-4 h-4 mr-2" />
@@ -604,6 +605,8 @@ export default function Settings() {
                     id="receiptPhone"
                     placeholder="Contoh: 0812-3456-7890"
                     value={settings.receiptPhone}
+                    readOnly={!canEditStore}
+                    disabled={storeLoading}
                     onChange={(e) => handleSettingChange('receiptPhone', e.target.value)}
                   />
                 </div>
@@ -614,6 +617,8 @@ export default function Settings() {
                     id="receiptWhatsapp"
                     placeholder="Contoh: 0812-3456-7890"
                     value={settings.receiptWhatsapp}
+                    readOnly={!canEditStore}
+                    disabled={storeLoading}
                     onChange={(e) => handleSettingChange('receiptWhatsapp', e.target.value)}
                   />
                 </div>
@@ -624,6 +629,8 @@ export default function Settings() {
                     id="receiptInstagram"
                     placeholder="Contoh: @namatoko"
                     value={settings.receiptInstagram}
+                    readOnly={!canEditStore}
+                    disabled={storeLoading}
                     onChange={(e) => handleSettingChange('receiptInstagram', e.target.value)}
                   />
                 </div>
@@ -634,9 +641,12 @@ export default function Settings() {
                     id="receiptCustomText"
                     placeholder="Contoh: Terima kasih atas kunjungan Anda!"
                     value={settings.receiptCustomText}
+                    readOnly={!canEditStore}
+                    disabled={storeLoading}
                     onChange={(e) => handleSettingChange('receiptCustomText', e.target.value)}
                   />
                 </div>
+
               </div>
 
               <Separator />
