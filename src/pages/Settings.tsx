@@ -19,7 +19,6 @@ import { useStore } from "@/contexts/StoreContext";
 const RECEIPT_SETTINGS_KEY = "receipt_design_settings";
 
 export default function Settings() {
-  const [loading, setLoading] = useState(false);
   const { theme, setTheme } = useTheme();
   const [themeSaving, setThemeSaving] = useState(false);
   const { toast } = useToast();
@@ -253,20 +252,6 @@ export default function Settings() {
     }
   };
 
-  const handleSave = async () => {
-    setLoading(true);
-    
-    // Simulate save operation
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast({
-      title: "Berhasil",
-      description: "Pengaturan berhasil disimpan",
-    });
-    
-    setLoading(false);
-  };
-
   const handleSettingChange = (key: string, value: any) => {
     setSettings(prev => ({
       ...prev,
@@ -415,8 +400,17 @@ export default function Settings() {
                 <Store className="w-5 h-5 text-primary" />
                 <CardTitle>Informasi Toko</CardTitle>
               </div>
+              <CardDescription>
+                {canEditStore
+                  ? "Data ini tersimpan per toko dan berlaku untuk semua pengguna toko tersebut"
+                  : "Hanya pemilik toko atau developer yang dapat mengubah informasi ini"}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {storeLoading ? (
+                <p className="text-muted-foreground">Memuat informasi toko...</p>
+              ) : (
+              <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="storeName">Nama Toko</Label>
@@ -424,6 +418,7 @@ export default function Settings() {
                     id="storeName"
                     value={settings.storeName}
                     onChange={(e) => handleSettingChange('storeName', e.target.value)}
+                    disabled={!canEditStore}
                   />
                 </div>
                 <div>
@@ -433,6 +428,7 @@ export default function Settings() {
                     type="email"
                     value={settings.storeEmail}
                     onChange={(e) => handleSettingChange('storeEmail', e.target.value)}
+                    disabled={!canEditStore}
                   />
                 </div>
               </div>
@@ -443,6 +439,7 @@ export default function Settings() {
                   id="storeAddress"
                   value={settings.storeAddress}
                   onChange={(e) => handleSettingChange('storeAddress', e.target.value)}
+                  disabled={!canEditStore}
                 />
               </div>
 
@@ -453,6 +450,7 @@ export default function Settings() {
                     id="storePhone"
                     value={settings.storePhone}
                     onChange={(e) => handleSettingChange('storePhone', e.target.value)}
+                    disabled={!canEditStore}
                   />
                 </div>
                 <div>
@@ -461,6 +459,7 @@ export default function Settings() {
                     id="currency"
                     value={settings.currency}
                     onChange={(e) => handleSettingChange('currency', e.target.value)}
+                    disabled={!canEditStore}
                   />
                 </div>
               </div>
@@ -478,6 +477,7 @@ export default function Settings() {
                     step="0.01"
                     value={settings.taxRate}
                     onChange={(e) => handleSettingChange('taxRate', e.target.value)}
+                    disabled={!canEditStore}
                   />
                 </div>
 
@@ -488,9 +488,24 @@ export default function Settings() {
                     value={settings.receiptFooter}
                     onChange={(e) => handleSettingChange('receiptFooter', e.target.value)}
                     placeholder="Pesan yang ditampilkan di footer struk"
+                    disabled={!canEditStore}
                   />
                 </div>
               </div>
+
+              {canEditStore && (
+                <div className="flex justify-end pt-2">
+                  <Button
+                    className="bg-gradient-primary hover:bg-primary/90"
+                    onClick={handleSaveStoreInfo}
+                    disabled={storeSaving || !currentStoreId}
+                  >
+                    {storeSaving ? "Menyimpan..." : "Simpan Informasi Toko"}
+                  </Button>
+                </div>
+              )}
+              </>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
