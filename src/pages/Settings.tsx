@@ -70,14 +70,19 @@ export default function Settings() {
     }
   };
 
+  const { currentStoreId, userStoreRole, refreshStores } = useStore();
+  const [storeLoading, setStoreLoading] = useState(true);
+  const [storeSaving, setStoreSaving] = useState(false);
+  const canEditStore = userProfile?.role === 'developer' || userStoreRole === 'owner';
+
   const [settings, setSettings] = useState({
-    storeName: "KENZHO Apps Store",
-    storeAddress: "123 Main Street, City, State 12345",
-    storePhone: "+1 (555) 123-4567",
-    storeEmail: "store@kenzho.com",
-    taxRate: "8.25",
-    currency: "IDR",
-    receiptFooter: "Terima kasih atas kunjungan Anda!",
+    storeName: "",
+    storeAddress: "",
+    storePhone: "",
+    storeEmail: "",
+    taxRate: "",
+    currency: "",
+    receiptFooter: "",
     
     // Notifications
     lowStockAlerts: true,
@@ -97,6 +102,65 @@ export default function Settings() {
     receiptWhatsapp: "",
     receiptCustomText: "",
   });
+
+  // Load store info from database for the active store
+  useEffect(() => {
+    const fetchStore = async () => {
+      if (!currentStoreId) {
+        setStoreLoading(false);
+        return;
+      }
+      setStoreLoading(true);
+      const { data, error } = await supabase
+        .from('stores')
+        .select('name, address, phone, email, tax_rate, currency, receipt_footer')
+        .eq('id', currentStoreId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching store info:', error);
+      } else if (data) {
+        setSettings(prev => ({
+          ...prev,
+          storeName: data.name ?? "",
+          storeAddress: data.address ?? "",
+          storePhone: data.phone ?? "",
+          storeEmail: data.email ?? "",
+          taxRate: data.tax_rate != null ? String(data.tax_rate) : "0",
+          currency: data.currency ?? "IDR",
+          receiptFooter: data.receipt_footer ?? "",
+        }));
+      }
+      setStoreLoading(false);
+    };
+    fetchStore();
+  }, [currentStoreId]);
+
+  const handleSaveStoreInfo = async () => {
+    if (!currentStoreId || !canEditStore) return;
+    setStoreSaving(true);
+    const { error } = await supabase
+      .from('stores')
+      .update({
+        name: settings.storeName,
+        address: settings.storeAddress || null,
+        phone: settings.storePhone || null,
+        email: settings.storeEmail || null,
+        tax_rate: settings.taxRate === "" ? 0 : Number(settings.taxRate),
+        currency: settings.currency || 'IDR',
+        receipt_footer: settings.receiptFooter || null,
+      })
+      .eq('id', currentStoreId);
+
+    if (error) {
+      toast({ title: "Gagal", description: error.message, variant: "destructive" });
+    } else {
+      await refreshStores();
+      toast({ title: "Berhasil", description: "Informasi toko tersimpan" });
+    }
+    setStoreSaving(false);
+  };
+
 
   const btPrinter = useBluetoothPrinter();
 
