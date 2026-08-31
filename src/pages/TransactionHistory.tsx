@@ -286,7 +286,7 @@ export default function TransactionHistory() {
         cash: cashAmount,
         card: cardAmount,
         change: changeAmount,
-        storeFooter: "Terima kasih atas kunjungan Anda!",
+        storeFooter: combinedFooter || "Terima kasih atas kunjungan Anda!",
       });
       toast({ title: "Berhasil", description: "Nota dikirim ke printer" });
     } catch (e: any) {
