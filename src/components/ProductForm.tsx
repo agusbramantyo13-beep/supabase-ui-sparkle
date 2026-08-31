@@ -252,6 +252,29 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
       return;
     }
 
+    // Product-only edit: update just the products table, never touch variants
+    if (isProductEditMode) {
+      setLoading(true);
+      try {
+        const { error: productError } = await supabase
+          .from('products')
+          .update({
+            name: productName,
+            category_id: parseInt(categoryId),
+          } as any)
+          .eq('id', product.id);
+        if (productError) throw productError;
+        toast({ title: "Berhasil", description: "Produk berhasil diperbarui" });
+        onSuccess();
+        onOpenChange(false);
+      } catch (error: any) {
+        toast({ title: "Error", description: error.message || "Gagal menyimpan produk", variant: "destructive" });
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     // When toggle is OFF, hidden variant name is auto-set to product name.
     // When toggle is ON, each row must have a name.
     const preparedVariants = hasVariantsToggle
