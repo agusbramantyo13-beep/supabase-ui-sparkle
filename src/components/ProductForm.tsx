@@ -203,7 +203,7 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
       return;
     }
 
-    if (isEditMode && product?.id && currentStoreId) {
+    if (isAnyEditMode && product?.id && currentStoreId) {
       setImageBusy(true);
       try {
         const path = await uploadProductImage(currentStoreId, product.id, file);
@@ -225,7 +225,7 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
   };
 
   const handleRemoveImage = async () => {
-    if (isEditMode && product?.id && existingImagePath && currentStoreId) {
+    if (isAnyEditMode && product?.id && existingImagePath && currentStoreId) {
       setImageBusy(true);
       try {
         await deleteProductImage(currentStoreId, product.id);
