@@ -852,7 +852,7 @@ export default function Sales() {
       {/* Products Section */}
 
       <div className="space-y-3 lg:col-span-3">
-        <div className="sticky top-0 z-10 -mx-1 px-1 py-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div className="sticky below-app-header z-10 -mx-1 px-1 py-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <h2 className="text-base font-semibold uppercase tracking-wide text-muted-foreground">Produk</h2>
           <div className="flex flex-col sm:flex-row gap-2 sm:max-w-md w-full">
             <Input
@@ -1515,7 +1515,7 @@ export default function Sales() {
       </div>
 
       {/* Mobile floating cart bar */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 flex border-t border-border shadow-elegant">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 flex safe-bottom border-t border-border shadow-elegant bg-background">
         <button
           type="button"
           onClick={() => setMobileCartOpen((open) => !open)}

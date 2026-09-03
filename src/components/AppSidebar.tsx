@@ -97,7 +97,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarContent className="bg-sidebar border-r border-sidebar-border">
+      <SidebarContent className="bg-sidebar border-r border-sidebar-border safe-top safe-bottom">
         {/* Store Switcher */}
         <div className="p-3 border-b border-sidebar-border">
           <DropdownMenu>
