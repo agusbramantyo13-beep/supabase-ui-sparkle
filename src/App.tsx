@@ -65,13 +65,14 @@ const App = () => (
                         <div className="flex min-h-dvh w-full">
                           <AppSidebar />
                           <SidebarInset className="flex-1 min-w-0">
-                            <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background/95 px-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:px-4">
+                            <header className="app-header sticky top-0 z-30 flex shrink-0 items-center gap-2 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
                               <SidebarTrigger className="tap-target -ml-1" aria-label="Buka atau tutup menu" />
                               <div className="flex min-w-0 items-center gap-2">
                                 <h1 className="truncate text-base font-semibold tracking-tight sm:text-lg">KENZHO Apps</h1>
                               </div>
                             </header>
-                            <main className="flex-1 p-3 sm:p-4 lg:p-6">
+                            <main className="flex-1 safe-x p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] sm:p-4 lg:p-6">
+
 
                               <Routes>
                                 <Route path="/" element={
