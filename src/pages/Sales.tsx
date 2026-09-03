@@ -1515,7 +1515,7 @@ export default function Sales() {
       </div>
 
       {/* Mobile floating cart bar */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 flex border-t border-border shadow-elegant">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 flex safe-bottom border-t border-border shadow-elegant bg-background">
         <button
           type="button"
           onClick={() => setMobileCartOpen((open) => !open)}
