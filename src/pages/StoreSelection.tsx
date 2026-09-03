@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Store, Plus, LogOut, Trash2 } from "lucide-react";
+import { InstallPWAButton } from "@/components/InstallPWAButton";
 
 export default function StoreSelection() {
   const { stores, setCurrentStore, refreshStores, loading } = useStore();
@@ -133,6 +134,10 @@ export default function StoreSelection() {
           <p className="text-muted-foreground">
             Selamat datang, {userName || user?.email}! Pilih toko untuk melanjutkan.
           </p>
+        </div>
+
+        <div className="flex justify-center">
+          <InstallPWAButton />
         </div>
 
         {stores.length > 0 && (
