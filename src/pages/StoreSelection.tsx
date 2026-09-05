@@ -27,6 +27,10 @@ export default function StoreSelection() {
   const { stores, setCurrentStore, refreshStores, loading } = useStore();
   const { user, signOut, userName } = useAuth();
   const [profileRole, setProfileRole] = useState<string | null>(null);
+  const [ownerStoreIds, setOwnerStoreIds] = useState<Set<string>>(new Set());
+  const [logoBusyStoreId, setLogoBusyStoreId] = useState<string | null>(null);
+  const logoTargetStoreId = useRef<string | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user) {
@@ -41,8 +45,52 @@ export default function StoreSelection() {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (user) {
+      supabase
+        .from('store_members')
+        .select('store_id')
+        .eq('user_id', user.id)
+        .eq('role', 'owner')
+        .then(({ data }) => {
+          setOwnerStoreIds(new Set((data || []).map((r: any) => r.store_id)));
+        });
+    }
+  }, [user]);
+
   const canCreateStore = profileRole === 'developer';
   const isDeveloper = profileRole === 'developer';
+
+  const canEditLogo = (storeId: string) => isDeveloper || ownerStoreIds.has(storeId);
+
+  const handlePickLogo = (storeId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    logoTargetStoreId.current = storeId;
+    logoInputRef.current?.click();
+  };
+
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    const storeId = logoTargetStoreId.current;
+    if (!file || !storeId) return;
+    setLogoBusyStoreId(storeId);
+    try {
+      const path = await uploadStoreLogo(storeId, file);
+      const now = new Date().toISOString();
+      const { error } = await supabase
+        .from('stores')
+        .update({ logo_path: path, logo_updated_at: now })
+        .eq('id', storeId);
+      if (error) throw error;
+      await refreshStores();
+      toast({ title: "Berhasil", description: "Logo toko diperbarui" });
+    } catch (err: any) {
+      toast({ title: "Gagal upload logo", description: err.message, variant: "destructive" });
+    } finally {
+      setLogoBusyStoreId(null);
+    }
+  };
   const navigate = useNavigate();
   const { toast } = useToast();
   const [showCreateForm, setShowCreateForm] = useState(false);
