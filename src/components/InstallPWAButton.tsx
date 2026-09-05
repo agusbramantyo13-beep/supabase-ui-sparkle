@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { usePWAInstall } from "@/hooks/use-pwa-install";
+import { CANONICAL_PWA_URL, isCanonicalPwaHost } from "@/lib/pwaConfig";
 
 type Platform = "ios" | "android" | "desktop";
 
@@ -56,10 +57,19 @@ export function InstallPWAButton() {
 
   if (isInstalled) return null;
 
+  const onCanonicalHost = isCanonicalPwaHost();
   const platform = detectPlatform();
   const info = INSTRUCTIONS[platform];
 
   const handleClick = async () => {
+    if (!onCanonicalHost) {
+      // Not on the canonical Cloudflare origin — a native install here
+      // would install a PWA scoped to the wrong origin. Send the user
+      // to the canonical origin instead so any install they do there
+      // is the "real" KENZHO POS app.
+      window.location.href = CANONICAL_PWA_URL;
+      return;
+    }
     if (canPromptInstall) {
       await promptInstall();
     } else {
@@ -71,24 +81,26 @@ export function InstallPWAButton() {
     <>
       <Button onClick={handleClick} variant="outline" className="gap-2">
         <Download className="w-4 h-4" />
-        Install KENZHO POS
+        {onCanonicalHost ? "Install KENZHO POS" : "Buka KENZHO POS untuk Install"}
       </Button>
 
-      <Dialog open={showInstructions} onOpenChange={setShowInstructions}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{info.title}</DialogTitle>
-            <DialogDescription>
-              Browser ini belum mendukung install otomatis. Ikuti langkah berikut:
-            </DialogDescription>
-          </DialogHeader>
-          <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-            {info.steps.map((step, i) => (
-              <li key={i}>{step}</li>
-            ))}
-          </ol>
-        </DialogContent>
-      </Dialog>
+      {onCanonicalHost && (
+        <Dialog open={showInstructions} onOpenChange={setShowInstructions}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{info.title}</DialogTitle>
+              <DialogDescription>
+                Browser ini belum mendukung install otomatis. Ikuti langkah berikut:
+              </DialogDescription>
+            </DialogHeader>
+            <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+              {info.steps.map((step, i) => (
+                <li key={i}>{step}</li>
+              ))}
+            </ol>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 }

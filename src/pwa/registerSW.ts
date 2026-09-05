@@ -1,6 +1,11 @@
 // Guarded service worker registration.
-// Skips registration in dev, Lovable previews, iframes, and when ?sw=off is set.
-// Always unregisters any existing /sw.js in refused contexts to avoid stale caches.
+// Only registers on the canonical production origin (the Cloudflare
+// Workers deployment) so there is exactly one installable KENZHO POS
+// PWA. Every other origin (dev, Lovable previews, Lovable's own
+// kenzhovp.lovable.app hosting, iframes, ?sw=off) is refused, and any
+// stale registration left over on those origins is actively unregistered.
+
+import { isCanonicalPwaHost } from "@/lib/pwaConfig";
 
 const SW_URL = "/sw.js";
 
@@ -12,12 +17,8 @@ function isRefusedContext(): boolean {
   } catch {
     return true;
   }
-  const host = window.location.hostname;
-  if (host.startsWith("id-preview--") || host.startsWith("preview--")) return true;
-  if (host === "lovableproject.com" || host.endsWith(".lovableproject.com")) return true;
-  if (host === "lovableproject-dev.com" || host.endsWith(".lovableproject-dev.com")) return true;
-  if (host === "beta.lovable.dev" || host.endsWith(".beta.lovable.dev")) return true;
   if (new URLSearchParams(window.location.search).get("sw") === "off") return true;
+  if (!isCanonicalPwaHost()) return true;
   return false;
 }
 
