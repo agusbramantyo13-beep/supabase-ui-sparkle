@@ -5,7 +5,12 @@
 //
 // This does NOT create a new install mechanism — it only captures and
 // re-exposes the browser's own native install prompt event, and tracks
-// whether the app has already been installed.
+// whether the app has already been installed. The captured prompt is
+// only ever exposed when running on the canonical PWA origin (see
+// src/lib/pwaConfig.ts), so a native install can never be triggered
+// from a non-canonical origin (e.g. Lovable's own hosting).
+
+import { isCanonicalPwaHost } from "./pwaConfig";
 
 export type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -25,6 +30,7 @@ function notify() {
 if (typeof window !== "undefined") {
   window.addEventListener("beforeinstallprompt", (event) => {
     event.preventDefault();
+    if (!isCanonicalPwaHost()) return;
     deferredPrompt = event as BeforeInstallPromptEvent;
     notify();
   });
