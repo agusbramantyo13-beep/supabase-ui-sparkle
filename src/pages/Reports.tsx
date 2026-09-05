@@ -75,12 +75,18 @@ export default function Reports() {
         .gte('created_at', startDate.toISOString())
         .lte('created_at', endDate.toISOString());
 
-      // Fetch sales summary
-      const { data: summaryData } = await supabase
-        .from('v_sales_summary')
-        .select('*')
-        .gte('day', startDate.toISOString().split('T')[0])
-        .lte('day', endDate.toISOString().split('T')[0]);
+      // Aggregate daily summary from the store-scoped sales data above,
+      // so the chart only shows the currently opened store.
+      const dayMap = new Map<string, { day: string; receipts: number; total_sales: number; total_discounts: number }>();
+      (salesData || []).forEach((sale: any) => {
+        const day = new Date(sale.created_at).toLocaleDateString('en-CA'); // YYYY-MM-DD local
+        const entry = dayMap.get(day) || { day, receipts: 0, total_sales: 0, total_discounts: 0 };
+        entry.receipts += 1;
+        entry.total_sales += Number(sale.total || 0);
+        entry.total_discounts += Number(sale.discount_total || 0);
+        dayMap.set(day, entry);
+      });
+      const summaryData = Array.from(dayMap.values());
 
       // Fetch profit data per-store via RPC (only for owner/developer)
       let totalProfit = 0;
