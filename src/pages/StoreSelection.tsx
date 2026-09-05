@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStore } from "@/contexts/StoreContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,8 +18,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Store, Plus, LogOut, Trash2 } from "lucide-react";
+import { Store, Plus, LogOut, Trash2, Camera, Loader2 } from "lucide-react";
 import { InstallPWAButton } from "@/components/InstallPWAButton";
+import { StoreLogo } from "@/components/StoreLogo";
+import { uploadStoreLogo } from "@/lib/storeLogo";
 
 export default function StoreSelection() {
   const { stores, setCurrentStore, refreshStores, loading } = useStore();
