@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStore } from "@/contexts/StoreContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,13 +18,19 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Store, Plus, LogOut, Trash2 } from "lucide-react";
+import { Store, Plus, LogOut, Trash2, Camera, Loader2 } from "lucide-react";
 import { InstallPWAButton } from "@/components/InstallPWAButton";
+import { StoreLogo } from "@/components/StoreLogo";
+import { uploadStoreLogo } from "@/lib/storeLogo";
 
 export default function StoreSelection() {
   const { stores, setCurrentStore, refreshStores, loading } = useStore();
   const { user, signOut, userName } = useAuth();
   const [profileRole, setProfileRole] = useState<string | null>(null);
+  const [ownerStoreIds, setOwnerStoreIds] = useState<Set<string>>(new Set());
+  const [logoBusyStoreId, setLogoBusyStoreId] = useState<string | null>(null);
+  const logoTargetStoreId = useRef<string | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user) {
@@ -39,8 +45,52 @@ export default function StoreSelection() {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (user) {
+      supabase
+        .from('store_members')
+        .select('store_id')
+        .eq('user_id', user.id)
+        .eq('role', 'owner')
+        .then(({ data }) => {
+          setOwnerStoreIds(new Set((data || []).map((r: any) => r.store_id)));
+        });
+    }
+  }, [user]);
+
   const canCreateStore = profileRole === 'developer';
   const isDeveloper = profileRole === 'developer';
+
+  const canEditLogo = (storeId: string) => isDeveloper || ownerStoreIds.has(storeId);
+
+  const handlePickLogo = (storeId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    logoTargetStoreId.current = storeId;
+    logoInputRef.current?.click();
+  };
+
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    const storeId = logoTargetStoreId.current;
+    if (!file || !storeId) return;
+    setLogoBusyStoreId(storeId);
+    try {
+      const path = await uploadStoreLogo(storeId, file);
+      const now = new Date().toISOString();
+      const { error } = await supabase
+        .from('stores')
+        .update({ logo_path: path, logo_updated_at: now })
+        .eq('id', storeId);
+      if (error) throw error;
+      await refreshStores();
+      toast({ title: "Berhasil", description: "Logo toko diperbarui" });
+    } catch (err: any) {
+      toast({ title: "Gagal upload logo", description: err.message, variant: "destructive" });
+    } finally {
+      setLogoBusyStoreId(null);
+    }
+  };
   const navigate = useNavigate();
   const { toast } = useToast();
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -149,8 +199,29 @@ export default function StoreSelection() {
                 onClick={() => handleSelectStore(store)}
               >
                 <CardContent className="p-6 flex items-center gap-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <Store className="w-6 h-6 text-primary" />
+                  <div className="relative shrink-0">
+                    <StoreLogo
+                      logoPath={store.logo_path}
+                      updatedAt={store.logo_updated_at}
+                      alt={store.name}
+                      className="w-12 h-12 rounded-lg"
+                      iconClassName="w-6 h-6"
+                    />
+                    {canEditLogo(store.id) && (
+                      <button
+                        type="button"
+                        onClick={(e) => handlePickLogo(store.id, e)}
+                        disabled={logoBusyStoreId === store.id}
+                        className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow"
+                        aria-label={`Ganti logo ${store.name}`}
+                      >
+                        {logoBusyStoreId === store.id ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Camera className="w-3 h-3" />
+                        )}
+                      </button>
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-foreground truncate">{store.name}</p>
@@ -246,6 +317,14 @@ export default function StoreSelection() {
           </div>
         )}
       </div>
+
+      <input
+        ref={logoInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleLogoChange}
+      />
 
       <AlertDialog open={!!storeToDelete} onOpenChange={(open) => !open && setStoreToDelete(null)}>
         <AlertDialogContent>

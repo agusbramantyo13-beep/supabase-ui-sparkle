@@ -14,6 +14,8 @@ interface Store {
   receipt_whatsapp?: string | null;
   receipt_instagram?: string | null;
   receipt_custom_text?: string | null;
+  logo_path?: string | null;
+  logo_updated_at?: string | null;
 }
 
 
