@@ -11,7 +11,11 @@ import {
 import { usePWAInstall } from "@/hooks/use-pwa-install";
 import { CANONICAL_PWA_URL, isCanonicalPwaHost } from "@/lib/pwaConfig";
 
-type Platform = "ios" | "android" | "desktop";
+type Platform = "ios" | "android" | "mac-safari" | "desktop";
+
+function isSafariBrowser(ua: string): boolean {
+  return /safari/i.test(ua) && !/chrome|chromium|crios|edg|opr|fxios|firefox/i.test(ua);
+}
 
 function detectPlatform(): Platform {
   if (typeof navigator === "undefined") return "desktop";
@@ -21,6 +25,7 @@ function detectPlatform(): Platform {
     (ua.includes("Macintosh") && (navigator as any).maxTouchPoints > 1);
   if (isIOS) return "ios";
   if (/android/i.test(ua)) return "android";
+  if (ua.includes("Macintosh") && isSafariBrowser(ua)) return "mac-safari";
   return "desktop";
 }
 
@@ -39,6 +44,15 @@ const INSTRUCTIONS: Record<Platform, { title: string; steps: string[] }> = {
       "Tap ikon menu (titik tiga) di pojok kanan atas Chrome.",
       'Pilih "Install app" atau "Add to Home screen".',
       "Ikuti instruksi yang muncul untuk menyelesaikan instalasi.",
+    ],
+  },
+  "mac-safari": {
+    title: "Install di Mac (Safari)",
+    steps: [
+      'Klik menu "File" di menu bar, lalu pilih "Add to Dock" (Tambahkan ke Dock). Bisa juga lewat tombol Share di toolbar Safari.',
+      'Beri nama aplikasi, lalu klik "Add".',
+      "Aplikasi akan muncul di Dock dan Launchpad seperti aplikasi Mac biasa.",
+      'Catatan: fitur ini butuh macOS Sonoma (14) atau lebih baru dengan Safari 17+. Jika menu "Add to Dock" tidak muncul, gunakan Chrome atau Edge sebagai alternatif.',
     ],
   },
   desktop: {
