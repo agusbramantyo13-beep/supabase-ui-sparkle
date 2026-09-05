@@ -1508,6 +1508,8 @@ export type Database = {
           currency: string
           email: string | null
           id: string
+          logo_path: string | null
+          logo_updated_at: string | null
           name: string
           phone: string | null
           receipt_custom_text: string | null
@@ -1525,6 +1527,8 @@ export type Database = {
           currency?: string
           email?: string | null
           id?: string
+          logo_path?: string | null
+          logo_updated_at?: string | null
           name: string
           phone?: string | null
           receipt_custom_text?: string | null
@@ -1542,6 +1546,8 @@ export type Database = {
           currency?: string
           email?: string | null
           id?: string
+          logo_path?: string | null
+          logo_updated_at?: string | null
           name?: string
           phone?: string | null
           receipt_custom_text?: string | null
