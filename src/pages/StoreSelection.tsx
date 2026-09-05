@@ -199,8 +199,29 @@ export default function StoreSelection() {
                 onClick={() => handleSelectStore(store)}
               >
                 <CardContent className="p-6 flex items-center gap-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <Store className="w-6 h-6 text-primary" />
+                  <div className="relative shrink-0">
+                    <StoreLogo
+                      logoPath={store.logo_path}
+                      updatedAt={store.logo_updated_at}
+                      alt={store.name}
+                      className="w-12 h-12 rounded-lg"
+                      iconClassName="w-6 h-6"
+                    />
+                    {canEditLogo(store.id) && (
+                      <button
+                        type="button"
+                        onClick={(e) => handlePickLogo(store.id, e)}
+                        disabled={logoBusyStoreId === store.id}
+                        className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow"
+                        aria-label={`Ganti logo ${store.name}`}
+                      >
+                        {logoBusyStoreId === store.id ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Camera className="w-3 h-3" />
+                        )}
+                      </button>
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-foreground truncate">{store.name}</p>
