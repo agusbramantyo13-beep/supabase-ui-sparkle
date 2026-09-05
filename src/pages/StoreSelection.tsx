@@ -318,6 +318,14 @@ export default function StoreSelection() {
         )}
       </div>
 
+      <input
+        ref={logoInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleLogoChange}
+      />
+
       <AlertDialog open={!!storeToDelete} onOpenChange={(open) => !open && setStoreToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
