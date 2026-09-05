@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStore } from "@/contexts/StoreContext";
+import { InstallPWAButton } from "@/components/InstallPWAButton";
 
 interface UserProfile {
   id: string;
@@ -484,61 +485,64 @@ export default function Users() {
           <h1 className="text-xl font-semibold tracking-tight text-foreground">Pengguna</h1>
           <p className="text-muted-foreground">Kelola akun pengguna, peran, dan penugasan toko</p>
         </div>
-        <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-gradient-primary hover:bg-primary/90">
-              <UserPlus className="w-4 h-4 mr-2" />
-              Tambah Pengguna
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Tambah Pengguna Baru</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="name">Nama</Label>
-                <Input id="name" type="text" placeholder="Masukkan nama lengkap" value={newUserName} onChange={(e) => setNewUserName(e.target.value)} />
-              </div>
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="user@example.com" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} />
-              </div>
-              <div>
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Input id="password" type={showPassword ? "text" : "password"} placeholder="Masukkan password" value={newUserPassword} onChange={(e) => setNewUserPassword(e.target.value)} className="pr-10" />
-                  <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent" onClick={() => setShowPassword(!showPassword)}>
-                    {showPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+        <div className="flex items-center gap-2">
+          <InstallPWAButton />
+          <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-gradient-primary hover:bg-primary/90">
+                <UserPlus className="w-4 h-4 mr-2" />
+                Tambah Pengguna
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Tambah Pengguna Baru</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="name">Nama</Label>
+                  <Input id="name" type="text" placeholder="Masukkan nama lengkap" value={newUserName} onChange={(e) => setNewUserName(e.target.value)} />
+                </div>
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" type="email" placeholder="user@example.com" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} />
+                </div>
+                <div>
+                  <Label htmlFor="password">Password</Label>
+                  <div className="relative">
+                    <Input id="password" type={showPassword ? "text" : "password"} placeholder="Masukkan password" value={newUserPassword} onChange={(e) => setNewUserPassword(e.target.value)} className="pr-10" />
+                    <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent" onClick={() => setShowPassword(!showPassword)}>
+                      {showPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                    </Button>
+                  </div>
+                </div>
+                <div>
+                  <Label>Peran</Label>
+                  <Select value={newUserRole} onValueChange={(value: 'developer' | 'staff') => setNewUserRole(value)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="staff">
+                        <div className="flex items-center gap-2"><User className="w-4 h-4" />Staff</div>
+                      </SelectItem>
+                      <SelectItem value="developer">
+                        <div className="flex items-center gap-2"><Shield className="w-4 h-4" />Developer</div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <StoreAssignmentSection isNew={true} />
+
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" onClick={() => setAddDialogOpen(false)}>Batal</Button>
+                  <Button onClick={createUser} disabled={isCreating} className="bg-gradient-primary hover:bg-primary/90">
+                    {isCreating ? "Membuat..." : "Buat Pengguna"}
                   </Button>
                 </div>
               </div>
-              <div>
-                <Label>Peran</Label>
-                <Select value={newUserRole} onValueChange={(value: 'developer' | 'staff') => setNewUserRole(value)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="staff">
-                      <div className="flex items-center gap-2"><User className="w-4 h-4" />Staff</div>
-                    </SelectItem>
-                    <SelectItem value="developer">
-                      <div className="flex items-center gap-2"><Shield className="w-4 h-4" />Developer</div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <StoreAssignmentSection isNew={true} />
-
-              <div className="flex gap-2 justify-end">
-                <Button variant="outline" onClick={() => setAddDialogOpen(false)}>Batal</Button>
-                <Button onClick={createUser} disabled={isCreating} className="bg-gradient-primary hover:bg-primary/90">
-                  {isCreating ? "Membuat..." : "Buat Pengguna"}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="flex items-center gap-4">
