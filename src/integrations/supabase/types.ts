@@ -1770,6 +1770,13 @@ export type Database = {
           total_pending_deposits: number
         }[]
       }
+      get_dashboard_sales_summary: {
+        Args: { p_end?: string; p_start?: string; p_store_id: string }
+        Returns: {
+          sale_count: number
+          total_sales: number
+        }[]
+      }
       get_profit_by_cashier: {
         Args: { p_end: string; p_start: string; p_store_id: string }
         Returns: {
@@ -1818,6 +1825,14 @@ export type Database = {
           total_profit: number
           total_revenue: number
           total_transactions: number
+        }[]
+      }
+      get_store_expenses_summary: {
+        Args: { p_end?: string; p_start?: string; p_store_id: string }
+        Returns: {
+          today_approved: number
+          total_approved: number
+          total_pending: number
         }[]
       }
       get_top_products_profit: {
