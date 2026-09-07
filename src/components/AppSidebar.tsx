@@ -151,7 +151,7 @@ export function AppSidebar() {
                 </DropdownMenuItem>
               ))}
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate("/select-store")}>
+              <DropdownMenuItem onClick={() => { navigate("/select-store"); closeMobileSidebar(); }}>
                 <Settings className="w-4 h-4 mr-2" />
                 Kelola Toko
               </DropdownMenuItem>
