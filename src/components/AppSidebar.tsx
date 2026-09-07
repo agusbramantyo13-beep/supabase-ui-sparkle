@@ -49,7 +49,7 @@ const allMenuItems = [
 const GROUP_ORDER = ["Operasional", "Inventori", "Keuangan & Laporan", "Administrasi"]
 
 export function AppSidebar() {
-  const { state } = useSidebar()
+  const { state, isMobile, setOpenMobile } = useSidebar()
   const { signOut, user, userName } = useAuth()
   const { stores, currentStore, setCurrentStore, userStoreRole } = useStore()
   const { toast } = useToast()
@@ -82,6 +82,12 @@ export function AppSidebar() {
     }
   }
 
+  const closeMobileSidebar = () => {
+    if (isMobile) {
+      setOpenMobile(false)
+    }
+  }
+
   const handleSwitchStore = async (store: any) => {
     if (store?.id === currentStore?.id) return;
     if (hasUnsavedChanges()) {
@@ -93,6 +99,7 @@ export function AppSidebar() {
     // No hard reload: the store context change re-renders pages with the new store.
     await setCurrentStore(store);
     navigate("/");
+    closeMobileSidebar();
   }
 
 
@@ -144,7 +151,7 @@ export function AppSidebar() {
                 </DropdownMenuItem>
               ))}
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate("/select-store")}>
+              <DropdownMenuItem onClick={() => { navigate("/select-store"); closeMobileSidebar(); }}>
                 <Settings className="w-4 h-4 mr-2" />
                 Kelola Toko
               </DropdownMenuItem>
@@ -165,6 +172,7 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       title={collapsed ? item.title : undefined}
+                      onClick={closeMobileSidebar}
                       className={({ isActive }) =>
                         `${isActive
                           ? "bg-primary/15 text-primary font-medium border-l-2 border-primary"
