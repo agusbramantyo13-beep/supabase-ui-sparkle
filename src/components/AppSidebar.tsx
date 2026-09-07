@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
-import { LayoutDashboard, Package, ShoppingCart, Warehouse, Users, BarChart3, Settings, LogOut, UserCheck, Receipt, Tag, ClipboardList, FileText, Store, ChevronsUpDown, ArrowRightLeft, Wallet, ShoppingBag, Coins, History } from "lucide-react"
+import { LayoutDashboard, Package, ShoppingCart, Warehouse, Users, BarChart3, Settings, LogOut, UserCheck, Receipt, Tag, ClipboardList, FileText, ChevronsUpDown, ArrowRightLeft, Wallet, ShoppingBag, Coins, History } from "lucide-react"
 import { NavLink, useLocation, useNavigate } from "react-router-dom"
+import { StoreLogo } from "@/components/StoreLogo"
 import { useAuth } from "@/contexts/AuthContext"
 import { useStore } from "@/contexts/StoreContext"
 import { useToast } from "@/hooks/use-toast"
@@ -103,9 +104,13 @@ export function AppSidebar() {
           <DropdownMenu>
             <DropdownMenuTrigger className="w-full rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring" aria-label="Ganti toko">
               <div className="flex items-center gap-3 p-2 rounded-md hover:bg-sidebar-accent transition-colors duration-150">
-                <div className="w-9 h-9 bg-primary/15 rounded-md flex items-center justify-center flex-shrink-0">
-                  <Store className="w-5 h-5 text-primary" />
-                </div>
+                <StoreLogo
+                  logoPath={currentStore?.logo_path}
+                  updatedAt={currentStore?.logo_updated_at}
+                  alt={currentStore?.name || "Toko"}
+                  className="w-9 h-9 rounded-md flex-shrink-0"
+                  iconClassName="w-5 h-5"
+                />
                 {!collapsed && (
                   <>
                     <div className="flex-1 text-left min-w-0">
@@ -128,7 +133,13 @@ export function AppSidebar() {
                   onClick={() => handleSwitchStore(store)}
                   className={store.id === currentStore?.id ? "bg-primary/10 font-semibold" : ""}
                 >
-                  <Store className="w-4 h-4 mr-2" />
+                  <StoreLogo
+                    logoPath={store.logo_path}
+                    updatedAt={store.logo_updated_at}
+                    alt={store.name}
+                    className="w-4 h-4 rounded-sm mr-2 flex-shrink-0"
+                    iconClassName="w-2.5 h-2.5"
+                  />
                   {store.name}
                 </DropdownMenuItem>
               ))}
