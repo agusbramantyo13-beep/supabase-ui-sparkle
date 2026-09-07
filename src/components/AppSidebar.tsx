@@ -82,6 +82,12 @@ export function AppSidebar() {
     }
   }
 
+  const closeMobileSidebar = () => {
+    if (isMobile) {
+      setOpenMobile(false)
+    }
+  }
+
   const handleSwitchStore = async (store: any) => {
     if (store?.id === currentStore?.id) return;
     if (hasUnsavedChanges()) {
@@ -94,12 +100,6 @@ export function AppSidebar() {
     await setCurrentStore(store);
     navigate("/");
     closeMobileSidebar();
-  }
-
-  const closeMobileSidebar = () => {
-    if (isMobile) {
-      setOpenMobile(false)
-    }
   }
 
 
