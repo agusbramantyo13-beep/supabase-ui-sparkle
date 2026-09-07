@@ -49,7 +49,7 @@ const allMenuItems = [
 const GROUP_ORDER = ["Operasional", "Inventori", "Keuangan & Laporan", "Administrasi"]
 
 export function AppSidebar() {
-  const { state } = useSidebar()
+  const { state, isMobile, setOpenMobile } = useSidebar()
   const { signOut, user, userName } = useAuth()
   const { stores, currentStore, setCurrentStore, userStoreRole } = useStore()
   const { toast } = useToast()
