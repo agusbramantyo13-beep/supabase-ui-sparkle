@@ -172,6 +172,7 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       title={collapsed ? item.title : undefined}
+                      onClick={closeMobileSidebar}
                       className={({ isActive }) =>
                         `${isActive
                           ? "bg-primary/15 text-primary font-medium border-l-2 border-primary"
