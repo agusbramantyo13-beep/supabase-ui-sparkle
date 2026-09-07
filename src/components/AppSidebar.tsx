@@ -93,6 +93,13 @@ export function AppSidebar() {
     // No hard reload: the store context change re-renders pages with the new store.
     await setCurrentStore(store);
     navigate("/");
+    closeMobileSidebar();
+  }
+
+  const closeMobileSidebar = () => {
+    if (isMobile) {
+      setOpenMobile(false)
+    }
   }
 
 
