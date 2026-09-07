@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { DollarSign, Package, ShoppingCart, TrendingUp, Users, Warehouse } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useStore } from "@/contexts/StoreContext"
@@ -8,12 +8,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useNavigate } from "react-router-dom"
+import {
+  PeriodFilter,
+  PeriodPreset,
+  resolvePeriod,
+  formatPeriodLabel,
+} from "@/components/PeriodFilter"
 
 interface DashboardStats {
   totalSales: number
+  saleCount: number
   totalProducts: number
-  totalOrders: number
-  totalUsers: number
+  storeStaffCount: number
   lowStockItems: number
   recentSales: any[]
   inventoryValue: number
@@ -22,9 +28,9 @@ interface DashboardStats {
 export function Dashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     totalSales: 0,
+    saleCount: 0,
     totalProducts: 0,
-    totalOrders: 0,
-    totalUsers: 0,
+    storeStaffCount: 0,
     lowStockItems: 0,
     recentSales: [],
     inventoryValue: 0
@@ -33,34 +39,49 @@ export function Dashboard() {
   const navigate = useNavigate()
   const { currentStoreId } = useStore()
 
+  const [preset, setPreset] = useState<PeriodPreset>("today")
+  const [customStart, setCustomStart] = useState<Date | null>(null)
+  const [customEnd, setCustomEnd] = useState<Date | null>(null)
+  const range = useMemo(
+    () => resolvePeriod(preset, customStart, customEnd),
+    [preset, customStart, customEnd]
+  )
+  const periodLabel = formatPeriodLabel(preset, range)
+  const startIso = range.start ? range.start.toISOString() : null
+  const endIso = range.end ? range.end.toISOString() : null
+
   useEffect(() => {
     fetchDashboardData()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStoreId, startIso, endIso])
 
   const fetchDashboardData = async () => {
+    if (!currentStoreId) return
+    setLoading(true)
     try {
-      // Fetch sales data
-      const { data: salesData } = await supabase
-        .from('sales')
-        .select('total')
-        .eq('store_id', currentStoreId)
-      // Fetch products count
-      const { data: productsData, count: productsCount } = await supabase
+      // Sales summary for the selected period — aggregated server-side so this
+      // never has to download the store's entire sales history to the browser.
+      const { data: salesSummary, error: salesError } = await supabase.rpc(
+        'get_dashboard_sales_summary',
+        { p_store_id: currentStoreId, p_start: startIso, p_end: endIso }
+      )
+      if (salesError) throw salesError
+      const salesRow = (salesSummary as any[])?.[0]
+
+      // Products count (snapshot, not tied to the selected period)
+      const { count: productsCount } = await supabase
         .from('products')
-        .select('*', { count: 'exact' })
+        .select('*', { count: 'exact', head: true })
         .eq('store_id', currentStoreId)
 
-      // Fetch orders count
-      const { data: ordersData, count: ordersCount } = await supabase
-        .from('orders')
-        .select('*', { count: 'exact' })
+      // Staff count for THIS store specifically (previously showed every
+      // registered user across the whole platform, which was misleading)
+      const { count: staffCount } = await supabase
+        .from('store_members')
+        .select('*', { count: 'exact', head: true })
+        .eq('store_id', currentStoreId)
 
-      // Fetch users count
-      const { data: usersData, count: usersCount } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact' })
-
-      // Fetch recent sales
+      // Recent sales — always the latest 5, independent of the period filter
       const { data: recentSales } = await supabase
         .from('sales')
         .select(`
@@ -71,7 +92,7 @@ export function Dashboard() {
         .order('created_at', { ascending: false })
         .limit(5)
 
-      // Calculate total capital value (modal) from inventory
+      // Inventory capital value (snapshot, not tied to the selected period)
       const { data: inventoryData } = await supabase
         .from('inventory')
         .select(`
@@ -79,24 +100,20 @@ export function Dashboard() {
           variants!inner(cost_price)
         `)
         .eq('store_id', currentStoreId)
-      
+
       const totalCapital = inventoryData?.reduce((sum, item) => {
         const costPrice = Number(item.variants?.cost_price || 0)
         const quantity = Number(item.quantity || 0)
         return sum + (costPrice * quantity)
       }, 0) || 0
 
-      // Calculate totals
-      const totalSales = salesData?.reduce((sum, sale) => sum + Number(sale.total || 0), 0) || 0
-
-      // Calculate low stock items
       const lowStockCount = inventoryData?.filter(item => item.quantity < 10).length || 0
 
       setStats({
-        totalSales,
+        totalSales: Number(salesRow?.total_sales || 0),
+        saleCount: Number(salesRow?.sale_count || 0),
         totalProducts: productsCount || 0,
-        totalOrders: ordersCount || 0,
-        totalUsers: usersCount || 0,
+        storeStaffCount: staffCount || 0,
         lowStockItems: lowStockCount,
         recentSales: recentSales || [],
         inventoryValue: totalCapital
@@ -130,7 +147,7 @@ export function Dashboard() {
       <div className="toolbar">
         <div>
           <h1 className="page-title">Dasbor</h1>
-          <p className="page-subtitle">Ringkasan operasional toko hari ini.</p>
+          <p className="page-subtitle">Ringkasan penjualan periode: {periodLabel}.</p>
         </div>
         <Button
           className="tap-target"
@@ -141,13 +158,36 @@ export function Dashboard() {
         </Button>
       </div>
 
+      {/* Period filter */}
+      <Card>
+        <CardContent className="pt-4">
+          <PeriodFilter
+            preset={preset}
+            onPresetChange={setPreset}
+            customStart={customStart}
+            customEnd={customEnd}
+            onCustomChange={(s, e) => {
+              setCustomStart(s)
+              setCustomEnd(e)
+            }}
+          />
+        </CardContent>
+      </Card>
+
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard
           title="Total Penjualan"
           value={`Rp ${stats.totalSales.toLocaleString('id-ID')}`}
-          subtitle="Akumulasi toko ini"
+          subtitle={periodLabel}
           icon={<DollarSign className="w-5 h-5" />}
+        />
+
+        <StatCard
+          title="Transaksi"
+          value={stats.saleCount}
+          subtitle={periodLabel}
+          icon={<ShoppingCart className="w-5 h-5" />}
         />
 
         <StatCard
@@ -158,16 +198,9 @@ export function Dashboard() {
         />
 
         <StatCard
-          title="Pesanan"
-          value={stats.totalOrders}
-          subtitle="Total pesanan"
-          icon={<ShoppingCart className="w-5 h-5" />}
-        />
-
-        <StatCard
-          title="Pengguna"
-          value={stats.totalUsers}
-          subtitle="Pengguna aktif"
+          title="Karyawan"
+          value={stats.storeStaffCount}
+          subtitle="Anggota toko ini"
           icon={<Users className="w-5 h-5" />}
         />
       </div>
