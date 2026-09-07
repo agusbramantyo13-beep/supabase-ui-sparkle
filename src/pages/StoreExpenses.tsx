@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStore } from "@/contexts/StoreContext";
@@ -10,6 +10,12 @@ import { CurrencyKeypadInput } from "@/components/CurrencyKeypadInput";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import {
+  PeriodFilter,
+  PeriodPreset,
+  resolvePeriod,
+  formatPeriodLabel,
+} from "@/components/PeriodFilter";
 import {
   Dialog,
   DialogContent,
@@ -27,7 +33,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ShoppingBag, Plus, CheckCircle2, XCircle, Clock, TrendingDown } from "lucide-react";
+import { ShoppingBag, Plus, CheckCircle2, XCircle, Clock, TrendingDown, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface StoreExpense {
   id: string;
@@ -45,14 +51,22 @@ interface StoreExpense {
   approver_name?: string;
 }
 
+interface Summary {
+  total_approved: number;
+  total_pending: number;
+  today_approved: number;
+}
+
+const EMPTY_SUMMARY: Summary = {
+  total_approved: 0,
+  total_pending: 0,
+  today_approved: 0,
+};
+
+const PAGE_SIZE = 20;
+
 const formatRupiah = (n: number) =>
   "Rp " + Math.round(n).toLocaleString("id-ID");
-
-const formatPriceInput = (v: string) => {
-  const digits = v.replace(/\D/g, "");
-  if (!digits) return "";
-  return parseInt(digits, 10).toLocaleString("id-ID");
-};
 
 const parsePriceInput = (v: string) => {
   const digits = v.replace(/\D/g, "");
@@ -65,10 +79,22 @@ export default function StoreExpenses() {
   const { toast } = useToast();
   const isOwner = userStoreRole === "owner";
 
+  // Period filter
+  const [preset, setPreset] = useState<PeriodPreset>("this_month");
+  const [customStart, setCustomStart] = useState<Date | null>(null);
+  const [customEnd, setCustomEnd] = useState<Date | null>(null);
+  const range = useMemo(
+    () => resolvePeriod(preset, customStart, customEnd),
+    [preset, customStart, customEnd]
+  );
+  const periodLabel = formatPeriodLabel(preset, range);
+  const startIso = range.start ? range.start.toISOString() : null;
+  const endIso = range.end ? range.end.toISOString() : null;
+
   const [expenses, setExpenses] = useState<StoreExpense[]>([]);
-  const [totalApproved, setTotalApproved] = useState(0);
-  const [totalPending, setTotalPending] = useState(0);
-  const [todayApproved, setTodayApproved] = useState(0);
+  const [totalRows, setTotalRows] = useState(0);
+  const [page, setPage] = useState(0);
+  const [summary, setSummary] = useState<Summary>(EMPTY_SUMMARY);
   const [loading, setLoading] = useState(true);
 
   // Submit dialog
@@ -83,56 +109,74 @@ export default function StoreExpenses() {
   const [rejectTarget, setRejectTarget] = useState<StoreExpense | null>(null);
   const [rejectReason, setRejectReason] = useState("");
 
-  const loadData = async () => {
+  const loadSummary = async () => {
     if (!currentStore?.id) return;
-    setLoading(true);
+    const { data, error } = await supabase.rpc("get_store_expenses_summary", {
+      p_store_id: currentStore.id,
+      p_start: startIso,
+      p_end: endIso,
+    });
+    if (error) throw error;
+    const row = (data as any[])?.[0];
+    setSummary(
+      row
+        ? {
+            total_approved: Number(row.total_approved || 0),
+            total_pending: Number(row.total_pending || 0),
+            today_approved: Number(row.today_approved || 0),
+          }
+        : EMPTY_SUMMARY
+    );
+  };
 
-    try {
-      const { data, error } = await supabase
-        .from("store_expenses")
-        .select("*")
-        .eq("store_id", currentStore.id)
-        .order("submitted_at", { ascending: false });
+  const loadExpenses = async () => {
+    if (!currentStore?.id) return;
+    let q = supabase
+      .from("store_expenses")
+      .select("*", { count: "exact" })
+      .eq("store_id", currentStore.id);
+    if (startIso) q = q.gte("submitted_at", startIso);
+    if (endIso) q = q.lt("submitted_at", endIso);
 
-      if (error) throw error;
+    const { data, error, count } = await q
+      .order("submitted_at", { ascending: false })
+      .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+    if (error) throw error;
 
-      const userIds = new Set<string>();
-      (data || []).forEach((d: any) => {
-        if (d.submitted_by) userIds.add(d.submitted_by);
-        if (d.approved_by) userIds.add(d.approved_by);
+    setTotalRows(count || 0);
+
+    const rows = data || [];
+    const userIds = new Set<string>();
+    rows.forEach((d: any) => {
+      if (d.submitted_by) userIds.add(d.submitted_by);
+      if (d.approved_by) userIds.add(d.approved_by);
+    });
+
+    let profilesMap: Record<string, string> = {};
+    if (userIds.size > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, name, email")
+        .in("id", Array.from(userIds));
+      (profiles || []).forEach((p: any) => {
+        profilesMap[p.id] = p.name || p.email || "Pengguna";
       });
+    }
 
-      let profilesMap: Record<string, string> = {};
-      if (userIds.size > 0) {
-        const { data: profiles } = await supabase
-          .from("profiles")
-          .select("id, name, email")
-          .in("id", Array.from(userIds));
-        (profiles || []).forEach((p: any) => {
-          profilesMap[p.id] = p.name || p.email || "Pengguna";
-        });
-      }
-
-      const enriched: StoreExpense[] = (data || []).map((d: any) => ({
+    setExpenses(
+      rows.map((d: any) => ({
         ...d,
         submitter_name: d.submitted_by ? profilesMap[d.submitted_by] || "Pengguna" : "-",
         approver_name: d.approved_by ? profilesMap[d.approved_by] || "Pengguna" : undefined,
-      }));
+      }))
+    );
+  };
 
-      setExpenses(enriched);
-
-      const approved = enriched.filter((d) => d.status === "approved");
-      const pending = enriched.filter((d) => d.status === "pending");
-      setTotalApproved(approved.reduce((s, d) => s + Number(d.amount), 0));
-      setTotalPending(pending.reduce((s, d) => s + Number(d.amount), 0));
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      setTodayApproved(
-        approved
-          .filter((d) => new Date(d.approved_at || d.submitted_at) >= today)
-          .reduce((s, d) => s + Number(d.amount), 0)
-      );
+  const loadData = async () => {
+    if (!currentStore?.id) return;
+    setLoading(true);
+    try {
+      await Promise.all([loadSummary(), loadExpenses()]);
     } catch (err: any) {
       console.error(err);
       toast({
@@ -145,10 +189,16 @@ export default function StoreExpenses() {
     }
   };
 
+  // Reset pagination whenever the period changes
+  useEffect(() => {
+    setPage(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preset, customStart, customEnd, currentStore?.id]);
+
   useEffect(() => {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStore?.id]);
+  }, [currentStore?.id, startIso, endIso, page]);
 
   const handleSubmit = async () => {
     const amount = parsePriceInput(amountInput);
@@ -272,6 +322,8 @@ export default function StoreExpenses() {
     );
   };
 
+  const totalPages = Math.max(1, Math.ceil(totalRows / PAGE_SIZE));
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -306,7 +358,6 @@ export default function StoreExpenses() {
                   label="Nominal Belanja"
                   placeholder="0"
                 />
-
               </div>
               <div>
                 <Label>Keterangan Belanja *</Label>
@@ -337,6 +388,22 @@ export default function StoreExpenses() {
         </Dialog>
       </div>
 
+      {/* Period filter */}
+      <Card>
+        <CardContent className="pt-4">
+          <PeriodFilter
+            preset={preset}
+            onPresetChange={setPreset}
+            customStart={customStart}
+            customEnd={customEnd}
+            onCustomChange={(s, e) => {
+              setCustomStart(s);
+              setCustomEnd(e);
+            }}
+          />
+        </CardContent>
+      </Card>
+
       {/* Summary cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
@@ -346,7 +413,8 @@ export default function StoreExpenses() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="num text-2xl font-semibold">{formatRupiah(todayApproved)}</div>
+            <div className="num text-2xl font-semibold">{formatRupiah(summary.today_approved)}</div>
+            <p className="text-[11px] text-muted-foreground mt-1">Selalu hari ini, tidak mengikuti filter periode</p>
           </CardContent>
         </Card>
         <Card>
@@ -357,8 +425,9 @@ export default function StoreExpenses() {
           </CardHeader>
           <CardContent>
             <div className="num text-2xl font-semibold text-destructive">
-              {formatRupiah(totalApproved)}
+              {formatRupiah(summary.total_approved)}
             </div>
+            <p className="text-[11px] text-muted-foreground mt-1">{periodLabel}</p>
           </CardContent>
         </Card>
         <Card>
@@ -369,8 +438,9 @@ export default function StoreExpenses() {
           </CardHeader>
           <CardContent>
             <div className="num text-2xl font-semibold text-yellow-600">
-              {formatRupiah(totalPending)}
+              {formatRupiah(summary.total_pending)}
             </div>
+            <p className="text-[11px] text-muted-foreground mt-1">Semua waktu, tidak mengikuti filter periode</p>
           </CardContent>
         </Card>
       </div>
@@ -378,99 +448,130 @@ export default function StoreExpenses() {
       {/* Expenses table */}
       <Card>
         <CardHeader>
-          <CardTitle>Riwayat Pengajuan Belanja</CardTitle>
+          <CardTitle>Riwayat Pengajuan Belanja — {periodLabel}</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
             <p className="text-center text-muted-foreground py-8">Memuat...</p>
           ) : expenses.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">
-              Belum ada pengajuan belanja
+              Belum ada pengajuan belanja pada periode ini
             </p>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tanggal</TableHead>
-                    <TableHead>Diajukan Oleh</TableHead>
-                    <TableHead>Keterangan</TableHead>
-                    <TableHead>Nominal</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Disetujui Oleh</TableHead>
-                    <TableHead className="text-right">Aksi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {expenses.map((d) => (
-                    <TableRow key={d.id}>
-                      <TableCell className="whitespace-nowrap">
-                        {new Date(d.submitted_at).toLocaleString("id-ID", {
-                          dateStyle: "short",
-                          timeStyle: "short",
-                        })}
-                      </TableCell>
-                      <TableCell>{d.submitter_name}</TableCell>
-                      <TableCell className="max-w-[260px]">
-                        <p className="font-medium text-foreground">{d.description}</p>
-                        {d.notes && (
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {d.notes}
-                          </p>
-                        )}
-                      </TableCell>
-                      <TableCell className="font-semibold text-destructive">
-                        - {formatRupiah(Number(d.amount))}
-                      </TableCell>
-                      <TableCell>
-                        {statusBadge(d.status)}
-                        {d.status === "rejected" && d.rejection_reason && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Alasan: {d.rejection_reason}
-                          </p>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {d.approver_name || "-"}
-                        {d.approved_at && (
-                          <p className="text-xs">
-                            {new Date(d.approved_at).toLocaleString("id-ID", {
-                              dateStyle: "short",
-                              timeStyle: "short",
-                            })}
-                          </p>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {isOwner && d.status === "pending" ? (
-                          <div className="flex gap-2 justify-end">
-                            <Button
-                              size="sm"
-                              variant="default"
-                              onClick={() => handleApprove(d)}
-                            >
-                              <CheckCircle2 className="w-4 h-4 mr-1" /> ACC
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => {
-                                setRejectTarget(d);
-                                setRejectOpen(true);
-                              }}
-                            >
-                              <XCircle className="w-4 h-4 mr-1" /> Tolak
-                            </Button>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Tanggal</TableHead>
+                      <TableHead>Diajukan Oleh</TableHead>
+                      <TableHead>Keterangan</TableHead>
+                      <TableHead>Nominal</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Disetujui Oleh</TableHead>
+                      <TableHead className="text-right">Aksi</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {expenses.map((d) => (
+                      <TableRow key={d.id}>
+                        <TableCell className="whitespace-nowrap">
+                          {new Date(d.submitted_at).toLocaleString("id-ID", {
+                            dateStyle: "short",
+                            timeStyle: "short",
+                          })}
+                        </TableCell>
+                        <TableCell>{d.submitter_name}</TableCell>
+                        <TableCell className="max-w-[260px]">
+                          <p className="font-medium text-foreground">{d.description}</p>
+                          {d.notes && (
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {d.notes}
+                            </p>
+                          )}
+                        </TableCell>
+                        <TableCell className="font-semibold text-destructive">
+                          - {formatRupiah(Number(d.amount))}
+                        </TableCell>
+                        <TableCell>
+                          {statusBadge(d.status)}
+                          {d.status === "rejected" && d.rejection_reason && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Alasan: {d.rejection_reason}
+                            </p>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {d.approver_name || "-"}
+                          {d.approved_at && (
+                            <p className="text-xs">
+                              {new Date(d.approved_at).toLocaleString("id-ID", {
+                                dateStyle: "short",
+                                timeStyle: "short",
+                              })}
+                            </p>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {isOwner && d.status === "pending" ? (
+                            <div className="flex gap-2 justify-end">
+                              <Button
+                                size="sm"
+                                variant="default"
+                                onClick={() => handleApprove(d)}
+                              >
+                                <CheckCircle2 className="w-4 h-4 mr-1" /> ACC
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => {
+                                  setRejectTarget(d);
+                                  setRejectOpen(true);
+                                }}
+                              >
+                                <XCircle className="w-4 h-4 mr-1" /> Tolak
+                              </Button>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="flex items-center justify-between pt-4">
+                <p className="text-sm text-muted-foreground">
+                  Menampilkan {page * PAGE_SIZE + 1}–
+                  {Math.min((page + 1) * PAGE_SIZE, totalRows)} dari {totalRows}{" "}
+                  pengajuan
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page === 0}
+                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <span className="text-sm num">
+                    {page + 1} / {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page + 1 >= totalPages}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
