@@ -23,6 +23,7 @@ interface ProductVariant {
   product_name: string;
   price: number;
   cost_price: number;
+  average_cost: number | null;
 }
 
 interface StockItem {
@@ -233,6 +234,7 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
         name,
         price,
         cost_price,
+        average_cost,
         product_id,
         products!inner(name)
       `)
@@ -254,7 +256,8 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
       product_id: String(variant.product_id ?? ''),
       product_name: variant.products.name,
       price: variant.price,
-      cost_price: variant.cost_price
+      cost_price: variant.cost_price,
+      average_cost: variant.average_cost
     })) || [];
 
     setVariants(formattedVariants);
@@ -307,9 +310,9 @@ export function StockPurchaseForm({ open, onOpenChange, onSuccess }: StockPurcha
       ...newItems[index],
       variant_id: variantId,
       variant_name: `${variant.product_name} - ${variant.name}`,
-      cost_price: variant.cost_price,
+      cost_price: variant.average_cost ?? variant.cost_price,
       selling_price: variant.price,
-      total_cost: newItems[index].quantity * variant.cost_price,
+      total_cost: newItems[index].quantity * (variant.average_cost ?? variant.cost_price),
     };
     setItems(newItems);
   };
