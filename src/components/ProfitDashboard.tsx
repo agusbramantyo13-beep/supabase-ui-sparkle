@@ -415,11 +415,22 @@ export default function ProfitDashboard() {
   const exportExcel = async () => {
     const data = await fetchAllForExport();
     if (data.length === 0) return;
+    const productIds = [...new Set(data.map((r) => r.product_id).filter((id): id is number => id !== null))];
+    const { data: products, error: productsError } = productIds.length
+      ? await supabase.from("products").select("id, has_variants").in("id", productIds)
+      : { data: [], error: null };
+    if (productsError) {
+      toast({ title: "Export gagal", description: productsError.message, variant: "destructive" });
+      return;
+    }
+    const hasVariantsByProduct = new Map((products || []).map((product) => [product.id, product.has_variants]));
     const wsData = data.map((r) => ({
       "Tanggal": format(new Date(r.sale_created_at), "yyyy-MM-dd HH:mm", { locale: idLocale }),
       "No. Invoice": r.receipt_number ?? "",
       "Produk": r.product_name ?? "",
-      "Varian": r.variant_name ?? "-",
+      "Varian": r.product_id !== null && hasVariantsByProduct.get(r.product_id) === false
+        ? "-"
+        : r.variant_name ?? "-",
       "Kategori": r.category_name ?? "",
       "Qty": Number(r.quantity),
       "Harga Modal": Number(r.cost_price),
