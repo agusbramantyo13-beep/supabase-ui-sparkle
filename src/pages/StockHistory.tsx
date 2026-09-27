@@ -186,10 +186,18 @@ export default function StockHistory() {
   const exportExcel = async () => {
     try {
       const all = await fetchAllForExport();
+      const productIds = [...new Set(all.map((r) => r.product_id).filter((id): id is number => id !== null))];
+      const { data: products, error: productsError } = productIds.length
+        ? await supabase.from("products").select("id, has_variants").in("id", productIds)
+        : { data: [], error: null };
+      if (productsError) throw productsError;
+      const hasVariantsByProduct = new Map((products || []).map((product) => [product.id, product.has_variants]));
       const sheetData = all.map((r) => ({
         Tanggal: format(new Date(r.created_at), "dd MMM yyyy HH:mm", { locale: idLocale }),
         Produk: r.product_name,
-        Varian: r.variant_name || "-",
+        Varian: r.product_id !== null && hasVariantsByProduct.get(r.product_id) === false
+          ? "-"
+          : r.variant_name || "-",
         Jenis: STOCK_HISTORY_TYPE_LABEL[r.movement_type],
         "Qty Sebelum": r.qty_before,
         "Qty Perubahan": r.qty_change,

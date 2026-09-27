@@ -18,6 +18,7 @@ interface InventoryItem {
   product_name: string
   variant_name: string
   category_name: string
+  has_variants: boolean
   cost_price?: number
   price?: number
 }
@@ -49,17 +50,22 @@ export default function Inventory() {
 
       const { data: variantData } = await supabase
         .from('variants')
-        .select('id, price, cost_price, average_cost')
+        .select('id, price, cost_price, average_cost, products!inner(has_variants)')
         .eq('store_id', currentStoreId)
 
       const priceMap = new Map(
-        (variantData || []).map(v => [v.id, { price: Number(v.price) || 0, cost: Number(v.average_cost ?? v.cost_price) || 0 }])
+        (variantData || []).map(v => [v.id, {
+          price: Number(v.price) || 0,
+          cost: Number(v.average_cost ?? v.cost_price) || 0,
+          hasVariants: Boolean(v.products?.has_variants),
+        }])
       )
 
       setInventory((data || []).map(item => ({
         ...item,
         price: priceMap.get(item.variant_id)?.price ?? 0,
         cost_price: priceMap.get(item.variant_id)?.cost ?? 0,
+        has_variants: priceMap.get(item.variant_id)?.hasVariants ?? true,
       })))
     } catch (error) {
       console.error('Error fetching inventory:', error)
@@ -95,7 +101,7 @@ export default function Inventory() {
       const excelData = inventory.map(item => ({
         'Nama Produk': item.product_name,
         'Kategori': item.category_name,
-        'Varian': item.variant_name,
+        'Varian': item.has_variants ? item.variant_name : '-',
         'Harga Beli': item.cost_price || 0,
         'Harga Jual': item.price || 0,
         'Jumlah Stok': item.quantity || 0,
