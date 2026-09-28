@@ -872,6 +872,8 @@ export type Database = {
           product_snapshot: Json
           quantity: number
           sale_id: string
+          stock_after_sync: number | null
+          stock_shortage: boolean
           total: number
           unit_price: number
           variant_id: number | null
@@ -883,6 +885,8 @@ export type Database = {
           product_snapshot: Json
           quantity?: number
           sale_id: string
+          stock_after_sync?: number | null
+          stock_shortage?: boolean
           total: number
           unit_price: number
           variant_id?: number | null
@@ -894,6 +898,8 @@ export type Database = {
           product_snapshot?: Json
           quantity?: number
           sale_id?: string
+          stock_after_sync?: number | null
+          stock_shortage?: boolean
           total?: number
           unit_price?: number
           variant_id?: number | null
@@ -931,9 +937,12 @@ export type Database = {
       }
       sales: {
         Row: {
+          client_created_at: string | null
+          client_txn_id: string | null
           created_at: string | null
           discount_total: number
           id: string
+          is_offline_sync: boolean
           member_id: string | null
           member_points_after: number | null
           payment_details: Json | null
@@ -943,16 +952,21 @@ export type Database = {
           returned_by: string | null
           shift_id: string | null
           status: string | null
+          stock_review_required: boolean
           store_id: string | null
           subtotal: number
+          synced_at: string | null
           tax_total: number
           total: number
           user_id: string | null
         }
         Insert: {
+          client_created_at?: string | null
+          client_txn_id?: string | null
           created_at?: string | null
           discount_total?: number
           id?: string
+          is_offline_sync?: boolean
           member_id?: string | null
           member_points_after?: number | null
           payment_details?: Json | null
@@ -962,16 +976,21 @@ export type Database = {
           returned_by?: string | null
           shift_id?: string | null
           status?: string | null
+          stock_review_required?: boolean
           store_id?: string | null
           subtotal?: number
+          synced_at?: string | null
           tax_total?: number
           total?: number
           user_id?: string | null
         }
         Update: {
+          client_created_at?: string | null
+          client_txn_id?: string | null
           created_at?: string | null
           discount_total?: number
           id?: string
+          is_offline_sync?: boolean
           member_id?: string | null
           member_points_after?: number | null
           payment_details?: Json | null
@@ -981,8 +1000,10 @@ export type Database = {
           returned_by?: string | null
           shift_id?: string | null
           status?: string | null
+          stock_review_required?: boolean
           store_id?: string | null
           subtotal?: number
+          synced_at?: string | null
           tax_total?: number
           total?: number
           user_id?: string | null
@@ -1863,6 +1884,17 @@ export type Database = {
         Returns: boolean
       }
       store_has_members: { Args: { _store_id: string }; Returns: boolean }
+      sync_offline_sale: {
+        Args: { payload: Json }
+        Returns: {
+          already_synced: boolean
+          created_at: string
+          member_points_after: number
+          receipt_number: string
+          sale_id: string
+          stock_review_required: boolean
+        }[]
+      }
     }
     Enums: {
       applies_to: "global" | "product" | "variant" | "category"
