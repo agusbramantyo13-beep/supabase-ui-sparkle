@@ -253,6 +253,7 @@ export type ReceiptData = {
   /** Optional logo as data URL / http URL. If omitted, will try to read
    *  the saved receipt design settings from localStorage. */
   logo?: string;
+  offlinePointsPending?: boolean;
 };
 
 // ============================================================
@@ -420,6 +421,8 @@ function buildReceiptBytes(data: ReceiptData, logoBytes?: Uint8Array | null): Ui
   if (data.member) parts.push(enc("Member: " + data.member + "\n"));
   if (data.member && data.memberPoints != null)
     parts.push(enc("Poin  : " + Math.round(data.memberPoints).toLocaleString("id-ID") + "\n"));
+  if (data.offlinePointsPending)
+    wrap("Poin member dihitung setelah sinkronisasi").forEach((l) => parts.push(enc(l + "\n")));
 
   parts.push(enc(SEP + "\n"));
 

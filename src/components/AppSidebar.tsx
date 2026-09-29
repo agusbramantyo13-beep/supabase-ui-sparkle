@@ -7,6 +7,7 @@ import { useStore } from "@/contexts/StoreContext"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
 import { hasUnsavedChanges } from "@/lib/unsavedChanges"
+import { useOfflineSales } from "@/contexts/OfflineSalesContext"
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
@@ -55,6 +56,7 @@ export function AppSidebar() {
   const { toast } = useToast()
   const location = useLocation()
   const navigate = useNavigate()
+  const { pendingCount } = useOfflineSales()
   const currentPath = location.pathname
   const collapsed = state === "collapsed"
   const [menuItems, setMenuItems] = useState<typeof allMenuItems>([])
@@ -74,6 +76,9 @@ export function AppSidebar() {
 
 
   const handleLogout = async () => {
+    if (pendingCount > 0 && !window.confirm(
+      `Masih ada ${pendingCount} transaksi yang belum tersinkron. Keluar sekarang?`
+    )) return
     try {
       await signOut()
       toast({ title: "Berhasil", description: "Berhasil keluar!" })
