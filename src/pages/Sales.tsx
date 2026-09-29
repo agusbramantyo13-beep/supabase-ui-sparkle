@@ -205,11 +205,10 @@ export default function Sales() {
       .eq('store_id', currentStoreId);
 
     if (error) {
-      toast({
-        title: "Gagal",
-        description: "Gagal memuat produk",
-        variant: "destructive"
-      });
+      if (currentStoreId) {
+        const cached = await readPosCache(currentStoreId);
+        if (cached) setProducts(cached.products as ProductVariant[]);
+      }
       return;
     }
 
@@ -949,7 +948,8 @@ export default function Sales() {
   filteredProducts.forEach(p => {
     const key = p.product_name;
     if (!groupMap.has(key)) groupMap.set(key, []);
-    groupMap.get(key)!.push(p);
+    const group = groupMap.get(key);
+    if (group) group.push(p);
   });
   groupMap.forEach((variants, product_name) => {
     const sortedVariants = [...variants].sort((a, b) =>

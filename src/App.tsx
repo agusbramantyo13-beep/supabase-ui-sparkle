@@ -10,6 +10,7 @@ import { StoreProvider } from "@/contexts/StoreContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { BluetoothPrinterProvider } from "@/contexts/BluetoothPrinterContext";
 import { OfflineSalesProvider } from "@/contexts/OfflineSalesContext";
+import { useOfflineSales } from "@/contexts/OfflineSalesContext";
 import { OfflineStatus } from "@/components/OfflineStatus";
 import { OnlineOnly } from "@/components/OnlineOnly";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -46,6 +47,12 @@ function OfflineRouteGate({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   if (location.pathname === "/sales" || location.pathname === "/offline-sales") return <>{children}</>;
   return <OnlineOnly>{children}</OnlineOnly>;
+}
+
+function OfflineCapableRoleRoute({ children }: { children: React.ReactNode }) {
+  const { online } = useOfflineSales();
+  if (!online) return <>{children}</>;
+  return <RoleBasedRoute allowedRoles={["owner", "cashier"]}>{children}</RoleBasedRoute>;
 }
 
 const App = () => (
@@ -103,14 +110,14 @@ const App = () => (
                                   </RoleBasedRoute>
                                 } />
                                 <Route path="/sales" element={
-                                  <RoleBasedRoute allowedRoles={["owner", "cashier"]}>
+                                   <OfflineCapableRoleRoute>
                                     <Sales />
-                                  </RoleBasedRoute>
+                                   </OfflineCapableRoleRoute>
                                 } />
                                  <Route path="/offline-sales" element={
-                                   <RoleBasedRoute allowedRoles={["owner", "cashier"]}>
+                                   <OfflineCapableRoleRoute>
                                      <OfflineSales />
-                                   </RoleBasedRoute>
+                                   </OfflineCapableRoleRoute>
                                  } />
                                 <Route path="/users" element={
                                   <RoleBasedRoute allowedRoles={["owner"]}>
