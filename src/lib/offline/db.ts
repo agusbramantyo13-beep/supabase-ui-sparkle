@@ -29,8 +29,6 @@ export async function mergePosCache(storeId: string, patch: Partial<PosCache>) {
   const db = await dbPromise;
   const existing = await db.get("posCache", storeId);
   const next: PosCache = {
-    storeId,
-    updatedAt: Date.now(),
     products: [], members: [], discounts: [], loyaltyRules: [], redemptionRules: [], bundlePromos: [], store: null,
     ...existing,
     ...patch,
