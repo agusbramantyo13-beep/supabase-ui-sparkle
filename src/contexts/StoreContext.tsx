@@ -47,16 +47,29 @@ export function useStore() {
 }
 
 const STORE_KEY = "kenzho_current_store_id";
+const STORE_SNAPSHOT_KEY = "kenzho_current_store_snapshot";
+const STORE_ROLE_KEY = "kenzho_current_store_role";
+
+function readOfflineStoreSnapshot(): Store | null {
+  if (typeof window === "undefined" || navigator.onLine) return null;
+  try {
+    const value = localStorage.getItem(STORE_SNAPSHOT_KEY);
+    return value ? JSON.parse(value) as Store : null;
+  } catch {
+    return null;
+  }
+}
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const [stores, setStores] = useState<Store[]>([]);
-  const [currentStore, setCurrentStoreState] = useState<Store | null>(null);
+  const offlineStore = readOfflineStoreSnapshot();
+  const [stores, setStores] = useState<Store[]>(offlineStore ? [offlineStore] : []);
+  const [currentStore, setCurrentStoreState] = useState<Store | null>(offlineStore);
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
-  const [roleResolved, setRoleResolved] = useState(false);
+  const [roleResolved, setRoleResolved] = useState(Boolean(offlineStore));
   const [roleError, setRoleError] = useState(false);
-  const [userStoreRole, setUserStoreRole] = useState<string | null>(null);
+  const [userStoreRole, setUserStoreRole] = useState<string | null>(() => offlineStore ? localStorage.getItem(STORE_ROLE_KEY) : null);
 
   const fetchStores = async () => {
     if (!user) {
@@ -80,7 +93,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     if (profileError) {
       console.error('Error fetching profile:', profileError);
-      setRoleError(true);
+      setRoleError(!currentStore);
       setLoading(false);
       setInitialized(true);
       return;
@@ -97,7 +110,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       console.error('Error fetching stores:', storesError);
       // Keep whatever we already had; a failed refetch must not log the user
       // out of the current page or clear the resolved role.
-      setRoleError(true);
+      setRoleError(!currentStore);
       setLoading(false);
       setInitialized(true);
       return;
@@ -123,9 +136,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     setCurrentStoreState(selectedStore);
     localStorage.setItem(STORE_KEY, selectedStore.id);
+    localStorage.setItem(STORE_SNAPSHOT_KEY, JSON.stringify(selectedStore));
 
     if (isDev) {
       setUserStoreRole('owner');
+      localStorage.setItem(STORE_ROLE_KEY, 'owner');
       setRoleResolved(true);
     } else {
       const { data: membership, error: membershipError } = await supabase
@@ -140,6 +155,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setRoleError(true);
       } else {
         setUserStoreRole(membership?.role || null);
+        if (membership?.role) localStorage.setItem(STORE_ROLE_KEY, membership.role);
         setRoleResolved(true);
       }
     }
@@ -155,6 +171,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const setCurrentStore = async (store: Store) => {
     setCurrentStoreState(store);
     localStorage.setItem(STORE_KEY, store.id);
+    localStorage.setItem(STORE_SNAPSHOT_KEY, JSON.stringify(store));
 
     if (!user) return;
 
@@ -165,6 +182,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       .maybeSingle();
     if (profileData?.role === 'developer') {
       setUserStoreRole('owner');
+      localStorage.setItem(STORE_ROLE_KEY, 'owner');
       setRoleResolved(true);
       return;
     }
@@ -184,6 +202,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     setRoleError(false);
     setUserStoreRole(data?.role || null);
+    if (data?.role) localStorage.setItem(STORE_ROLE_KEY, data.role);
     setRoleResolved(true);
   };
 
