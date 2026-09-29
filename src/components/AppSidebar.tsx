@@ -26,6 +26,7 @@ import {
 const allMenuItems = [
   { title: "Dasbor", url: "/", icon: LayoutDashboard, roles: ["owner"], group: "Operasional" },
   { title: "Penjualan", url: "/sales", icon: ShoppingCart, roles: ["owner", "cashier"], group: "Operasional" },
+  { title: "Antrean Offline", url: "/offline-sales", icon: Receipt, roles: ["owner", "cashier"], group: "Operasional" },
   { title: "Riwayat Transaksi", url: "/transaction-history", icon: Receipt, roles: ["owner", "cashier"], group: "Operasional" },
   { title: "Kehadiran", url: "/attendance", icon: UserCheck, roles: ["owner", "cashier"], group: "Operasional" },
 

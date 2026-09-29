@@ -67,7 +67,7 @@ export async function getDeviceIdentity() {
   const savedCode = await db.get("meta", "device-code");
   if (savedId && savedCode) return { deviceId: String(savedId.value), deviceCode: String(savedCode.value) };
   const deviceId = crypto.randomUUID();
-  const deviceCode = `DV${deviceId.replaceAll("-", "").slice(0, 6).toUpperCase()}`;
+  const deviceCode = `DV${deviceId.replace(/-/g, "").slice(0, 6).toUpperCase()}`;
   await db.put("meta", { key: "device-id", value: deviceId });
   await db.put("meta", { key: "device-code", value: deviceCode });
   return { deviceId, deviceCode };

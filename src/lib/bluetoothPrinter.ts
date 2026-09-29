@@ -422,6 +422,8 @@ function buildReceiptBytes(data: ReceiptData, logoBytes?: Uint8Array | null): Ui
   if (data.member && data.memberPoints != null)
     parts.push(enc("Poin  : " + Math.round(data.memberPoints).toLocaleString("id-ID") + "\n"));
   if (data.offlinePointsPending)
+    wrap("Poin member dihitung setelah sinkronisasi").forEach((line) => parts.push(enc(line + "\n")));
+  if (data.offlinePointsPending)
     wrap("Poin member dihitung setelah sinkronisasi").forEach((l) => parts.push(enc(l + "\n")));
 
   parts.push(enc(SEP + "\n"));
