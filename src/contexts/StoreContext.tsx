@@ -48,7 +48,6 @@ export function useStore() {
 
 const STORE_KEY = "kenzho_current_store_id";
 const STORE_SNAPSHOT_KEY = "kenzho_current_store_snapshot";
-const STORE_ROLE_KEY = "kenzho_current_store_role";
 
 function readOfflineStoreSnapshot(): Store | null {
   if (typeof window === "undefined" || navigator.onLine) return null;
@@ -65,11 +64,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const offlineStore = readOfflineStoreSnapshot();
   const [stores, setStores] = useState<Store[]>(offlineStore ? [offlineStore] : []);
   const [currentStore, setCurrentStoreState] = useState<Store | null>(offlineStore);
-  const [loading, setLoading] = useState(true);
-  const [initialized, setInitialized] = useState(false);
-  const [roleResolved, setRoleResolved] = useState(Boolean(offlineStore));
+  const [loading, setLoading] = useState(!offlineStore);
+  const [initialized, setInitialized] = useState(Boolean(offlineStore));
+  const [roleResolved, setRoleResolved] = useState(false);
   const [roleError, setRoleError] = useState(false);
-  const [userStoreRole, setUserStoreRole] = useState<string | null>(() => offlineStore ? localStorage.getItem(STORE_ROLE_KEY) : null);
+  const [userStoreRole, setUserStoreRole] = useState<string | null>(null);
 
   const fetchStores = async () => {
     if (!user) {
@@ -140,7 +139,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     if (isDev) {
       setUserStoreRole('owner');
-      localStorage.setItem(STORE_ROLE_KEY, 'owner');
       setRoleResolved(true);
     } else {
       const { data: membership, error: membershipError } = await supabase
@@ -155,7 +153,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setRoleError(true);
       } else {
         setUserStoreRole(membership?.role || null);
-        if (membership?.role) localStorage.setItem(STORE_ROLE_KEY, membership.role);
         setRoleResolved(true);
       }
     }
@@ -182,7 +179,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       .maybeSingle();
     if (profileData?.role === 'developer') {
       setUserStoreRole('owner');
-      localStorage.setItem(STORE_ROLE_KEY, 'owner');
       setRoleResolved(true);
       return;
     }
@@ -202,7 +198,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     setRoleError(false);
     setUserStoreRole(data?.role || null);
-    if (data?.role) localStorage.setItem(STORE_ROLE_KEY, data.role);
     setRoleResolved(true);
   };
 

@@ -29,6 +29,7 @@ interface Transaction {
   member_name: string | null;
   member_code: string | null;
   member_points_after?: number | null;
+  is_offline_sync?: boolean;
 
   subtotal?: number;
   discount_total?: number;
@@ -79,7 +80,7 @@ export default function TransactionHistory() {
         .from('sales')
         .select(`
           id, receipt_number, total, subtotal, discount_total, tax_total,
-          created_at, payment_method, payment_details, user_id, status, member_id, member_points_after,
+          created_at, payment_method, payment_details, user_id, status, member_id, member_points_after, is_offline_sync,
           profiles:user_id(name, email),
           members:member_id(name, member_code)
         `)
@@ -142,6 +143,7 @@ export default function TransactionHistory() {
         member_name: (sale.members as any)?.name || null,
         member_code: (sale.members as any)?.member_code || null,
         member_points_after: sale.member_points_after ?? null,
+        is_offline_sync: Boolean(sale.is_offline_sync),
 
         type: 'sale',
       }));
@@ -480,7 +482,10 @@ export default function TransactionHistory() {
                               {transaction.description || 'Belanja Toko'}
                             </span>
                           ) : (
-                            transaction.receipt_number || '-'
+                            <span className="flex items-center gap-2">
+                              {transaction.receipt_number || '-'}
+                              {transaction.is_offline_sync && <Badge variant="outline">Offline</Badge>}
+                            </span>
                           )}
                         </TableCell>
                         <TableCell className="text-foreground">{transaction.user_name || '-'}</TableCell>

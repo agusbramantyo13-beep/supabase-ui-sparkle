@@ -16,6 +16,11 @@ import { CurrencyKeypadInput } from "@/components/CurrencyKeypadInput";
 import { applyInventoryChange } from "@/lib/stockHistory";
 import { ProductImage } from "@/components/ProductImage";
 import { cn } from "@/lib/utils";
+import { addOutbox, getDeviceIdentity, nextReceiptNumber } from "@/lib/offline/db";
+import { imageUrlToDataUrl, readPosCache, writePosCache } from "@/lib/offline/cache";
+import { isNetworkError } from "@/lib/offline/network";
+import type { OfflineQueueEntry, OfflineSalePayload } from "@/lib/offline/types";
+import { getProductImageUrl } from "@/lib/productImage";
 
 interface ProductVariant {
   id: string;
@@ -125,17 +130,32 @@ export default function Sales() {
   const [bundlePromos, setBundlePromos] = useState<BundlePromo[]>([]);
   const mobileCartSectionRef = useRef<HTMLDivElement | null>(null);
   const { toast } = useToast();
-  const { user } = useAuth();
-  const { currentStoreId } = useStore();
+  const { user, userName } = useAuth();
+  const { currentStoreId, currentStore } = useStore();
 
   useEffect(() => {
-    fetchProducts();
-    fetchDiscounts();
-    fetchMembers();
-    fetchLoyaltyRules();
-    fetchRedemptionRules();
-    fetchBundlePromos();
-  }, []);
+    if (!currentStoreId) return;
+    let active = true;
+    const hydrate = async () => {
+      const cached = await readPosCache(currentStoreId);
+      if (cached && active) {
+        setProducts(cached.products as ProductVariant[]);
+        setMembers(cached.members as Member[]);
+        setDiscounts(cached.discounts as Discount[]);
+        setLoyaltyRules(cached.loyaltyRules as LoyaltyPointRule[]);
+        setRedemptionRules(cached.redemptionRules as PointRedemptionRule[]);
+        setBundlePromos(cached.bundlePromos as BundlePromo[]);
+      }
+      if (navigator.onLine) {
+        await Promise.all([fetchProducts(), fetchDiscounts(), fetchMembers(), fetchLoyaltyRules(), fetchRedemptionRules(), fetchBundlePromos()]);
+      }
+    };
+    const reconnect = () => void hydrate();
+    void hydrate();
+    window.addEventListener("online", reconnect);
+    return () => { active = false; window.removeEventListener("online", reconnect); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStoreId]);
 
   useEffect(() => {
     calculateEarnedPoints();
@@ -186,11 +206,10 @@ export default function Sales() {
       .eq('store_id', currentStoreId);
 
     if (error) {
-      toast({
-        title: "Gagal",
-        description: "Gagal memuat produk",
-        variant: "destructive"
-      });
+      if (currentStoreId) {
+        const cached = await readPosCache(currentStoreId);
+        if (cached) setProducts(cached.products as ProductVariant[]);
+      }
       return;
     }
 
@@ -220,6 +239,23 @@ export default function Sales() {
     })) || [];
 
     setProducts(formattedProducts);
+    if (currentStoreId) {
+      void (async () => {
+        const imageCache = new Map<string, string | undefined>();
+        const cachedProducts = await Promise.all(formattedProducts.map(async (product) => {
+          if (!product.image_path) return product;
+          const key = `${product.image_path}:${product.product_updated_at || ""}`;
+          let dataUrl = imageCache.get(key);
+          if (!imageCache.has(key)) {
+            const signedUrl = await getProductImageUrl(product.image_path, product.product_updated_at);
+            dataUrl = await imageUrlToDataUrl(signedUrl);
+            imageCache.set(key, dataUrl);
+          }
+          return dataUrl ? { ...product, image_path: dataUrl } : product;
+        }));
+        await writePosCache(currentStoreId, { products: cachedProducts });
+      })();
+    }
   };
 
   const fetchDiscounts = async () => {
@@ -235,6 +271,7 @@ export default function Sales() {
     }
 
     setDiscounts(data || []);
+    if (currentStoreId) void writePosCache(currentStoreId, { discounts: data || [] });
   };
 
   const fetchMembers = async () => {
@@ -251,6 +288,7 @@ export default function Sales() {
     }
 
     setMembers(data || []);
+    if (currentStoreId) void writePosCache(currentStoreId, { members: data || [] });
   };
 
 
@@ -267,6 +305,7 @@ export default function Sales() {
     }
 
     setLoyaltyRules(data || []);
+    if (currentStoreId) void writePosCache(currentStoreId, { loyaltyRules: data || [] });
   };
 
   const fetchRedemptionRules = async () => {
@@ -282,6 +321,7 @@ export default function Sales() {
     }
 
     setRedemptionRules(data || []);
+    if (currentStoreId) void writePosCache(currentStoreId, { redemptionRules: data || [] });
   };
 
   // Get available redemption rules for selected member
@@ -332,8 +372,23 @@ export default function Sales() {
         "id, name, active, starts_at, ends_at, bundle_promo_buy_items(variant_id, quantity), bundle_promo_free_items(variant_id, quantity)"
       )
       .eq("store_id", currentStoreId);
-    if (!error) setBundlePromos((data as any) || []);
+    if (!error) {
+      const promos = (data as BundlePromo[]) || [];
+      setBundlePromos(promos);
+      if (currentStoreId) void writePosCache(currentStoreId, { bundlePromos: promos });
+    }
   };
+
+  useEffect(() => {
+    if (!currentStoreId || !currentStore) return;
+    const cacheStore = async () => {
+      const receiptLogo = await imageUrlToDataUrl(currentStore.receipt_logo);
+      await writePosCache(currentStoreId, {
+        store: { ...currentStore, receipt_logo: receiptLogo || currentStore.receipt_logo },
+      });
+    };
+    void cacheStore();
+  }, [currentStoreId, currentStore]);
 
   const syncBundleFreeItems = () => {
     const now = new Date();
@@ -580,6 +635,95 @@ export default function Sales() {
     return paid - total;
   };
 
+  const resetAfterSale = () => {
+    clearCart();
+    setAmountPaid("");
+    setSplitCash("");
+    setSplitCard("");
+    setSelectedDiscountId("");
+    setSelectedMemberId("");
+    setSelectedRedemptionId("");
+    setEarnedPoints(0);
+  };
+
+  const queueOfflineSale = async () => {
+    if (!user?.id || !currentStoreId) throw new Error("Sesi kasir atau toko aktif tidak tersedia");
+    const subtotal = getSubtotal();
+    const discountTotal = getDiscountAmount() + getRedemptionDiscount();
+    const total = getTotalAmount();
+    const splitCashNum = Number(splitCash) || 0;
+    const splitCardNum = Number(splitCard) || 0;
+    const paid = Number(amountPaid) || 0;
+    const { deviceId } = await getDeviceIdentity();
+    const clientTxnId = crypto.randomUUID();
+    const receiptNumber = await nextReceiptNumber();
+    const clientCreatedAt = new Date().toISOString();
+    const redemption = redemptionRules.find((rule) => rule.id === selectedRedemptionId);
+    const payload: OfflineSalePayload = {
+      client_txn_id: clientTxnId,
+      store_id: currentStoreId,
+      cashier_user_id: user.id,
+      device_id: deviceId,
+      receipt_number: receiptNumber,
+      client_created_at: clientCreatedAt,
+      items: cart.map((item) => ({
+        variant_id: Number(item.product.id),
+        product_id: item.product.product_id ? Number(item.product.product_id) : undefined,
+        display_name: `${item.product.product_name} - ${item.product.name}`,
+        quantity: item.quantity,
+        unit_price: item.product.price,
+        total: item.subtotal,
+      })),
+      payment_method: paymentMethod,
+      payment_details: {
+        amount_paid: paymentMethod === "split" ? splitCashNum + splitCardNum : paid,
+        change: getChange(),
+        cash_amount: paymentMethod === "split" ? splitCashNum : paymentMethod === "cash" ? total : 0,
+        card_amount: paymentMethod === "split" ? splitCardNum : paymentMethod === "card" ? total : 0,
+      },
+      member_id: selectedMemberId && selectedMemberId !== "none" ? selectedMemberId : null,
+      subtotal,
+      discount_total: discountTotal,
+      tax_total: 0,
+      total,
+      redeemed_points: redemption?.points_required || 0,
+    };
+    const entry: OfflineQueueEntry = {
+      clientTxnId,
+      storeId: currentStoreId,
+      receiptNumber,
+      clientCreatedAt,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      status: "menunggu",
+      attempts: 0,
+      nextRetryAt: 0,
+      payload,
+      receipt: {
+        storeName: currentStore?.name || "KENZHO Apps",
+        storeAddress: currentStore?.address || undefined,
+        storePhone: currentStore?.receipt_phone || currentStore?.phone || undefined,
+        storeFooter: currentStore?.receipt_footer || currentStore?.receipt_custom_text || undefined,
+        logo: currentStore?.receipt_logo || undefined,
+        cashier: userName || undefined,
+        member: members.find((member) => member.id === selectedMemberId)?.name,
+        dateTime: new Date(clientCreatedAt).toLocaleString("id-ID"),
+      },
+    };
+    await addOutbox(entry);
+    const queuedQty = new Map<string, number>();
+    cart.forEach((item) => queuedQty.set(item.product.id, (queuedQty.get(item.product.id) || 0) + item.quantity));
+    const nextProducts = products.map((product) => ({
+      ...product,
+      available_stock: (product.available_stock || 0) - (queuedQty.get(product.id) || 0),
+    }));
+    setProducts(nextProducts);
+    await writePosCache(currentStoreId, { products: nextProducts });
+    window.dispatchEvent(new Event("kenzho-outbox-changed"));
+    resetAfterSale();
+    toast({ title: "Tersimpan di perangkat", description: `Transaksi ${receiptNumber} akan disinkronkan saat online.` });
+  };
+
   const processSale = async () => {
     if (cart.length === 0) {
       toast({
@@ -592,6 +736,7 @@ export default function Sales() {
 
     setLoading(true);
 
+    let onlineSaleCreated = false;
     try {
       const selectedMember = members.find(m => m.id === selectedMemberId);
       const subtotal = getSubtotal();
@@ -634,6 +779,11 @@ export default function Sales() {
         }
       }
 
+      if (!navigator.onLine) {
+        await queueOfflineSale();
+        return;
+      }
+
       const receiptNumber = `RCP-${Date.now()}`;
 
       // Create sale record
@@ -663,6 +813,7 @@ export default function Sales() {
         .single();
 
       if (saleError) throw saleError;
+      onlineSaleCreated = true;
 
       // Create sale items
       const saleItems = cart.map(item => ({
@@ -779,18 +930,19 @@ export default function Sales() {
         description: successMessage + pointsMessage,
       });
 
-      clearCart();
-      setAmountPaid("");
-      setSplitCash("");
-      setSplitCard("");
-      setSelectedDiscountId("");
-      setSelectedMemberId("");
-      setSelectedRedemptionId("");
-      setEarnedPoints(0);
+      resetAfterSale();
       
       // Refresh product list to update stock
       fetchProducts();
     } catch (error: any) {
+      if (!onlineSaleCreated && isNetworkError(error)) {
+        try {
+          await queueOfflineSale();
+          return;
+        } catch (queueError) {
+          error = queueError;
+        }
+      }
       toast({
         title: "Gagal",
         description: error.message || "Gagal memproses penjualan",
@@ -820,7 +972,8 @@ export default function Sales() {
   filteredProducts.forEach(p => {
     const key = p.product_name;
     if (!groupMap.has(key)) groupMap.set(key, []);
-    groupMap.get(key)!.push(p);
+    const group = groupMap.get(key);
+    if (group) group.push(p);
   });
   groupMap.forEach((variants, product_name) => {
     const sortedVariants = [...variants].sort((a, b) =>

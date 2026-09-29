@@ -30,6 +30,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
+        // A refresh failure without connectivity must not discard the last
+        // persisted session. The server validates it again when sync resumes.
+        if (event === 'SIGNED_OUT' && !navigator.onLine) {
+          setLoading(false);
+          return;
+        }
         // Always keep session fresh (token refresh), but only update user
         // reference when the actual user id changes. This prevents downstream
         // effects (StoreContext, data fetches) from re-running when the user
@@ -63,9 +69,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    supabase.auth.getSession().then(({ data: { session: storedSession } }) => {
+      setSession(storedSession);
+      setUser(storedSession?.user ?? null);
       setLoading(false);
     });
 

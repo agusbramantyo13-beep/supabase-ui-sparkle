@@ -27,17 +27,18 @@ export async function getPosCache(storeId: string) {
 
 export async function mergePosCache(storeId: string, patch: Partial<PosCache>) {
   const db = await dbPromise;
-  const existing = await db.get("posCache", storeId);
+  const transaction = db.transaction("posCache", "readwrite");
+  const store = transaction.objectStore("posCache");
+  const existing = await store.get(storeId);
   const next: PosCache = {
-    storeId,
-    updatedAt: Date.now(),
     products: [], members: [], discounts: [], loyaltyRules: [], redemptionRules: [], bundlePromos: [], store: null,
     ...existing,
     ...patch,
     storeId,
     updatedAt: Date.now(),
   };
-  await db.put("posCache", next);
+  await store.put(next);
+  await transaction.done;
   return next;
 }
 
@@ -67,7 +68,7 @@ export async function getDeviceIdentity() {
   const savedCode = await db.get("meta", "device-code");
   if (savedId && savedCode) return { deviceId: String(savedId.value), deviceCode: String(savedCode.value) };
   const deviceId = crypto.randomUUID();
-  const deviceCode = `DV${deviceId.replaceAll("-", "").slice(0, 6).toUpperCase()}`;
+  const deviceCode = `DV${deviceId.replace(/-/g, "").slice(0, 6).toUpperCase()}`;
   await db.put("meta", { key: "device-id", value: deviceId });
   await db.put("meta", { key: "device-code", value: deviceCode });
   return { deviceId, deviceCode };

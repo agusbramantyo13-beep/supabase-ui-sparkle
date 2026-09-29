@@ -14,10 +14,10 @@ export async function syncOutbox(onChange?: () => void) {
   running = true;
   onChange?.();
   try {
-    const rows = (await listOutbox()).filter((row) => row.status !== "sinkron");
+    const rows = (await listOutbox()).filter((row) => row.status === "menunggu");
     for (const row of rows) {
       if (!navigator.onLine) break;
-      if (row.status === "menunggu" && row.nextRetryAt > Date.now()) continue;
+      if (row.nextRetryAt > Date.now()) break;
       try {
         const { error } = await (supabase.rpc as any)("sync_offline_sale", { payload: row.payload });
         if (error) throw error;

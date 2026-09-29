@@ -3,12 +3,16 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { StoreProvider } from "@/contexts/StoreContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { BluetoothPrinterProvider } from "@/contexts/BluetoothPrinterContext";
+import { OfflineSalesProvider } from "@/contexts/OfflineSalesContext";
+import { useOfflineSales } from "@/contexts/OfflineSalesContext";
+import { OfflineStatus } from "@/components/OfflineStatus";
+import { OnlineOnly } from "@/components/OnlineOnly";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { StoreRequiredRoute } from "@/components/StoreRequiredRoute";
 import { RoleBasedRoute } from "@/components/RoleBasedRoute";
@@ -32,11 +36,24 @@ import StoreSelection from "./pages/StoreSelection";
 import CashDeposits from "./pages/CashDeposits";
 import StoreExpenses from "./pages/StoreExpenses";
 import OtherSales from "./pages/OtherSales";
+import OfflineSales from "./pages/OfflineSales";
 import Auth from "./pages/Auth";
 import OAuthConsent from "./pages/OAuthConsent";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
+
+function OfflineRouteGate({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
+  if (location.pathname === "/sales" || location.pathname === "/offline-sales") return <>{children}</>;
+  return <OnlineOnly>{children}</OnlineOnly>;
+}
+
+function OfflineCapableRoleRoute({ children }: { children: React.ReactNode }) {
+  const { online } = useOfflineSales();
+  if (!online) return <>{children}</>;
+  return <RoleBasedRoute allowedRoles={["owner", "cashier"]}>{children}</RoleBasedRoute>;
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -45,6 +62,7 @@ const App = () => (
         <ThemeProvider>
         <StoreProvider>
           <BluetoothPrinterProvider>
+          <OfflineSalesProvider>
           <Toaster />
           <Sonner />
           <BrowserRouter>
@@ -70,11 +88,12 @@ const App = () => (
                               <div className="flex min-w-0 items-center gap-2">
                                 <h1 className="truncate text-base font-semibold tracking-tight sm:text-lg">KENZHO Apps</h1>
                               </div>
+                               <OfflineStatus />
                             </header>
                             <main className="flex-1 safe-x p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] sm:p-4 lg:p-6">
 
 
-                              <Routes>
+                              <OfflineRouteGate><Routes>
                                 <Route path="/" element={
                                   <RoleBasedRoute allowedRoles={["owner"]}>
                                     <Index />
@@ -91,10 +110,15 @@ const App = () => (
                                   </RoleBasedRoute>
                                 } />
                                 <Route path="/sales" element={
-                                  <RoleBasedRoute allowedRoles={["owner", "cashier"]}>
+                                   <OfflineCapableRoleRoute>
                                     <Sales />
-                                  </RoleBasedRoute>
+                                   </OfflineCapableRoleRoute>
                                 } />
+                                 <Route path="/offline-sales" element={
+                                   <OfflineCapableRoleRoute>
+                                     <OfflineSales />
+                                   </OfflineCapableRoleRoute>
+                                 } />
                                 <Route path="/users" element={
                                   <RoleBasedRoute allowedRoles={["owner"]}>
                                     <Users />
@@ -167,7 +191,7 @@ const App = () => (
                                 } />
                                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                                 <Route path="*" element={<NotFound />} />
-                              </Routes>
+                              </Routes></OfflineRouteGate>
                             </main>
                           </SidebarInset>
                         </div>
@@ -178,6 +202,7 @@ const App = () => (
               />
             </Routes>
           </BrowserRouter>
+          </OfflineSalesProvider>
           </BluetoothPrinterProvider>
         </StoreProvider>
         </ThemeProvider>
