@@ -104,6 +104,9 @@ export function getProductImageUrl(
   updatedAt?: string | null
 ): Promise<string | null> {
   if (!imagePath) return Promise.resolve(null);
+  if (imagePath.startsWith("data:") || imagePath.startsWith("blob:") || imagePath.startsWith("http")) {
+    return Promise.resolve(imagePath);
+  }
   const v = updatedAt ? new Date(updatedAt).getTime() : 0;
   const key = `${imagePath}?v=${v}`;
   const cached = urlCache.get(key);

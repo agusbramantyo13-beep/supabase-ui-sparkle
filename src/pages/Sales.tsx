@@ -20,6 +20,7 @@ import { addOutbox, getDeviceIdentity, nextReceiptNumber } from "@/lib/offline/d
 import { imageUrlToDataUrl, readPosCache, writePosCache } from "@/lib/offline/cache";
 import { isNetworkError } from "@/lib/offline/network";
 import type { OfflineQueueEntry, OfflineSalePayload } from "@/lib/offline/types";
+import { getProductImageUrl } from "@/lib/productImage";
 
 interface ProductVariant {
   id: string;
@@ -238,7 +239,23 @@ export default function Sales() {
     })) || [];
 
     setProducts(formattedProducts);
-    if (currentStoreId) void writePosCache(currentStoreId, { products: formattedProducts });
+    if (currentStoreId) {
+      void (async () => {
+        const imageCache = new Map<string, string | undefined>();
+        const cachedProducts = await Promise.all(formattedProducts.map(async (product) => {
+          if (!product.image_path) return product;
+          const key = `${product.image_path}:${product.product_updated_at || ""}`;
+          let dataUrl = imageCache.get(key);
+          if (!imageCache.has(key)) {
+            const signedUrl = await getProductImageUrl(product.image_path, product.product_updated_at);
+            dataUrl = await imageUrlToDataUrl(signedUrl);
+            imageCache.set(key, dataUrl);
+          }
+          return dataUrl ? { ...product, image_path: dataUrl } : product;
+        }));
+        await writePosCache(currentStoreId, { products: cachedProducts });
+      })();
+    }
   };
 
   const fetchDiscounts = async () => {
