@@ -6,10 +6,13 @@ import { useOfflineSales } from "@/contexts/OfflineSalesContext";
 import { retryOutbox } from "@/lib/offline/syncEngine";
 import { useBluetoothPrinter } from "@/contexts/BluetoothPrinterContext";
 import { toast } from "sonner";
+import { useStore } from "@/contexts/StoreContext";
 
 export default function OfflineSales() {
   const { entries, online, syncing, syncNow, refresh } = useOfflineSales();
   const printer = useBluetoothPrinter();
+  const { currentStoreId } = useStore();
+  const visibleEntries = entries.filter((entry) => entry.storeId === currentStoreId);
   const retry = async (entry: (typeof entries)[number]) => { await retryOutbox(entry); await refresh(); await syncNow(); };
   const print = async (entry: (typeof entries)[number]) => {
     try {
@@ -38,7 +41,7 @@ export default function OfflineSales() {
         <div><h1 className="text-xl font-semibold">Antrean Penjualan Offline</h1><p className="text-sm text-muted-foreground">Transaksi tersimpan aman di perangkat ini.</p></div>
         <Button onClick={syncNow} disabled={!online || syncing} className="gap-2"><RefreshCw className={syncing ? "h-4 w-4 animate-spin" : "h-4 w-4"} />Sinkronkan sekarang</Button>
       </div>
-      {entries.length === 0 ? <p className="py-12 text-center text-sm text-muted-foreground">Belum ada transaksi offline.</p> : entries.map((entry) => (
+      {visibleEntries.length === 0 ? <p className="py-12 text-center text-sm text-muted-foreground">Belum ada transaksi offline.</p> : visibleEntries.map((entry) => (
         <Card key={entry.clientTxnId}><CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
           <ReceiptText className="h-5 w-5 text-muted-foreground" />
           <div className="min-w-0 flex-1"><p className="font-medium">{entry.receiptNumber}</p><p className="text-xs text-muted-foreground">{new Date(entry.clientCreatedAt).toLocaleString("id-ID")} · Rp {entry.payload.total.toLocaleString("id-ID")}</p>{entry.errorMessage && <p className="mt-1 text-xs text-destructive">{entry.errorMessage}</p>}</div>
