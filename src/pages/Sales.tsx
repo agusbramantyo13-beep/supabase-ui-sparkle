@@ -17,7 +17,7 @@ import { applyInventoryChange } from "@/lib/stockHistory";
 import { ProductImage } from "@/components/ProductImage";
 import { cn } from "@/lib/utils";
 import { addOutbox, getDeviceIdentity, nextReceiptNumber } from "@/lib/offline/db";
-import { readPosCache, writePosCache } from "@/lib/offline/cache";
+import { imageUrlToDataUrl, readPosCache, writePosCache } from "@/lib/offline/cache";
 import { isNetworkError } from "@/lib/offline/network";
 import type { OfflineQueueEntry, OfflineSalePayload } from "@/lib/offline/types";
 
@@ -363,7 +363,14 @@ export default function Sales() {
   };
 
   useEffect(() => {
-    if (currentStoreId && currentStore) void writePosCache(currentStoreId, { store: { ...currentStore } });
+    if (!currentStoreId || !currentStore) return;
+    const cacheStore = async () => {
+      const receiptLogo = await imageUrlToDataUrl(currentStore.receipt_logo);
+      await writePosCache(currentStoreId, {
+        store: { ...currentStore, receipt_logo: receiptLogo || currentStore.receipt_logo },
+      });
+    };
+    void cacheStore();
   }, [currentStoreId, currentStore]);
 
   const syncBundleFreeItems = () => {

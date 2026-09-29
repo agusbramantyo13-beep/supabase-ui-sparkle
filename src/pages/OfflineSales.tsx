@@ -5,25 +5,32 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useOfflineSales } from "@/contexts/OfflineSalesContext";
 import { retryOutbox } from "@/lib/offline/syncEngine";
 import { useBluetoothPrinter } from "@/contexts/BluetoothPrinterContext";
+import { toast } from "sonner";
 
 export default function OfflineSales() {
   const { entries, online, syncing, syncNow, refresh } = useOfflineSales();
   const printer = useBluetoothPrinter();
   const retry = async (entry: (typeof entries)[number]) => { await retryOutbox(entry); await refresh(); await syncNow(); };
-  const print = async (entry: (typeof entries)[number]) => printer.printReceipt({
-    ...entry.receipt,
-    receiptNumber: entry.receiptNumber,
-    paymentMethod: entry.payload.payment_method,
-    items: entry.payload.items.map((item) => ({ name: item.display_name, qty: item.quantity, price: item.unit_price, total: item.total })),
-    subtotal: entry.payload.subtotal,
-    discount: entry.payload.discount_total,
-    tax: entry.payload.tax_total,
-    total: entry.payload.total,
-    cash: Number(entry.payload.payment_details.cash_amount || 0),
-    card: Number(entry.payload.payment_details.card_amount || 0),
-    change: Number(entry.payload.payment_details.change || 0),
-    offlinePointsPending: Boolean(entry.payload.member_id && entry.status !== "sinkron"),
-  });
+  const print = async (entry: (typeof entries)[number]) => {
+    try {
+      await printer.printReceipt({
+        ...entry.receipt,
+        receiptNumber: entry.receiptNumber,
+        paymentMethod: entry.payload.payment_method,
+        items: entry.payload.items.map((item) => ({ name: item.display_name, qty: item.quantity, price: item.unit_price, total: item.total })),
+        subtotal: entry.payload.subtotal,
+        discount: entry.payload.discount_total,
+        tax: entry.payload.tax_total,
+        total: entry.payload.total,
+        cash: Number(entry.payload.payment_details.cash_amount || 0),
+        card: Number(entry.payload.payment_details.card_amount || 0),
+        change: Number(entry.payload.payment_details.change || 0),
+        offlinePointsPending: Boolean(entry.payload.member_id && entry.status !== "sinkron"),
+      });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Gagal mencetak nota");
+    }
+  };
 
   return (
     <div className="space-y-4">
