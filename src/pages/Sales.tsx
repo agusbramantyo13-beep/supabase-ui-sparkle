@@ -1058,7 +1058,7 @@ export default function Sales() {
                       </Badge>
                     </div>
                     <CardContent className="p-2.5 flex flex-col gap-1 flex-1">
-                      <h3 className="font-semibold text-sm text-foreground line-clamp-2 leading-tight">
+                      <h3 className="font-semibold text-[13px] sm:text-sm text-foreground leading-snug break-words sm:line-clamp-3">
                         {group.product_name}
                       </h3>
                       <div className="flex items-end justify-between gap-1 mt-auto pt-1">
@@ -1103,7 +1103,7 @@ export default function Sales() {
                         </Badge>
                       </div>
                       <CardContent className="p-2.5 flex flex-col gap-1">
-                        <h3 className="font-semibold text-sm text-foreground line-clamp-2 leading-tight">
+                        <h3 className="font-semibold text-[13px] sm:text-sm text-foreground leading-snug break-words sm:line-clamp-3">
                           {group.product_name}
                         </h3>
                         <p className="text-xs text-muted-foreground">
@@ -1124,7 +1124,7 @@ export default function Sales() {
                           className="w-14 h-14 rounded-md shrink-0"
                         />
                         <div className="min-w-0 flex-1">
-                          <h3 className="font-semibold text-foreground truncate">{group.product_name}</h3>
+                          <h3 className="font-semibold text-foreground leading-snug break-words sm:line-clamp-2">{group.product_name}</h3>
                           <p className="text-xs text-muted-foreground">
                             {group.category_name} · {group.variants.length} varian
                           </p>
@@ -1142,7 +1142,7 @@ export default function Sales() {
                               onClick={() => addToCart(variant)}
                             >
                               <div className="min-w-0">
-                                <p className="font-medium text-sm text-foreground truncate">{variant.name}</p>
+                                <p className="font-medium text-sm text-foreground leading-snug break-words">{variant.name}</p>
                                 <p className="text-xs text-muted-foreground">
                                   Rp {variant.price.toLocaleString('id-ID')} · Stok {stock}
                                 </p>
