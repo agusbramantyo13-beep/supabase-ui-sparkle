@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { discountAmount, profitDiscountBounds, sumDisplayedDiscounts } from './discountReporting';
+import { actualDiscount, profitDiscountBounds, sumDisplayedDiscounts } from './discountReporting';
 
 // Additive reads only. Any failure discards partial results, not the existing report.
 export async function fetchProfitPeriodDiscount(storeId: string, start: string, end: string): Promise<number> {
@@ -9,7 +9,7 @@ export async function fetchProfitPeriodDiscount(storeId: string, start: string, 
     const pageSize = 500;
     for (let from = 0; ; from += pageSize) {
       const { data, error } = await supabase.from('sales')
-        .select('id, discount_total, sale_items!inner(sale_id)')
+        .select('id, subtotal, total, tax_total, discount_total, sale_items!inner(sale_id)')
         .eq('store_id', storeId)
         .or('status.is.null,status.neq.returned')
         .gte('created_at', bounds.start)
@@ -31,11 +31,11 @@ export async function fetchSaleDiscounts(storeId: string, saleIds: string[]): Pr
   if (ids.length === 0) return {};
   try {
     const { data, error } = await supabase.from('sales')
-      .select('id, discount_total')
+      .select('id, subtotal, total, tax_total, discount_total')
       .eq('store_id', storeId)
       .in('id', ids);
     if (error) throw error;
-    return Object.fromEntries((data ?? []).map(sale => [sale.id, discountAmount(sale.discount_total)]));
+    return Object.fromEntries((data ?? []).map(sale => [sale.id, actualDiscount(sale)]));
   } catch (error) {
     console.error('Error fetching transaction discounts:', error);
     return {};

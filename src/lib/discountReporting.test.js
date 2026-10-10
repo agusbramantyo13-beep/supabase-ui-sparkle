@@ -1,7 +1,35 @@
 import { describe, expect, test } from 'bun:test';
-import { discountAmount, profitDiscountBounds, sumDisplayedDiscounts } from './discountReporting';
+import { actualDiscount, discountAmount, profitDiscountBounds, sumDisplayedDiscounts } from './discountReporting';
 
 describe('display-only discount reporting', () => {
+  test('ordinary note discount is the actual net reduction', () => {
+    expect(actualDiscount({ subtotal: 155000, total: 150000, tax_total: 0, discount_total: 5000 })).toBe(5000);
+  });
+  test('online redemption is included even when stored discount is zero', () => {
+    expect(actualDiscount({ subtotal: 155000, total: 55000, discount_total: 0, tax_total: 0 })).toBe(100000);
+    expect(sumDisplayedDiscounts([{ subtotal: 155000, total: 55000, discount_total: 0 }])).toBe(100000);
+  });
+  test('offline discount is counted once, not added to the actual reduction', () => {
+    expect(actualDiscount({ subtotal: 155000, total: 145000, discount_total: 10000, tax_total: 0 })).toBe(10000);
+  });
+  test('tax is added back when calculating the reduction', () => {
+    expect(actualDiscount({ subtotal: 100000, total: 95000, tax_total: 5000, discount_total: 10000 })).toBe(10000);
+  });
+  test('absent or zero subtotal falls back to stored discount', () => {
+    expect(actualDiscount({ discount_total: 5000 })).toBe(5000);
+    expect(actualDiscount({ subtotal: 0, total: 10000, discount_total: 2000 })).toBe(2000);
+    expect(actualDiscount({ subtotal: null, discount_total: 3000 })).toBe(3000);
+  });
+  test('null and nonfinite values never produce NaN', () => {
+    expect(actualDiscount({ subtotal: null, total: null, tax_total: null, discount_total: null })).toBe(0);
+    expect(actualDiscount({ subtotal: NaN, total: NaN, tax_total: NaN, discount_total: NaN })).toBe(0);
+    expect(actualDiscount({ subtotal: 155000, total: NaN, tax_total: NaN })).toBe(155000);
+    expect(actualDiscount({ subtotal: Infinity, discount_total: Infinity })).toBe(0);
+  });
+  test('negative fallback or total above subtotal never produces a negative discount', () => {
+    expect(actualDiscount({ subtotal: 10000, total: 15000 })).toBe(0);
+    expect(actualDiscount({ subtotal: -10000, discount_total: -5000 })).toBe(0);
+  });
   test('history excludes returned sales and expenses', () => {
     expect(sumDisplayedDiscounts([
       { type: 'sale', status: 'completed', discount_total: 10000 },

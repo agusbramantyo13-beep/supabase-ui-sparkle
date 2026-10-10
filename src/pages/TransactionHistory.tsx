@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import SalesReturnDialog from "@/components/SalesReturnDialog";
 import { useBluetoothPrinter } from "@/contexts/BluetoothPrinterContext";
 import { useToast } from "@/hooks/use-toast";
-import { discountAmount, sumDisplayedDiscounts } from "@/lib/discountReporting";
+import { actualDiscount, discountAmount, sumDisplayedDiscounts } from "@/lib/discountReporting";
 
 interface Transaction {
   id: string;
@@ -352,16 +352,6 @@ export default function TransactionHistory() {
         </CardContent>
       </Card>
 
-      <Card className="bg-card border-border">
-        <CardContent className="p-4 sm:p-6 flex flex-wrap items-center justify-between gap-2">
-          <p className="text-sm font-medium text-muted-foreground">Total Diskon Diberikan</p>
-          <p className="num text-lg font-semibold text-foreground break-words">
-            {sumDisplayedDiscounts(transactions, true) > 0
-              ? formatRp(sumDisplayedDiscounts(transactions, true)) : '-'}
-          </p>
-        </CardContent>
-      </Card>
-
       {(() => {
         const active = transactions.filter(t => t.type === 'sale' && t.status !== 'returned');
         const sumBy = (fn: (t: Transaction) => number) => active.reduce((s, t) => s + fn(t), 0);
@@ -444,6 +434,14 @@ export default function TransactionHistory() {
                 </span>
               </div>
 
+              <div className="flex flex-wrap items-baseline justify-between gap-2 pt-3 text-xs italic text-muted-foreground">
+                <span className="min-w-0 break-words">Diskon diberikan (sudah termasuk dalam total di atas)</span>
+                <span className="shrink-0 tabular-nums">
+                  {sumDisplayedDiscounts(transactions, true) > 0
+                    ? formatRp(sumDisplayedDiscounts(transactions, true)) : '-'}
+                </span>
+              </div>
+
               <p className="text-[11px] text-muted-foreground pt-3 leading-relaxed">
                 Kenapa "Omzet Bersih" bisa berbeda dari "Kas Fisik"? Omzet menghitung <strong>semua metode pembayaran</strong>, sedangkan Kas Fisik hanya uang tunai yang benar-benar masuk laci. Kartu, QRIS, dan transfer tidak menambah kas fisik; Penjualan Lain-lain menambah kas walau bukan penjualan reguler.
               </p>
@@ -504,9 +502,9 @@ export default function TransactionHistory() {
                         <TableCell className="text-foreground capitalize">{transaction.payment_method || '-'}</TableCell>
                         <TableCell className={`text-right font-semibold ${isExpense ? 'text-destructive' : 'text-foreground'}`}>
                           {isExpense ? '- ' : ''}{formatRp(transaction.total)}
-                          {!isExpense && discountAmount(transaction.discount_total) > 0 && (
+                          {!isExpense && actualDiscount(transaction) > 0 && (
                             <p className="text-xs font-normal text-muted-foreground break-words mt-1">
-                              Diskon {formatRp(discountAmount(transaction.discount_total))}
+                              Diskon {formatRp(actualDiscount(transaction))}
                             </p>
                           )}
                         </TableCell>
@@ -672,10 +670,10 @@ export default function TransactionHistory() {
                   <span className="text-muted-foreground">Subtotal</span>
                   <span className="text-foreground">{formatRp(detailTx.subtotal || 0)}</span>
                 </div>
-                {(detailTx.discount_total || 0) > 0 && (
+                {actualDiscount(detailTx) > 0 && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Diskon</span>
-                    <span className="text-foreground">- {formatRp(detailTx.discount_total || 0)}</span>
+                    <span className="text-foreground">- {formatRp(actualDiscount(detailTx))}</span>
                   </div>
                 )}
                 {(detailTx.tax_total || 0) > 0 && (
