@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Optimasi Profit v2: kandidat LATERAL v2b, ekuivalensi seluruh kolom/data, median 3x untuk seluruh bentuk query; ganti v2 hanya jika semua target lulus. Tidak mengubah frontend, UTC, kebijakan alokasi, objek lama atau data.
 - [x] Langkah 2: satu migration additive tersimpan/terpasang, 9 objek v2 ada, 6 hash lama identik, diff/ACL/kontrak sama, 19 tes lulus, agregasi nyata dan konsistensi SQL cocok; frontend tidak dialihkan.
 - [ ] Penggunaan Profit v2 ditahan: EXPLAIN 196,789/270,838 ms (~26–27x lama, gagal ambang relatif >5x). Menunggu keputusan pengguna untuk optimasi v2; tidak ada optimasi dijalankan. Warning intentional authenticated SECURITY DEFINER dilaporkan; uji owner end-to-end belum tersedia.
 
