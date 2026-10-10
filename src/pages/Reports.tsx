@@ -201,7 +201,7 @@ export default function Reports() {
           </div>
 
           {/* Key Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-6", isOwner ? "xl:grid-cols-3" : "lg:grid-cols-4")}>
             <Card className="bg-card border-border">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -263,8 +263,6 @@ export default function Reports() {
                 </div>
               </CardContent>
             </Card>
-          </div>
-
           <Card className="bg-card border-border">
             <CardContent className="p-4 sm:p-6 flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-medium text-muted-foreground">Total Diskon</p>
@@ -274,6 +272,7 @@ export default function Reports() {
               </p>
             </CardContent>
           </Card>
+          </div>
 
           {/* Sales Chart */}
           <Card className="bg-card border-border">
