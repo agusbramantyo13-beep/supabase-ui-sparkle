@@ -345,3 +345,92 @@ DROP FUNCTION public.profit_allocate_sale(numeric,numeric[]);
 ```
 
 Risiko untuk verifikasi lanjutan: pure helpers sengaja callable PUBLIC karena tidak mengakses data dan view invoker/auditor perlu memanggilnya; RPC v2 tetap hanya role yang sama dengan produksi. Helper periode UTC mempertahankan produksi sesi UTC, bukan browser timezone. MATERIALIZED agregasi per nota perlu pemeriksaan performa sebelum pemakaian. Cabang toleransi sengaja boleh meninggalkan SUM item berbeda dari N sampai toleransi final; jangan memaksa kesamaan di cabang identitas. Tidak ada dashboard dialihkan.
+
+## Langkah 2 — migration berhasil, penggunaan dihentikan pada pemeriksaan performa
+
+Migration baru `supabase/migrations/20261010162002_7139bd34-8c4a-4762-9fc9-28bb441e4989.sql` berhasil diterapkan pada Supabase terhubung; file otomatis tersimpan dan sudah dibaca. Tidak ada migration lama diubah. Tidak ada frontend/checkout/struk/retur/stok/poin/data transaksi diubah. Definisi produksi dibaca langsung; alias record/katalog terpisah. Guard awal/akhir hash, assertion sumber v2/bounds/format placeholder/kolom prefix, dan 19 assertion fungsi produksi semuanya dilewati dengan sukses.
+
+### a–b. Katalog dan diff
+
+Keenam hash lama sebelum/sesudah tetap tepat seperti tabel hash sebelumnya. Lima perbandingan programatik menghasilkan `exact_expected_diff=true`, `acl_equal=true`, `security_equal=true`, `volatility_equal=true`, `config_equal=true`, `contract_equal=true`. Metadata RPC tetap STABLE SECURITY DEFINER, search_path=public, owner postgres, ACL postgres/authenticated/service_role EXECUTE; guard developer/owner ada pada seluruh lima RPC. View options dan ACL persis sama: security_invoker=true, seluruh privilege view sesuai produksi. Prefix 20 nama/tipe dasar kolom lama sama; tambahan posisi 21–23 gross_total, allocated_discount, anomaly. Total v2 numeric tanpa typmod untuk menghindari pemotongan hasil; gross_total tetap numeric(12,2).
+
+Baris berbeda yang disengaja (nomor pg_get_functiondef):
+- cashier/category: 1 nama *_v2; 24 FROM view v2; 26 batas awal helper; 27 batas akhir helper.
+- summary: 1 nama *_v2; 22 FROM view v2; 24 batas awal helper; 25 batas akhir helper.
+- top products: 1 nama *_v2; 31 FROM view v2; 33 batas awal helper; 34 batas akhir helper.
+- period: 1 nama *_v2; 21 date_trunc -> public.profit_period_bucket; 30 FROM view v2; 32/33 batas helper; 36 format args menjadi v_trunc,p_store_id,p_start,p_end,p_start,p_end (6 %L).
+
+Perubahan batas non-period persis:
+```sql
+-- lama
+x.sale_created_at >= p_start::timestamptz
+x.sale_created_at < (p_end + 1)::timestamptz
+-- baru
+x.sale_created_at >= (SELECT start_ts FROM public.profit_period_bounds(p_start, p_end))
+x.sale_created_at < (SELECT end_ts_exclusive FROM public.profit_period_bounds(p_start, p_end))
+```
+Perubahan period persis:
+```sql
+-- lama
+date_trunc(%L, x.sale_created_at)
+x.sale_created_at >= %L::timestamptz
+x.sale_created_at < (%L::date + 1)::timestamptz
+-- baru
+public.profit_period_bucket(%L, x.sale_created_at)
+x.sale_created_at >= (SELECT start_ts FROM public.profit_period_bounds(%L::date, %L::date))
+x.sale_created_at < (SELECT end_ts_exclusive FROM public.profit_period_bounds(%L::date, %L::date))
+```
+Tidak ada perbedaan lain setelah normalisasi programatik. Functiondef secara normal ditampilkan pg_get_functiondef sebagai CREATE OR REPLACE; migration tidak menjalankan CREATE OR REPLACE objek lama maupun baru, melainkan CREATE untuk target baru.
+
+### c. Pengujian fungsi produksi yang sama — 19/19 lulus
+
+| Kasus | N | Input totals | Output |
+|---|---:|---|---|
+| residu negatif | 0,02 | [0,01;0,01;0,01;0,01] | NULL |
+| identitas subcent | 0,012 | [0,006;0,006] | [0,006;0,006] |
+| toleransi atas | 1,005 | [1] | [1] |
+| gratis | 70 | [100;0] | [70;0] |
+| tiga pembulatan | 100 | [100;100;100] | [33,34;33,33;33,33] |
+| net nol | 0 | [100;50;0] | [0;0;0] |
+| sum nol | 0 | [0;0] | NULL |
+| identitas | 150 | [100;50] | [100;50] |
+| lebih batas | 100,02 | [100] | NULL |
+| null item | 1 | [1;NULL] | NULL |
+| negatif item | 1 | [2;-1] | NULL |
+| NaN item | 1 | [NaN] | NULL |
+| infinity item | 1 | [Infinity] | NULL |
+| net negatif | -1 | [100] | NULL |
+| net NULL | NULL | [100] | NULL |
+| net NaN | NaN | [100] | NULL |
+| array kosong | 0 | [] | NULL |
+| diskon subcent | 0,013 | [0,02] | NULL |
+| item subcent bukan identitas | 0 | [0,006;0,006] | NULL |
+
+Identitas/toleransi dievaluasi sebelum subcent sesuai keputusan final, sehingga contoh dua subcent tidak anomali. Fungsi tidak membaca tabel.
+
+### d–e. Angka view produksi dan konsistensi
+
+Query langsung v2 berhasil dengan role read-only. Semua 8 baris tabel simulasi di bagian sebelumnya sekarang dikonfirmasi persis melalui view produksi v2: revenue/cost/profit/transaksi sama dengan tabel itu, bukan lagi hanya simulasi. Untuk kedua periode dan semua toko: anomaly rows=0, item negatif=0, allocation mismatch >0,005=0, identity item changes=0. Tidak ada nota anomaly ber-item. Satu nota tanpa item tetap MAINAN RCP-1789372713698, completed, 2026-09-14 07:58:37.11355 UTC, total/net Rp10000 pajak0; tetap tidak muncul view.
+
+Replikasi SQL kategori, kasir, day/week/month, dan top produk tanpa limit: masing-masing revenue/cost/profit sama dengan summary, seluruh selisih maksimum 0. Ada 42 pembandingan kelompok nonkosong (7 kombinasi toko/periode x 6). TIRIS 30 tanggal tidak memiliki item/kelompok; summary seluruh metrik nol (ditangani sebagai set kosong, bukan kegagalan). SQL kategori/kasir/top mempertahankan kunci pengelompokan dan rumus produksi; date bucket memakai helper yang sama.
+
+### Performa — ambang relatif gagal; tidak dioptimasi
+
+EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON), agregasi sama untuk SEMPOLAN, query langsung sebagai role baca-saja:
+
+| Periode | Lama ms | v2 ms | Rasio |
+|---|---:|---:|---:|
+| 30 tanggal | 7,537 | 196,789 | 26,11x |
+| Seluruh riwayat | 10,040 | 270,838 | 26,98x |
+
+Keduanya masih <1 detik, tetapi >5x batas pengguna. Tidak ada optimasi atau migration lanjutan dilakukan; v2 tetap terpasang tetapi tidak dipakai frontend. Sampel tunggal pada server hidup, bukan benchmark beban/median atau RPC owner. Plan menunjukkan kedua query v2 mengalokasikan 3450 nota / 5053 item sebelum filter; dua CTE MATERIALIZED menghalangi pushdown store/periode. Semua pembacaan blok pada plan sampel hit cache, bukan cold disk.
+
+Pilihan optimasi untuk persetujuan terpisah: alokasi LATERAL per sale setelah filter toko/tanggal (view baru atau perubahan v2 saja); atau RPC v2 melakukan filter sale sebelum agregasi; uji opsi NOT MATERIALIZED dengan EXPLAIN karena bisa mengulang fungsi per item. Tetap satu fungsi alokasi produksi, data tak ditulis ulang, objek lama tidak berubah. Jangan mengalihkan dashboard sebelum pengukuran ulang memenuhi keputusan performa.
+
+### f. Objek, keamanan, keterbatasan
+
+Sembilan objek ada: v_sale_item_profit_v2, profit_allocate_sale, profit_period_bounds, profit_period_bucket, get_profit_summary_v2, get_profit_by_period_v2, get_profit_by_category_v2, get_profit_by_cashier_v2, get_top_products_profit_v2. Rollback lengkap sudah dalam migration dan salinan bagian sebelumnya. Helper periode/bucket eksplisit UTC; contoh 2026-10-04 23:55 UTC memberi bucket day 2026-10-04, week 2026-09-28, month 2026-10-01, persis date_trunc UTC lama.
+
+Linter menghasilkan 5 warning authenticated SECURITY DEFINER untuk RPC v2. Dokumentasi resmi 0029 ditelaah: opsi intentional exposure berlaku; pemeriksaan katalog membuktikan guard developer/owner + store_id tetap persis lama, anon/PUBLIC tidak mendapat EXECUTE RPC. Warning tetap ada sebagai konsekuensi rancangan yang diminta, bukan diklaim hilang. Tidak mencabut akses yang diperlukan atau mengubah SECURITY tanpa izin. Tiga helper murni tanpa data sengaja EXECUTE PUBLIC untuk view invoker/audit. Ada 23 finding lama, tidak diubah: 4 public definer,16 authenticated definer, OTP expiry,password leak protection,patch Postgres.
+
+Eksekusi RPC sebagai owner, uji akses end-to-end lintas akun, beban serentak/cold cache, dan tampilan/export tidak diverifikasi; Supabase eksternal dan dashboard belum dialihkan. Tidak ada pemeriksaan TypeScript mandiri; frontend tidak diedit. Berkas tambahan non-aplikasi: AGENTS.md aturan struktur, roadmap dan rencana. Staff tetap melihat angka profit lama. Tugas penerapan/verifikasi finansial selesai, penggunaan v2 tertahan keputusan optimasi performa.
