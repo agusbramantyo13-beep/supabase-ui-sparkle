@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Langkah 2: audit produksi dan uji alokasi Profit v2; satu migration additive hanya jika seluruh pemeriksaan awal aman, lalu verifikasi objek lama dan agregasi.
 
 - [x] Langkah 1: diskon sebenarnya display-only, informasi rekonsiliasi tanpa mengubah total; 11 tes lulus, build OK, perbandingan produksi baca-saja selesai. Tampilan terautentikasi belum dapat diverifikasi pada Supabase eksternal.
 
