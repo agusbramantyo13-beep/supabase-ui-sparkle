@@ -27,6 +27,8 @@ import { id as idLocale } from "date-fns/locale";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { fetchProfitPeriodDiscount, fetchSaleDiscounts } from "@/lib/discountQueries";
+import { discountAmount } from "@/lib/discountReporting";
 
 // ---------- helpers ----------
 const fmtIDR = (n: number | null | undefined) =>
@@ -153,6 +155,9 @@ export default function ProfitDashboard() {
   const [monthSum, setMonthSum] = useState<SummaryRow | null>(null);
   const [periodSum, setPeriodSum] = useState<SummaryRow | null>(null);
   const [cardsLoading, setCardsLoading] = useState(false);
+  const [periodDiscount, setPeriodDiscount] = useState(0);
+  const [discountLoading, setDiscountLoading] = useState(false);
+  const [saleDiscounts, setSaleDiscounts] = useState<Record<string, number>>({});
 
   // Chart
   const [groupBy, setGroupBy] = useState<"day" | "week" | "month">("day");
@@ -199,6 +204,34 @@ export default function ProfitDashboard() {
   const today = useMemo(() => startOfToday(), []);
   const weekStart = useMemo(() => startOfWeek(new Date(), { weekStartsOn: 1 }), []);
   const monthStart = useMemo(() => startOfMonth(new Date()), []);
+
+  // Independent display-only reads; never change existing RPC data/loading states.
+  useEffect(() => {
+    let cancelled = false;
+    setPeriodDiscount(0);
+    if (!currentStoreId) return;
+    setDiscountLoading(true);
+    fetchProfitPeriodDiscount(currentStoreId, toDateStr(startDate), toDateStr(endDate)).then(value => {
+      if (cancelled) return;
+      setPeriodDiscount(value);
+      setDiscountLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [currentStoreId, startDate, endDate]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setSaleDiscounts({});
+    if (!currentStoreId) return;
+    const ids = [
+      ...(drillOpen ? drillTx.map(tx => tx.sale_id) : []),
+      ...(saleOpen && saleId ? [saleId] : []),
+    ];
+    fetchSaleDiscounts(currentStoreId, ids).then(value => {
+      if (!cancelled) setSaleDiscounts(value);
+    });
+    return () => { cancelled = true; };
+  }, [currentStoreId, drillOpen, drillTx, saleOpen, saleId]);
 
   // ---------- fetch summary cards ----------
   useEffect(() => {
@@ -442,6 +475,13 @@ export default function ProfitDashboard() {
     const ws = XLSX.utils.json_to_sheet(wsData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Profit Detail");
+    const exportDiscount = currentStoreId
+      ? await fetchProfitPeriodDiscount(currentStoreId, toDateStr(startDate), toDateStr(endDate)) : 0;
+    const discountSummary = XLSX.utils.aoa_to_sheet([
+      ['Periode', `${toDateStr(startDate)} - ${toDateStr(endDate)}`],
+      ['Total Diskon', exportDiscount > 0 ? exportDiscount : '-'],
+    ]);
+    XLSX.utils.book_append_sheet(wb, discountSummary, "Ringkasan Diskon");
     XLSX.writeFile(wb, `profit_${toDateStr(startDate)}_${toDateStr(endDate)}.xlsx`);
     toast({ title: "Export berhasil", description: `${data.length} baris diekspor ke Excel.` });
   };
@@ -455,12 +495,15 @@ export default function ProfitDashboard() {
     doc.setFontSize(10);
     doc.text(`Periode: ${format(startDate, "dd MMM yyyy", { locale: idLocale })} - ${format(endDate, "dd MMM yyyy", { locale: idLocale })}`, 14, 22);
     if (periodSum) {
+      const exportDiscount = currentStoreId
+        ? await fetchProfitPeriodDiscount(currentStoreId, toDateStr(startDate), toDateStr(endDate)) : 0;
       autoTable(doc, {
         startY: 28,
-        head: [["Total Revenue", "Total Modal", "Total Profit", "Transaksi", "Margin"]],
+        head: [["Total Revenue", "Total Modal", "Total Profit", "Transaksi", "Margin", "Total Diskon"]],
         body: [[
           fmtIDR(periodSum.total_revenue), fmtIDR(periodSum.total_cost), fmtIDR(periodSum.total_profit),
           String(periodSum.total_transactions), fmtPct(periodSum.avg_margin_pct),
+          exportDiscount > 0 ? fmtIDR(exportDiscount) : '-',
         ]],
         theme: "grid", styles: { fontSize: 9 },
       });
@@ -536,6 +579,17 @@ export default function ProfitDashboard() {
       </div>
 
       {/* Chart */}
+      <Card className="bg-card border-border">
+        <CardContent className="p-4 sm:p-6 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm font-medium text-muted-foreground">Diskon Periode</p>
+          {discountLoading ? <Skeleton className="h-7 w-32" /> : (
+            <p className="num text-lg font-semibold text-foreground break-words">
+              {periodDiscount > 0 ? fmtIDR(periodDiscount) : '-'}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
       <Card className="bg-card border-border">
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle className="text-foreground">Grafik Profit</CardTitle>
@@ -891,7 +945,14 @@ export default function ProfitDashboard() {
                     <TableCell className="text-xs">{format(new Date(t.sale_created_at), "dd/MM/yy HH:mm")}</TableCell>
                     <TableCell className="font-mono text-xs">{t.receipt_number ?? "-"}</TableCell>
                     <TableCell className="text-xs">{t.cashier_name ?? "-"}</TableCell>
-                    <TableCell className={cn("text-right font-semibold", t.profit < 0 ? "text-destructive" : "text-success")}>{fmtIDR(t.profit)}</TableCell>
+                    <TableCell className={cn("text-right font-semibold", t.profit < 0 ? "text-destructive" : "text-success")}>
+                      {fmtIDR(t.profit)}
+                      {discountAmount(saleDiscounts[t.sale_id]) > 0 && (
+                        <p className="text-xs font-normal text-muted-foreground break-words mt-1">
+                          Diskon {fmtIDR(discountAmount(saleDiscounts[t.sale_id]))}
+                        </p>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -910,6 +971,15 @@ export default function ProfitDashboard() {
               {saleItems[0] ? ` • ${format(new Date(saleItems[0].sale_created_at), "dd MMM yyyy HH:mm", { locale: idLocale })} • Kasir: ${saleItems[0].cashier_name ?? "-"}` : ""}
             </DialogDescription>
           </DialogHeader>
+          {!saleLoading && (
+            <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+              <span className="text-muted-foreground">Diskon Transaksi</span>
+              <span className="font-medium text-foreground break-words">
+                {saleId && discountAmount(saleDiscounts[saleId]) > 0
+                  ? fmtIDR(discountAmount(saleDiscounts[saleId])) : '-'}
+              </span>
+            </div>
+          )}
           {saleLoading ? (
             <div className="space-y-2">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
           ) : (
