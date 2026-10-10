@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Langkah 2: penerapan dihentikan sebelum migration; menunggu keputusan kebijakan pembulatan (CTE menghasilkan item negatif/subcent tidak identik) dan akses audit RPC yang sah. Bukti hash, simulasi produksi, nota tanpa item, dan rollback tersimpan di rencana; tidak ada objek DB/frontend diubah.
+- [ ] Langkah 2: kebijakan final disetujui; buat satu migration Profit v2 additive, uji fungsi produksi, hash/diff katalog, agregasi view dan konsistensi SQL; frontend tetap memakai laporan lama.
 
 - [x] Langkah 1: diskon sebenarnya display-only, informasi rekonsiliasi tanpa mengubah total; 11 tes lulus, build OK, perbandingan produksi baca-saja selesai. Tampilan terautentikasi belum dapat diverifikasi pada Supabase eksternal.
 
