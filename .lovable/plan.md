@@ -304,3 +304,44 @@ DROP FUNCTION public.profit_period_bucket(text,timestamptz);
 ```
 
 Pilihan aman untuk diputuskan sebelum melanjutkan: pertahankan gross persis ketika N=I; bila pembulatan-residu menghasilkan nilai negatif atau N bukan kelipatan 0,01, tandai anomaly dan pertahankan gross lama. Alternatif pembulatan ke bawah + residu positif menjaga nonnegatif tetapi mengubah kebijakan pembulatan yang diminta. Tidak ada pilihan tersebut diterapkan sekarang.
+
+## Langkah 2 — keputusan final dan percobaan migration, 10 Oktober 2026 setelah 16:16 UTC
+
+Kebijakan pengguna disetujui: seluruh alokasi berada dalam satu fungsi SQL IMMUTABLE profit_allocate_sale(n numeric, totals numeric[]), tanpa akses tabel. Guard NULL/nonfinite/negatif/empty/I=0 mendahului cabang identitas. |N-I|<=0,005 atau I<N<=I+0,01 mengembalikan totals asli sebelum pemeriksaan subcent. Di luar cabang identitas, subcent adalah anomaly; alokasi ROUND dua desimal + residu pada item pertama menolak hasil negatif. View mengurutkan total DESC,id ASC dan memakai modal snapshot. UTC tetap; helper bounds/bucket mengunci UTC. Kebijakan ini disimpan, tetapi belum berhasil diterapkan.
+
+### Hasil percobaan — dihentikan, tidak diulang
+
+Satu SQL additive dikirim melalui tool migration. Tool mengembalikan error:
+
+```text
+ERROR: 55000: record "p" is not assigned yet
+DETAIL: The tuple structure of a not-yet-assigned record is indeterminate.
+CONTEXT: SELECT p.* FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+PL/pgSQL function inline_code_block line 4 at FOR over SELECT rows
+```
+
+Penyebab: nama record PL/pgSQL `p` berbenturan dengan alias katalog `pg_proc p` di blok penyalinan RPC. Perbaikan yang dibutuhkan pada percobaan berikutnya adalah alias berbeda (misalnya `proc`) untuk query FOR, tanpa mengubah rancangan keuangan. Karena instruksi meminta berhenti saat verifikasi gagal, tidak ada retry migration pada giliran ini.
+
+Read_query sesudah kegagalan memastikan rollback transaksi migration: tidak ada v_sale_item_profit_v2, profit_allocate_sale, profit_period_bounds, profit_period_bucket, atau lima RPC v2 di katalog. Enam hash objek lama tetap sama dengan tabel hash di atas dan baseline sebelum percobaan. Tidak ada berkas migration baru tercipta di supabase/migrations; tidak ada perubahan kode frontend. Build log terbaru 2026-10-10T16:17:00Z = build OK; tidak ada TypeScript mandiri dijalankan.
+
+Verifikasi a lulus: enam hash lama identik sebelum/sesudah percobaan. Verifikasi b/c/d/e tidak dapat dijalankan atas objek v2 karena objek belum ada; tidak mengklaim hasil simulasi sebelumnya sebagai hasil view atau fungsi produksi. Verifikasi f memastikan objek lama utuh dan objek v2 belum ada. Sembilan objek additive yang masih perlu dibuat: profit_allocate_sale, profit_period_bounds, profit_period_bucket, v_sale_item_profit_v2, get_profit_summary_v2, get_profit_by_period_v2, get_profit_by_category_v2, get_profit_by_cashier_v2, get_top_products_profit_v2.
+
+Percobaan SQL menyertakan 19 assertion sintetis terhadap fungsi yang sama dengan produksi serta komentar rollback, tetapi blok assertion belum tercapai akibat error penyalinan RPC. Uji tersebut belum boleh dilaporkan lulus. Data nyata/baseline dan nota tanpa item dari pemeriksaan sebelumnya tetap hanya hasil audit baca-saja.
+
+### Salinan komentar rollback untuk kebijakan final — belum dijalankan
+
+```sql
+/* ROLLBACK — v2 objects only; legacy objects and transaction data stay untouched.
+DROP FUNCTION public.get_profit_summary_v2(uuid,date,date);
+DROP FUNCTION public.get_profit_by_period_v2(uuid,date,date,text);
+DROP FUNCTION public.get_profit_by_category_v2(uuid,date,date);
+DROP FUNCTION public.get_profit_by_cashier_v2(uuid,date,date);
+DROP FUNCTION public.get_top_products_profit_v2(uuid,date,date,text,integer);
+DROP VIEW public.v_sale_item_profit_v2;
+DROP FUNCTION public.profit_period_bounds(date,date);
+DROP FUNCTION public.profit_period_bucket(text,timestamptz);
+DROP FUNCTION public.profit_allocate_sale(numeric,numeric[]);
+*/
+```
+
+Risiko untuk verifikasi lanjutan: pure helpers sengaja callable PUBLIC karena tidak mengakses data dan view invoker/auditor perlu memanggilnya; RPC v2 tetap hanya role yang sama dengan produksi. Helper periode UTC mempertahankan produksi sesi UTC, bukan browser timezone. MATERIALIZED agregasi per nota perlu pemeriksaan performa sebelum pemakaian. Cabang toleransi sengaja boleh meninggalkan SUM item berbeda dari N sampai toleransi final; jangan memaksa kesamaan di cabang identitas. Tidak ada dashboard dialihkan.

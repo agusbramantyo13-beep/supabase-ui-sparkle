@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Langkah 2: kebijakan final disetujui; buat satu migration Profit v2 additive, uji fungsi produksi, hash/diff katalog, agregasi view dan konsistensi SQL; frontend tetap memakai laporan lama.
+- [ ] Langkah 2: kebijakan final disetujui; percobaan migration gagal karena record/alias `p` berbenturan. Penerapan dihentikan sesuai instruksi; rollback terverifikasi, 6 hash lama identik, 0 objek v2. Menunggu izin melanjutkan perbaikan percobaan; uji fungsi/diff/agregasi v2 belum tersedia. Frontend tidak berubah.
 
 - [x] Langkah 1: diskon sebenarnya display-only, informasi rekonsiliasi tanpa mengubah total; 11 tes lulus, build OK, perbandingan produksi baca-saja selesai. Tampilan terautentikasi belum dapat diverifikasi pada Supabase eksternal.
 
