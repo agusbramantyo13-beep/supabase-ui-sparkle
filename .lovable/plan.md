@@ -238,3 +238,69 @@ WIB hanya menggeser keanggotaan periode/bucket, bukan nilai sale/modal. Seluruh 
 5. **Rollback:** kembalikan seluruh laporan ke RPC/view lama dan helper periode lama sekaligus; v2 boleh tetap tidak dipakai. Bila kelak memilih `CREATE OR REPLACE` signature lama, lakukan hanya setelah validasi v2 dan siapkan migration pemulihan definisi asli. Tidak perlu rollback data transaksi karena rencana ini tidak menulis ulangnya.
 
 **Rekomendasi:** jangan langsung mengganti profit lama. Temuan produksi menunjukkan bukan hanya diskon, tetapi juga pengurangan tak tercatat dan nota tanpa item; pisahkan koreksi profit, WIB, dan perbaikan pencatatan checkout sebagai keputusan berbeda.
+
+## Langkah 2 — pemeriksaan awal 10 Oktober 2026, penerapan dihentikan
+
+Tidak ada migration atau objek v2 dibuat. Pemeriksaan baca-saja menemukan kegagalan pada kebijakan alokasi yang diminta; sesuai instruksi, penerapan dihentikan sebelum menyentuh database atau frontend.
+
+### Penghalang yang harus diputuskan
+
+1. Pembulatan biasa ke dua desimal + seluruh residu ke satu item dapat menghasilkan pendapatan item negatif. CTE produksi: empat item masing-masing 0,01, I=0,04, N=0,02. ROUND tiap alokasi menghasilkan 0,01; residu -0,02 pada item pertama menghasilkan [-0,01; 0,01; 0,01; 0,01]. Jumlah tepat N tetapi satu item negatif.
+2. Identitas N=I tidak selalu terjaga untuk data pecahan di bawah dua desimal: dua item masing-masing 0,006, N=I=0,012 menghasilkan [0,002; 0,01], dua item berbeda dari lama. Data produksi saat audit tidak mempunyai pecahan item di bawah dua desimal, tetapi kebijakan umum masih gagal.
+3. N yang memiliki pecahan di bawah dua desimal tidak dapat sekaligus memiliki semua item dua desimal dan jumlah persis N: I=1, N=1,005 berada dalam toleransi 0,01, namun residu membuat item 1,005. Jangan mengubah kebijakan tanpa persetujuan.
+4. Role alat read_query adalah supabase_read_only_user. Pemanggilan langsung get_profit_summary ditolak `permission denied for function get_profit_summary`. Tidak menambah grant, memalsukan sesi, atau melewati akses. Pembandingan di bawah adalah SQL simulasi/CTE, bukan eksekusi RPC v2.
+
+### Bukti objek lama tidak berubah selama audit
+
+MD5 pg_get_viewdef/pg_get_functiondef sebelum dan sesudah pemeriksaan sama:
+
+| Objek | MD5 |
+|---|---|
+| v_sale_item_profit | 835430e5863e97d584812e8a49a5d1cb |
+| get_profit_summary | 213f7e0e0586dea2e2a5022c4a3cbd79 |
+| get_profit_by_period | edc7eba9d317433f625def7ce7a0c5ee |
+| get_profit_by_category | 86dc254c75f850539f63c13da6074bac |
+| get_profit_by_cashier | 59c8fba05cc38497b073abcf8323def7 |
+| get_top_products_profit | c76fbb196187ab308d43224ab2c35488 |
+
+Produksi UTC. View security_invoker=true; owner postgres; grants semua hak view untuk postgres, anon, authenticated, service_role. RPC STABLE SECURITY DEFINER, search_path=public; EXECUTE hanya postgres, authenticated, service_role. Definisi dibaca langsung dari katalog produksi, bukan migration lama.
+
+### Simulasi data nyata — bukan RPC v2
+
+30 tanggal kalender UTC: [2026-09-11 00:00 UTC, 2026-10-11 00:00 UTC), sesuai input date RPC; tidak disebut rentang 30 hari bergulir. Seluruh riwayat juga dibandingkan dengan view lama menggunakan [2025-09-02, 2026-10-11) UTC. Status returned dikecualikan. Modal dan transaksi simulasi sama dengan agregasi view lama yang dibaca terpisah.
+
+| Periode | Toko | Revenue lama | Revenue simulasi | Cost sama | Profit lama | Profit simulasi | Transaksi sama | Penurunan revenue/profit |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| 30 tanggal | MAINAN | 1234000 | 1205500 | 760881,10 | 473118,90 | 444618,90 | 52 | 28500 |
+| 30 tanggal | SALSA | 29630000 | 29540000 | 22892650 | 6737350 | 6647350 | 274 | 90000 |
+| 30 tanggal | SEMPOLAN | 60774000 | 60674000 | 45080004,07 | 15693995,93 | 15593995,93 | 640 | 100000 |
+| 30 tanggal | TIRIS | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| Seluruh | MAINAN | 4532000 | 4397500 | 2871836,10 | 1660163,90 | 1525663,90 | 172 | 134500 |
+| Seluruh | SALSA | 41935000 | 41785000 | 32374600 | 9560400 | 9410400 | 384 | 150000 |
+| Seluruh | SEMPOLAN | 290224000 | 289779003 | 193808798,15 | 96415201,85 | 95970204,85 | 2862 | 444997 |
+| Seluruh | TIRIS | 2150000 | 2050000 | 1290000 | 860000 | 760000 | 15 | 100000 |
+
+Pada kedua periode, simulasi data nyata menghasilkan 0 item negatif, 0 selisih jumlah alokasi terhadap N >0,005, 0 item berbeda saat N=I, dan 0 nota anomali dengan item. Ini tidak menghapus kegagalan uji sintetis. Jumlah aktif seluruh riwayat: MAINAN 173 (172 dengan item), SALSA 384, SEMPOLAN 2862, TIRIS 15.
+
+Seluruh nota tanpa item (termasuk pemeriksaan semua status): satu, MAINAN RCP-1789372713698, 2026-09-14 07:58:37.11355 UTC, completed, subtotal=total=N=10000, pajak=0, tidak muncul dalam view profit. Tidak memperbaiki atau menulis ulang nota ini.
+
+Uji CTE wajib: item gratis [100,0], N=70 -> [70,0]; I=0 -> anomaly, nilai tetap nol; tiga item [100,100,100], N=100 -> [33,34;33,33;33,33]; N=0 dengan [100,50,0] -> seluruh alokasi nol. Semua empat kasus dasar lulus. Kasus empat item kecil gagal nonnegatif dan kasus identitas subcent gagal identik.
+
+Belum diverifikasi: eksekusi lima RPC v2, kontrak runtime/grants v2, agregasi by_category/by_cashier/by_period/top_products versus summary v2, performa view/RPC v2, verifikasi sesudah migration. Objeknya belum dibuat; panggilan RPC lama juga terhalang izin role audit. Frontend, checkout, data, dan profit lama tidak diubah; tidak ada pemeriksaan build/TypeScript baru karena tidak ada perubahan kode aplikasi.
+
+### Draf rollback v2 saja — belum dijalankan, belum ada migration
+
+```sql
+/* ROLLBACK — jalankan hanya bila objek additive ini kelak dibuat.
+DROP FUNCTION public.get_profit_summary_v2(uuid,date,date);
+DROP FUNCTION public.get_profit_by_period_v2(uuid,date,date,text);
+DROP FUNCTION public.get_profit_by_category_v2(uuid,date,date);
+DROP FUNCTION public.get_profit_by_cashier_v2(uuid,date,date);
+DROP FUNCTION public.get_top_products_profit_v2(uuid,date,date,text,integer);
+DROP VIEW public.v_sale_item_profit_v2;
+DROP FUNCTION public.profit_period_bounds(date,date);
+DROP FUNCTION public.profit_period_bucket(text,timestamptz);
+*/
+```
+
+Pilihan aman untuk diputuskan sebelum melanjutkan: pertahankan gross persis ketika N=I; bila pembulatan-residu menghasilkan nilai negatif atau N bukan kelipatan 0,01, tandai anomaly dan pertahankan gross lama. Alternatif pembulatan ke bawah + residu positif menjaga nonnegatif tetapi mengubah kebijakan pembulatan yang diminta. Tidak ada pilihan tersebut diterapkan sekarang.
