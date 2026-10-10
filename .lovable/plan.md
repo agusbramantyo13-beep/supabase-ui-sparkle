@@ -434,3 +434,65 @@ Sembilan objek ada: v_sale_item_profit_v2, profit_allocate_sale, profit_period_b
 Linter menghasilkan 5 warning authenticated SECURITY DEFINER untuk RPC v2. Dokumentasi resmi 0029 ditelaah: opsi intentional exposure berlaku; pemeriksaan katalog membuktikan guard developer/owner + store_id tetap persis lama, anon/PUBLIC tidak mendapat EXECUTE RPC. Warning tetap ada sebagai konsekuensi rancangan yang diminta, bukan diklaim hilang. Tidak mencabut akses yang diperlukan atau mengubah SECURITY tanpa izin. Tiga helper murni tanpa data sengaja EXECUTE PUBLIC untuk view invoker/audit. Ada 23 finding lama, tidak diubah: 4 public definer,16 authenticated definer, OTP expiry,password leak protection,patch Postgres.
 
 Eksekusi RPC sebagai owner, uji akses end-to-end lintas akun, beban serentak/cold cache, dan tampilan/export tidak diverifikasi; Supabase eksternal dan dashboard belum dialihkan. Tidak ada pemeriksaan TypeScript mandiri; frontend tidak diedit. Berkas tambahan non-aplikasi: AGENTS.md aturan struktur, roadmap dan rencana. Staff tetap melihat angka profit lama. Tugas penerapan/verifikasi finansial selesai, penggunaan v2 tertahan keputusan optimasi performa.
+
+## Optimasi Profit v2 — kandidat diterapkan, promosi dihentikan (10 Oktober 2026 ~16:29 UTC)
+
+**Status terkini:** migration kandidat berhasil, ekuivalensi lulus; target performa relatif gagal. Tidak ada migration kedua/drop/rename v2. Frontend tetap lama, UTC tetap, kebijakan alokasi/fungsi/5 RPC v2 tidak diubah, tidak ada data transaksi ditulis. Bagian status historis di atas bukan status terkini.
+
+### Berkas/objek
+- Migration additive `supabase/migrations/20261010162712_a03c1fff-bedf-4255-bafc-f7c7c357e531.sql`: hanya view baru `public.v_sale_item_profit_v2b`, guard enam hash lama, penurunan dari pg_get_viewdef produksi dengan assertion pola, kontrak seluruh 23 kolom termasuk urutan/typmod/collation sama dengan v2, owner postgres, security_invoker=true, ACL sama.
+- Kandidat menjadikan sales penggerak, array_agg item per nota ORDER BY total DESC,id ASC, LATERAL fungsi alokasi yang sama, OFFSET 0 pada hasil fungsi agar tidak diekspansi berulang per ekspresi item, unnest WITH ORDINALITY dan join item. Tidak memakai MATERIALIZED dalam view; CTE MATERIALIZED hanya dipakai query audit ekuivalensi untuk snapshot konsisten.
+- `supabase/tests/profit_v2_candidate.sql`: regresi baca-saja 19 kasus alokasi yang sama dan EXCEPT ALL dua arah. Pengujian identik dijalankan melalui read_query: 19 passed, 0 failed.
+- Dokumentasi AGENTS.md, roadmap.md, dan rencana diperbarui. Tidak mengubah frontend atau migration existing.
+
+### Indeks
+Indeks sudah ada: idx_sale_items_sale_id (sale_id), idx_sales_store_created_at (store_id,created_at DESC), sale_items_pkey dan sales_pkey. Tidak menambah indeks. Ukuran total tabel saat inspeksi: sales 1952 kB, sale_items 1432 kB; reltuples merupakan estimasi lama (3163/4701), bukan hitungan aktual.
+
+### Ekuivalensi dan keamanan
+EXCEPT ALL atas SEMUA 23 kolom, semua toko/seluruh data: kedua arah 0 baris. Snapshot pertama v2=v2b=5053 item; snapshot akhir keduanya 5054 item. Produksi bertambah satu item/nota selama pembacaan terpisah; jangan menyebut pertambahan ini akibat migration atau membandingkan snapshot berbeda sebagai kegagalan ekuivalensi. Query audit akhir satu statement: 0 anomaly, 0 item negatif, 0 mismatch SUM alokasi vs N >0,005, 0 perubahan item saat N=I.
+
+Agregasi seluruh riwayat snapshot pertama, identik v2 dan v2b:
+| Toko | Item | Nota | Revenue | Cost | Profit |
+|---|---:|---:|---:|---:|---:|
+| MAINAN |230|172|4397500|2871836,10|1525663,90|
+| SALSA |511|384|41785000|32374600|9410400|
+| SEMPOLAN |4280|2862|289779003|193808798,15|95970204,85|
+| TIRIS |15|15|2050000|1290000|760000|
+
+View v2 hash tetap 3774a73bbe091248c017d9564158aac9. Kandidat hash 3af9c4adf6a6531f63e4868b1968d0c7. Fungsi alokasi sebelum/sesudah hash 29c0be76bc75fcd1dfa3bd74c8a038c0 (IMMUTABLE tetap). Enam hash lama tepat sama dengan tabel baseline di atas. Lima RPC v2 tetap STABLE SECURITY DEFINER, search_path=public, EXECUTE postgres/authenticated/service_role dan tetap membaca v_sale_item_profit_v2. Tidak ada RPC dialihkan.
+
+### Performa — STOP pada gate pertama yang gagal
+SEMPOLAN, 30 tanggal UTC [2026-09-11,2026-10-11), sum(total),sum(cost_price*quantity),sum(profit),count(distinct sale_id), EXPLAIN ANALYZE BUFFERS. Tiga sampel tiap view, bukan waktu request/network:
+| Sumber | Sampel ms | Median ms | Rasio vs lama |
+|---|---|---:|---:|
+| Lama |110,863 / 3,409 / 3,330|3,409|1x|
+| v2 sekarang |242,641 / 202,471 / 191,913|202,471|59,39x|
+| Kandidat v2b |70,712 / 40,007 / 29,646|40,007|11,74x|
+
+Kandidat ~5,06x lebih cepat daripada v2 sekarang, median <50ms, tetapi target <=~3x lama GAGAL (11,74x). Sampel lama pertama outlier besar dipertahankan, tidak dibuang. Query di server hidup, tidak cold-cache atau concurrent-load terkontrol; batch pembacaan independen bisa berbagi beban server. Tidak mengklaim benchmark RPC owner.
+
+Bukti plan kandidat:
+```text
+Index Scan using sales_pkey on sales s ... rows=640 loops=1
+Filter: status IS DISTINCT FROM returned AND created_at >= 2026-09-11 AND created_at < 2026-10-11 AND store_id=SEMPOLAN
+Rows Removed by Filter: 2843 (snapshot berikut 2844)
+Aggregate ... rows=1 loops=640
+Index Scan using idx_sale_items_sale_id ... Index Cond: sale_id=s.id ... loops=640
+Memoize allocation ... Hits:481 Misses:159
+Result (allocation) ... rows=1 loops=159
+Function Scan on unnest ... loops=640
+Index Scan using sale_items_pkey ... loops=906
+```
+Filter sales didorong SEBELUM agregasi/alokasi: 640 nota terpilih/906 item, bukan seluruh 3450/3451 nota. Fungsi benar-benar dievaluasi 159 kali berkat memoize input identik. Namun planner memilih sales_pkey (memindai semua sales sambil menyaring), bukan indeks store/tanggal, dan banyak lookup/memoize item; kandidat 8569/8570 shared hit blocks vs lama 150. Ini hambatan tersisa, bukan bukti perlu indeks baru (indeks relevan sudah ada).
+
+### Keanehan, batas verifikasi, langkah berikut
+Satu nota tanpa item tetap MAINAN RCP-1789372713698, completed, 2026-09-14 07:58:37.11355 UTC, subtotal=total=10000, tax=0; tidak muncul kedua view. Tidak memperbaiki data ini.
+Sesuai stop-on-failure, tidak meneruskan benchmark seluruh riwayat/toko kecil/detail/count/category/cashier/sale_id, tidak cek dependency untuk drop/rename, tidak menjalankan tahap pascapenggantian atau konsistensi RPC lengkap ulang. Tidak ada penggantian terjadi. Eksekusi RPC sebagai owner, akses lintas akun, cold cache/beban serentak/tampilan/export belum terverifikasi. Diagnostics CLI tidak tersedia pada backend external; read_query Supabase berhasil. Eksperimen query_to_xml(EXPLAIN) ditolak karena EXPLAIN tidak diizinkan dalam non-volatile function; tidak menambahkan helper benchmark atau privilege baru.
+28 finding linter sudah ada sebelum migration, tidak ada finding baru. Frontend tidak berubah; tidak menjalankan build/TypeScript manual. Log build ditinjau, status terbaru dilaporkan terpisah.
+Saran terpisah: uji kandidat berikut mengurangi lookup balik item dengan array komposit terurut, atau RPC v2 prefilter sales dan batch allocation; tetap fungsi alokasi sama, guard/EXCEPT/performa penuh sebelum promosi. Jangan mengubah kandidat sekarang tanpa keputusan lanjutan.
+
+### Rollback kandidat (tidak dieksekusi)
+```sql
+DROP VIEW public.v_sale_item_profit_v2b;
+```
+Rollback lengkap objek v2 tetap komentar migration: lima DROP FUNCTION RPC v2, DROP VIEW v2b dan v2, lalu DROP FUNCTION profit_period_bounds, profit_period_bucket, profit_allocate_sale. Objek lama/data tidak termasuk. Frontend belum dialihkan, sehingga tidak perlu rollback frontend pada tahap ini.
