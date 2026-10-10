@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStore } from "@/contexts/StoreContext";
 import MemberTransactionReport from "@/components/MemberTransactionReport";
+import { discountAmount, sumDisplayedDiscounts } from "@/lib/discountReporting";
 import {
   ResponsiveContainer, ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip,
 } from "recharts";
@@ -23,6 +24,7 @@ const compactIDR = (v: number) => {
 };
 
 interface ReportData {
+  totalDiscount: number;
   totalSales: number;
   totalProfit: number;
   totalTransactions: number;
@@ -36,6 +38,7 @@ export default function Reports() {
   const { currentStoreId, userStoreRole } = useStore();
   const isOwner = userStoreRole === 'owner';
   const [reportData, setReportData] = useState<ReportData>({
+    totalDiscount: 0,
     totalSales: 0,
     totalProfit: 0,
     totalTransactions: 0,
@@ -83,7 +86,7 @@ export default function Reports() {
         const entry = dayMap.get(day) || { day, receipts: 0, total_sales: 0, total_discounts: 0 };
         entry.receipts += 1;
         entry.total_sales += Number(sale.total || 0);
-        entry.total_discounts += Number(sale.discount_total || 0);
+        entry.total_discounts += discountAmount(sale.discount_total);
         dayMap.set(day, entry);
       });
       const summaryData = Array.from(dayMap.values());
@@ -116,6 +119,7 @@ export default function Reports() {
       const averageOrderValue = totalTransactions > 0 ? totalSales / totalTransactions : 0;
 
       setReportData({
+        totalDiscount: sumDisplayedDiscounts(salesData || []),
         totalSales,
         totalProfit,
         totalTransactions,
@@ -197,7 +201,7 @@ export default function Reports() {
           </div>
 
           {/* Key Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             <Card className="bg-card border-border">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -260,6 +264,16 @@ export default function Reports() {
               </CardContent>
             </Card>
           </div>
+
+          <Card className="bg-card border-border">
+            <CardContent className="p-4 sm:p-6 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-medium text-muted-foreground">Total Diskon</p>
+              <p className="num text-2xl font-semibold text-foreground break-words">
+                {reportData.totalDiscount > 0
+                  ? `Rp ${reportData.totalDiscount.toLocaleString('id-ID', { maximumFractionDigits: 0 })}` : '-'}
+              </p>
+            </CardContent>
+          </Card>
 
           {/* Sales Chart */}
           <Card className="bg-card border-border">
@@ -370,7 +384,8 @@ export default function Reports() {
                           Rp {Number(day.total_sales || 0).toLocaleString('id-ID')}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          Discounts: Rp {Number(day.total_discounts || 0).toFixed(2)}
+                          Diskon: {discountAmount(day.total_discounts) > 0
+                            ? `Rp ${discountAmount(day.total_discounts).toLocaleString('id-ID', { maximumFractionDigits: 0 })}` : '-'}
                         </p>
                       </div>
                     </div>

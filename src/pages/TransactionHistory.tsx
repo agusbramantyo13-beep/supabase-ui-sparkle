@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import SalesReturnDialog from "@/components/SalesReturnDialog";
 import { useBluetoothPrinter } from "@/contexts/BluetoothPrinterContext";
 import { useToast } from "@/hooks/use-toast";
+import { discountAmount, sumDisplayedDiscounts } from "@/lib/discountReporting";
 
 interface Transaction {
   id: string;
@@ -133,7 +134,7 @@ export default function TransactionHistory() {
         receipt_number: sale.receipt_number,
         total: Number(sale.total || 0),
         subtotal: Number(sale.subtotal || 0),
-        discount_total: Number(sale.discount_total || 0),
+        discount_total: discountAmount(sale.discount_total),
         tax_total: Number(sale.tax_total || 0),
         created_at: sale.created_at,
         payment_method: sale.payment_method,
@@ -351,6 +352,16 @@ export default function TransactionHistory() {
         </CardContent>
       </Card>
 
+      <Card className="bg-card border-border">
+        <CardContent className="p-4 sm:p-6 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm font-medium text-muted-foreground">Total Diskon Diberikan</p>
+          <p className="num text-lg font-semibold text-foreground break-words">
+            {sumDisplayedDiscounts(transactions, true) > 0
+              ? formatRp(sumDisplayedDiscounts(transactions, true)) : '-'}
+          </p>
+        </CardContent>
+      </Card>
+
       {(() => {
         const active = transactions.filter(t => t.type === 'sale' && t.status !== 'returned');
         const sumBy = (fn: (t: Transaction) => number) => active.reduce((s, t) => s + fn(t), 0);
@@ -493,6 +504,11 @@ export default function TransactionHistory() {
                         <TableCell className="text-foreground capitalize">{transaction.payment_method || '-'}</TableCell>
                         <TableCell className={`text-right font-semibold ${isExpense ? 'text-destructive' : 'text-foreground'}`}>
                           {isExpense ? '- ' : ''}{formatRp(transaction.total)}
+                          {!isExpense && discountAmount(transaction.discount_total) > 0 && (
+                            <p className="text-xs font-normal text-muted-foreground break-words mt-1">
+                              Diskon {formatRp(discountAmount(transaction.discount_total))}
+                            </p>
+                          )}
                         </TableCell>
                         <TableCell>
                           {isExpense ? (
