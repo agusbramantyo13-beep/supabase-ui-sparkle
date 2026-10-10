@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStore } from "@/contexts/StoreContext";
 import MemberTransactionReport from "@/components/MemberTransactionReport";
-import { discountAmount, sumDisplayedDiscounts } from "@/lib/discountReporting";
+import { actualDiscount, discountAmount, sumDisplayedDiscounts } from "@/lib/discountReporting";
 import {
   ResponsiveContainer, ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip,
 } from "recharts";
@@ -86,7 +86,7 @@ export default function Reports() {
         const entry = dayMap.get(day) || { day, receipts: 0, total_sales: 0, total_discounts: 0 };
         entry.receipts += 1;
         entry.total_sales += Number(sale.total || 0);
-        entry.total_discounts += discountAmount(sale.discount_total);
+        entry.total_discounts += actualDiscount(sale);
         dayMap.set(day, entry);
       });
       const summaryData = Array.from(dayMap.values());
