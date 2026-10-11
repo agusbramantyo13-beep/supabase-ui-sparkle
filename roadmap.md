@@ -1,9 +1,9 @@
 # Roadmap
-- [ ] Pengukuran lima sampel dihentikan pada gate baru: per hari dengan helper RPC v2b median 111,392 ms (>~100 ms); matriks belum lengkap, tidak ada promosi. Enam hash lama, alokasi, view v2/v2b dan lima RPC v2 tetap sama; laporan lengkap disimpan dalam rencana.
+- [x] Audit keputusan 11 Oktober 01:12 UTC dihentikan sesuai gate: top produk SEMPOLAN seluruh riwayat memakai helper bounds median v2b 274,131 ms vs v2 248,821 ms (1,101720x, gagal relatif). Empat bentuk memiliki pembanding lima sampel lengkap; matriks lain belum lengkap, tidak diklaim lulus. Laporan seluruh sampel disimpan di rencana.
 - [x] Kandidat LATERAL v2b diterapkan additive; EXCEPT ALL dua arah 0, kolom/ACL/owner sama, 19/19 tes alokasi lulus. Tidak mengubah frontend, UTC, kebijakan alokasi, objek lama atau data.
-- [ ] Promosi diblokir gate terbaru median <~100 ms untuk setiap bentuk dan v2b <= v2; batas relatif 3x lama sudah digantikan pengguna. Tidak membuat migration penggantian; kandidat ditahan.
+- [ ] Swap atomik ditahan: blocker gate relatif top produk 1,101720x >1 dan matriks belum lengkap. Tidak membuat migration/drop/rename. Perlu keputusan optimasi kandidat berikut; enam hash lama/alokasi/lima RPC v2 dan kedua view tetap sesuai baseline. Tahap B/pascaswap/linter belum dijalankan.
 - [x] Langkah 2: satu migration additive tersimpan/terpasang, 9 objek v2 ada, 6 hash lama identik, diff/ACL/kontrak sama, 19 tes lulus, agregasi nyata dan konsistensi SQL cocok; frontend tidak dialihkan.
-- [ ] Penggunaan Profit v2 ditahan: kandidat optimasi v2b sudah ada tetapi gagal target relatif; RPC/dashboard tetap memakai sumber sebelumnya. Uji owner end-to-end belum tersedia.
+- [ ] Penggunaan Profit v2 oleh frontend di luar persetujuan ini; dashboard tidak dialihkan. Uji RPC owner/end-to-end, cold-cache dan beban serentak belum tersedia.
 
 - [x] Langkah 1: diskon sebenarnya display-only, informasi rekonsiliasi tanpa mengubah total; 11 tes lulus, build OK, perbandingan produksi baca-saja selesai. Tampilan terautentikasi belum dapat diverifikasi pada Supabase eksternal.
 

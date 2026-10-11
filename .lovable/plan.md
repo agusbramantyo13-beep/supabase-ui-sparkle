@@ -581,3 +581,125 @@ MAINAN/SALSA seluruh bentuk, SEMPOLAN ringkasan 30 hari lima sampel lengkap tiga
 Tahap 2 **tidak dijalankan**: tidak ada migration promosi/rollback baru, tidak cek dependency untuk drop/rename, tidak ada verifikasi pascapenggantian/19 kasus/security/konsistensi ulang. Hasil tes lama tidak diklaim sebagai tes ulang saat ini.
 Log otomatis build 2026-10-11T00:30:12Z: build OK; tidak ada build/TypeScript manual atau perubahan kode aplikasi, sehingga ini bukan verifikasi build setelah implementasi baru.
 Dokumentasi audit/rencana/checklist saja diperbarui. Risiko: pertumbuhan transaksi, variasi beban produksi, overhead helper bucket UTC, dan hasil benchmark privileged tidak menjamin performa RLS pengguna nyata. Dashboard staff tetap sumber lama; WIB tetap belum dikerjakan.
+
+
+## Keputusan penggantian bersyarat — audit 11 Oktober 2026 01:12 UTC
+
+# Profit v2 — hasil gate penggantian, 11 Oktober 2026
+
+## Keputusan: STOP, v2b tidak menggantikan v2
+
+Penggantian bersyarat telah disetujui, tetapi gate relatif gagal pada **top produk seluruh riwayat SEMPOLAN, memakai batas dari helper RPC**. Median v2b **274,131 ms**, v2 **248,821 ms**, rasio **1,101720x**: kandidat sekitar **10,17% lebih lambat**. Keduanya di bawah 300 ms, tetapi syarat v2b <= v2 tidak terpenuhi. Sesuai instruksi berhenti pada kegagalan, tidak membuat/menerapkan migration, DROP/RENAME, rollback, atau perubahan DB apa pun. Matriks belum lengkap dan tidak diklaim selesai/lulus.
+
+Semua src/**, checkout, nota, retur, stok, poin, login/sesi, penugasan/pemilihan toko, policy/role/GRANT, UTC/helper dan transaksi tidak diedit. Perubahan proyek hanya roadmap.md dan tambahan laporan pada .lovable/plan.md. Memori persyaratan gate diperbarui; AGENTS.md tidak berubah karena tidak ada keputusan struktur baru.
+
+## Metode dan gate
+
+- Satu SQL per panggilan Supabase read_query; waktu yang dipakai **Execution Time**, bukan waktu node teratas atau jaringan.
+- Lima sampel nyata per baris lengkap di tabel. Tidak mengisi hasil panggilan yang ditolak sebagai sampel.
+- Rentang bulanan tepat `[2026-09-11 00:00+00,2026-10-11 00:00+00)`; helper dipanggil dengan tanggal akhir inklusif 2026-10-10.
+- Bentuk seluruh riwayat gaya RPC menggunakan profit_period_bounds('1900-01-01','2100-01-01'). MIN/MAX sales SEMPOLAN yang dibaca: 2026-05-17 07:22:38.078848+00 sampai 2026-10-11 00:10:05.950094+00. Batas luas ini mencakup semua data saat pengukuran, bukan mengubah UTC atau helper.
+- Gate kandidat: median <100 ms sampai satu bulan, <300 ms seluruh riwayat; median v2b <= median v2 setiap bentuk. Batas absolut diterapkan pada kandidat, bukan menjadikan v2 pembanding yang lambat sebagai kegagalan kandidat.
+- Produksi aktif; bukan cold-cache atau beban serentak terkontrol. Panggilan independen dibatch; tool menyelesaikan hasil secara terpisah, bukan satu multi-statement. Variasi beban dapat memengaruhi angka. Tidak mengulangi kelompok gagal untuk memilih hasil yang lebih baik.
+
+## Lima sampel lengkap — SEMPOLAN
+
+Angka ms memakai titik desimal agar bisa dihitung ulang; tidak membuang outlier.
+
+| Bentuk | View | Sampel 1–5 ms | Median ms | Rasio v2b/v2 | Gate kandidat |
+|---|---|---|---:|---:|---|
+| Per hari 30 hari, helper bucket + bounds | v2b | 76.610 / 90.005 / 69.538 / 70.371 / 68.609 | 70.371 | 0.251411 | Lulus bentuk ini |
+| Sama | v2 | 305.245 / 314.131 / 275.889 / 279.772 / 279.904 | 279.904 | — | Pembanding |
+| Per hari seluruh riwayat, helper bucket + bounds | v2b | 287.708 / 267.099 / 256.895 / 296.138 / 254.680 | 267.099 | 0.855834 | Lulus bentuk ini |
+| Sama | v2 | 296.948 / 337.570 / 340.731 / 312.092 / 291.695 | 312.092 | — | Pembanding |
+| Ringkasan seluruh riwayat, helper bounds | v2b | 228.119 / 239.687 / 254.413 / 214.132 / 214.164 | 228.119 | 0.949934 | Lulus bentuk ini |
+| Sama | v2 | 240.142 / 252.510 / 231.384 / 228.899 / 246.335 | 240.142 | — | Pembanding |
+| Top produk LIMIT 10 seluruh riwayat, helper bounds | v2b | 274.131 / 260.915 / 273.391 / 285.616 / 274.679 | **274.131** | **1.101720** | **GAGAL relatif** |
+| Sama | v2 | 253.284 / 247.915 / 248.821 / 249.382 / 246.756 | **248.821** | — | Pembanding |
+
+Hasil lama 111,392 ms adalah per hari seluruh riwayat **tanpa helper bounds** pada sesi sebelumnya. Itu tidak lagi gagal batas absolut 300 ms, tetapi tidak menggantikan benchmark bentuk RPC yang memakai bounds. Perbedaan plan nyata membuat pengukuran ulang penting.
+
+## Sampel tambahan yang belum cukup untuk gate
+
+| Bentuk | View | Sampel nyata ms | Median 5 / rasio |
+|---|---|---|---|
+| MAINAN count exact 30 hari | v2b | 1.447 | Belum tersedia |
+| MAINAN count exact 30 hari | v2 | 192.602 | Belum tersedia |
+| SEMPOLAN detail kategori 12, LIMIT 25 | v2b | 48.170 | Belum tersedia |
+| SEMPOLAN detail kasir, LIMIT 25 | v2b | 4.926 | Belum tersedia |
+| SEMPOLAN agregasi kategori 30 hari + bounds | v2b | 56.575 | Belum tersedia |
+| SEMPOLAN top produk 30 hari + bounds | v2b | 62.782 | Belum tersedia |
+| SEMPOLAN agregasi kasir seluruh riwayat, tanpa bounds | v2b | 95.414 | Belum tersedia |
+| SEMPOLAN agregasi kasir seluruh riwayat + bounds | v2b | 217.919 / 224.726 | Belum tersedia |
+
+Eksperimen awal per hari 30 hari dengan **TIMING OFF** menghasilkan 206.247 ms. Ini tetap dilaporkan, tetapi tidak dicampurkan ke lima sampel standar TIMING ON: opsi instrumennya berbeda. Tiga panggilan byte-identik dalam satu batch ditolak oleh tool dan **tidak dihitung**. Lima sampel kandidat standar benar-benar dijalankan dalam panggilan berbeda.
+
+## SQL bentuk gagal
+
+```sql
+EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)
+SELECT product_id, variant_id, product_name, variant_name,
+       SUM(quantity), SUM(total), SUM(cost_price * quantity), SUM(profit),
+       CASE WHEN SUM(total)>0 THEN SUM(profit)/SUM(total)*100 ELSE 0 END
+FROM public.v_sale_item_profit_v2b
+WHERE store_id='2a57e905-edba-4182-bb06-21c6d71c3ff7'
+  AND sale_created_at >= (SELECT start_ts FROM public.profit_period_bounds('1900-01-01','2100-01-01'))
+  AND sale_created_at < (SELECT end_ts_exclusive FROM public.profit_period_bounds('1900-01-01','2100-01-01'))
+GROUP BY product_id,variant_id,product_name,variant_name
+ORDER BY SUM(profit) DESC LIMIT 10;
+```
+Pembanding identik, hanya sumber diganti public.v_sale_item_profit_v2. Semua SUM/revenue/cost/profit/margin memakai rumus existing.
+
+## Bukti plan dan keanehan
+
+- Per hari 30 hari kandidat: idx_sales_store_created_at, 640 nota eligible, 2 returned dibuang, 906 item, 30 grup, shared hit=5.042. Allocation Result loops=640; **tidak ada Memoize untuk fungsi alokasi** pada plan ini. Memoize unnest 0 hit/640 miss dan lookup item 0/906.
+- Per hari seluruh riwayat kandidat dengan helper bounds: estimasi sales 15 tetapi aktual 2.863 nota, 16 returned dibuang, 4.282 item, 148 grup, allocation Result loops=2.863, shared hit=21.983. Semua item perlu dibaca untuk grouping.
+- Top seluruh riwayat kandidat: membaca 4.282 item/2.863 nota, 509 grup sebelum top-N heapsort LIMIT 10; allocation Result per nota (bukan memoized berdasarkan totals). Helper bounds mengubah estimasi/planner dibanding bentuk tanpa bounds. Ini bukti overhead nyata, bukan alasan mengubah helper yang dilarang.
+- v2 pembanding tetap menghitung CTE MATERIALIZED 3.452 nota/5.056 item lintas toko sebelum filter. Per hari 30 hari shared hit=9.294. Bentuk top v2 menggunakan grouping/sort dan LIMIT setelah agregasi.
+- Detail filter kategori 12 menghasilkan hanya **2 item**: idx_sales_store_created_at membaca semua 640 nota/906 item sebelum mengembalikan 2. Bukan karena sort semua data sebelum LIMIT, melainkan filter kategori jarang cocok sehingga tidak dapat berhenti setelah 25. Shared hit=6.468; alokasi baru dievaluasi untuk 2 item eligible. Jangan menggeneralisasi hasil OFFSET 250 sesi lama ke semua filter.
+- Detail kasir: 18 nota →25 item, 13 sales lain dibuang; berhenti saat 25 terpenuhi. Memoize alokasi hit=4/miss=14, shared hit=728.
+- MAINAN count: 53 nota eligible termasuk satu tanpa item →78 item; kandidat count menghilangkan evaluasi alokasi (Result biaya 0.01), shared hit=418. Count cepat tidak membuktikan agregasi finansial cepat.
+- Nilai filter nyata: SEMPOLAN kategori 12, cashier e3fa496e-10d7-4fa3-b6f0-2147b86cd595; MAINAN kategori 38, cashier b982c61c-89f8-4f8b-8d5a-4ecabe9eab1b; SALSA kategori 44, cashier 47efbb63-598e-488f-b8c1-86ffcdbdedb6. Tidak mengubah penugasan akun tersebut.
+- Nota ditemukan: 13 item RCP-1779104377654 / 3e9c49ab-778e-4373-8b57-996977bc8a01; 10 item RCP-1780745527411 / df25fcdf-8eea-41ff-b3b1-4421a155904a; 9 item RCP-1785324437265 / 66f22d04-5949-4191-aeda-c1e5c6ce9877. Dua terakhir dikonfirmasi lewat count aktual; benchmark tiga nota belum dijalankan dalam sesi ini.
+- Kontrak view **tidak mempunyai kolom id**; kolom pertama sale_id. Karena itu rumus checksum pengguna `string_agg(id::text...)` tidak dapat dijalankan langsung pada view. Jika tahap B kelak lolos, checksum item perlu join sale_items dengan kunci item deterministik atau CTE definisi yang membawa raw.id tanpa mengubah kontrak view. Tidak menebak id=sale_id (bisa duplikat antar item). Belum mengerjakan checksum/swap.
+
+## Verifikasi objek baca-saja setelah STOP
+
+Enam hash lama, hash alokasi, dua view dan lima RPC v2 cocok dengan baseline yang ditetapkan pengguna. View v2/v2b hash juga diperiksa saat awal dan akhir.
+
+| Objek | MD5 akhir |
+|---|---|
+| v_sale_item_profit | 835430e5863e97d584812e8a49a5d1cb |
+| get_profit_summary | 213f7e0e0586dea2e2a5022c4a3cbd79 |
+| get_profit_by_period | edc7eba9d317433f625def7ce7a0c5ee |
+| get_profit_by_category | 86dc254c75f850539f63c13da6074bac |
+| get_profit_by_cashier | 59c8fba05cc38497b073abcf8323def7 |
+| get_top_products_profit | c76fbb196187ab308d43224ab2c35488 |
+| profit_allocate_sale | 29c0be76bc75fcd1dfa3bd74c8a038c0 |
+| v_sale_item_profit_v2 | 3774a73bbe091248c017d9564158aac9 |
+| v_sale_item_profit_v2b | 3af9c4adf6a6531f63e4868b1968d0c7 |
+| get_profit_summary_v2 | 2971b94bbdb424f8f8c3db6a964252f3 |
+| get_profit_by_period_v2 | 5d0a5265596486aab318ed36a9bf444b |
+| get_profit_by_category_v2 | e30536f74fc9c84491f0d7a2d487f1f9 |
+| get_profit_by_cashier_v2 | 0f13447ddaac608c7a6251b0ffd415c2 |
+| get_top_products_profit_v2 | 57b631000f0d29417ab7bb73570f420f |
+| profit_period_bounds | 0554370e03819474fe10c13b8192786e |
+| profit_period_bucket | 2984dc0fe9ce0658a3eb77ce4fea881e |
+
+Helper hashes baru dicatat sesi ini, bukan diklaim dibanding baseline awal yang belum diambil sesi ini.
+
+Lima RPC produksi terbukti **PL/pgSQL**, STABLE, SECURITY DEFINER, search_path=public, ACL EXECUTE postgres/authenticated/service_role; masing-masing guard developer/owner dan referensi public.v_sale_item_profit_v2 bernilai true. Review latar berdasarkan file sempat menyatakan SQL-language/dependen RPC; **klaim itu dibantah katalog produksi dan tidak dipakai**. pg_depend hanya menunjukkan type v2 dan rule _RETURN internal (deptype i); lima RPC tidak menjadi dependen tercatat, sesuai harapan pengguna. Tidak melakukan rename-swap alternatif yang menyisakan view retired atau mengubah RPC.
+
+Kedua view owner=postgres, security_invoker=true, ACL sama persis saat dibaca: postgres/anon/authenticated/service_role masing-masing arwdDxtm/postgres. Tidak menambah/mencabut hak. Nama/urutan 23 kolom identik; typmod/collation/type full assertion belum dijalankan karena tidak swap.
+
+## Tidak diverifikasi / tidak dilakukan
+
+- Sisa matriks MAINAN/SALSA, ringkasan 30 hari lengkap, halaman 1/OFFSET dan filter kategori/kasir beserta pembanding lengkap, count lima sampel, tiga nota, kategori/kasir semua periode/toko: **belum selesai**, dihentikan oleh gate relatif.
+- Tahap B tidak dijalankan: tidak ada migration/guard transaksi/rollback baru, checksum jendela tetap sebelum/sesudah, EXCEPT ulang, 19 tes alokasi ulang, konsistensi kategori/kasir/day-week-month/top vs summary ulang, EXPLAIN pascaswap, atau cek yatim pascaswap.
+- Tidak mengambil baseline/akhir hash daftar policy/GRANT tabel sales/sale_items/stores, auth/store/role. Tidak ada perintah tulis terhadapnya, tetapi **jangan menyebut hash tersebut sudah dibandingkan sama**.
+- Linter tidak dijalankan sesi ini karena tahap B tidak berlangsung; finding baru tidak dapat dinyatakan nol berdasarkan linter sesi sebelumnya.
+- RPC sebagai owner, cold-cache, beban serentak dan tampilan dashboard belum terverifikasi. Frontend tidak dialihkan. Build/TypeScript manual tidak dijalankan; tidak ada src berubah.
+
+## Risiko dan saran
+
+Kandidat belum aman dipromosikan menurut gate pengguna, meskipun hasil ekuivalensi sesi sebelumnya lulus. Input bounds melalui helper dapat menyebabkan estimasi 15 nota yang jauh di bawah aktual dan kehilangan Memoize alokasi. Pertumbuhan data dan variasi beban dapat memperburuknya. Saran: tahan swap; jika disetujui terpisah, optimasi kandidat saja dengan menjaga helper/aturan/RPC/objek lama tetap, lalu ukur kembali seluruh matriks. Jangan melewati gate atau menganggap source tanpa bounds mewakili RPC berbounds.
