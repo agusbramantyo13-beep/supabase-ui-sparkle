@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Ukur ulang semua bentuk query Profit lama/v2/v2b (5 sampel): gate baru median <~100 ms dan v2b <= v2; hanya jika semuanya lulus lakukan penggantian view bersyarat dan verifikasi lengkap. Tanpa perubahan RPC/frontend/WIB/data.
 - [x] Kandidat LATERAL v2b diterapkan additive; EXCEPT ALL dua arah 0, kolom/ACL/owner sama, 19/19 tes alokasi lulus. Tidak mengubah frontend, UTC, kebijakan alokasi, objek lama atau data.
 - [ ] Promosi/benchmark lanjutan diblokir target performa: SEMPOLAN 30 tanggal median v2b 40,007 ms vs lama 3,409 ms (11,74x, target <=~3x gagal). Tidak membuat migration penggantian; kandidat ditahan, membutuhkan keputusan optimasi berikutnya.
 - [x] Langkah 2: satu migration additive tersimpan/terpasang, 9 objek v2 ada, 6 hash lama identik, diff/ACL/kontrak sama, 19 tes lulus, agregasi nyata dan konsistensi SQL cocok; frontend tidak dialihkan.
