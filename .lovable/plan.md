@@ -703,3 +703,8 @@ Kedua view owner=postgres, security_invoker=true, ACL sama persis saat dibaca: p
 ## Risiko dan saran
 
 Kandidat belum aman dipromosikan menurut gate pengguna, meskipun hasil ekuivalensi sesi sebelumnya lulus. Input bounds melalui helper dapat menyebabkan estimasi 15 nota yang jauh di bawah aktual dan kehilangan Memoize alokasi. Pertumbuhan data dan variasi beban dapat memperburuknya. Saran: tahan swap; jika disetujui terpisah, optimasi kandidat saja dengan menjaga helper/aturan/RPC/objek lama tetap, lalu ukur kembali seluruh matriks. Jangan melewati gate atau menganggap source tanpa bounds mewakili RPC berbounds.
+
+
+## Pembaruan keputusan 11 Oktober 2026 01:24 UTC
+
+Untuk pekerjaan ini saja: median kandidat <100 ms sampai satu bulan, <300 ms seluruh riwayat dan rasio median v2b/v2 <=1,15. Top produk seluruh riwayat SEMPOLAN sebelumnya 274,131/248,821 ms (1,101720x) kini lulus, tanpa mengulang sampel. Selesaikan sisa matriks tepat sesuai daftar pengguna, satu EXPLAIN per panggilan dan lima sampel nyata per view/bentuk. Berhenti pada kegagalan tanpa mengulang untuk memilih hasil lebih baik. Swap atomik dan seluruh pengaman/verifikasi tahap B hanya jika seluruh gate lulus. Semua larangan objek/data/frontend/auth/toko/ACL/UTC tetap berlaku. Checksum memakai concat_ws dan urutan string deterministik tanpa kolom id.
