@@ -1,6 +1,7 @@
 # Roadmap
+- [ ] Pengukuran lima sampel dihentikan pada gate baru: per hari dengan helper RPC v2b median 111,392 ms (>~100 ms); matriks belum lengkap, tidak ada promosi. Enam hash lama, alokasi, view v2/v2b dan lima RPC v2 tetap sama; laporan lengkap disimpan dalam rencana.
 - [x] Kandidat LATERAL v2b diterapkan additive; EXCEPT ALL dua arah 0, kolom/ACL/owner sama, 19/19 tes alokasi lulus. Tidak mengubah frontend, UTC, kebijakan alokasi, objek lama atau data.
-- [ ] Promosi/benchmark lanjutan diblokir target performa: SEMPOLAN 30 tanggal median v2b 40,007 ms vs lama 3,409 ms (11,74x, target <=~3x gagal). Tidak membuat migration penggantian; kandidat ditahan, membutuhkan keputusan optimasi berikutnya.
+- [ ] Promosi diblokir gate terbaru median <~100 ms untuk setiap bentuk dan v2b <= v2; batas relatif 3x lama sudah digantikan pengguna. Tidak membuat migration penggantian; kandidat ditahan.
 - [x] Langkah 2: satu migration additive tersimpan/terpasang, 9 objek v2 ada, 6 hash lama identik, diff/ACL/kontrak sama, 19 tes lulus, agregasi nyata dan konsistensi SQL cocok; frontend tidak dialihkan.
 - [ ] Penggunaan Profit v2 ditahan: kandidat optimasi v2b sudah ada tetapi gagal target relatif; RPC/dashboard tetap memakai sumber sebelumnya. Uji owner end-to-end belum tersedia.
 

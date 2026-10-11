@@ -496,3 +496,88 @@ Saran terpisah: uji kandidat berikut mengurangi lookup balik item dengan array k
 DROP VIEW public.v_sale_item_profit_v2b;
 ```
 Rollback lengkap objek v2 tetap komentar migration: lima DROP FUNCTION RPC v2, DROP VIEW v2b dan v2, lalu DROP FUNCTION profit_period_bounds, profit_period_bucket, profit_allocate_sale. Objek lama/data tidak termasuk. Frontend belum dialihkan, sehingga tidak perlu rollback frontend pada tahap ini.
+
+
+## Pengukuran lima sampel — 11 Oktober 2026, STOP pada gate baru
+
+
+## Keputusan
+STOP; tidak membuat/menerapkan migration penggantian, tidak drop/rename, tidak mengubah frontend, UTC/WIB, RPC, alokasi, objek lama, atau data transaksi.
+Kriteria terbaru menggantikan batas 3x lama: SEMUA bentuk harus median lima sampel <~100 ms dan v2b tidak lebih lambat daripada v2.
+**Gagal absolut:** agregasi harian yang memakai `profit_period_bucket` seperti RPC v2 mempunyai median **111,392 ms**. Seluruh lima sampelnya di atas 100 ms. Bahkan tanpa membandingkan v2, syarat gabungan tidak terpenuhi.
+**Cakupan belum lengkap:** bukan seluruh matriks yang diminta telah diuji; jangan menganggap bentuk lain lulus atau tahap 1 selesai penuh.
+
+## Metode
+EXPLAIN (ANALYZE, BUFFERS), produksi aktif, waktu Execution Time dalam ms, bukan latency jaringan atau Actual Total Time node pertama. Tidak membuang outlier. Sampel dipanggil lewat alat baca-saja; batch independen tidak membuktikan lingkungan beban/cold-cache terkontrol. Tidak menguji RPC sebagai owner terautentikasi.
+Seluruh hasil lima sampel di tabel berikut untuk SEMPOLAN. Bentuk 30 hari memakai [2026-09-11 00:00+00,2026-10-11 00:00+00); lainnya seluruh riwayat kecuali disebutkan. Query bounds 1900–2100 adalah eksperimen batas luas, bukan pengganti matriks RPC lengkap.
+
+| Bentuk / sumber | Sampel 1–5 (ms) | Median (ms) |
+|---|---|---:|
+| Ringkasan seluruh riwayat — lama | 266.263 / 10.323 / 10.289 / 10.168 / 10.361 | 10.323 |
+| Ringkasan seluruh riwayat — v2 | 238.228 / 225.561 / 231.097 / 227.373 / 263.578 | 231.097 |
+| Ringkasan seluruh riwayat — v2b | 90.485 / 86.460 / 90.180 / 87.384 / 86.755 | 87.384 |
+| Ringkasan seluruh riwayat, batas 1900–2100 — v2b | 100.213 / 87.548 / 90.177 / 90.563 / 100.820 | 90.563 |
+| Per hari date_trunc + count distinct — v2b | 86.739 / 88.485 / 85.428 / 82.974 / 88.861 | 86.739 |
+| Per hari helper RPC + count distinct + margin — v2b (GAGAL) | 116.764 / 111.392 / 112.387 / 110.678 / 109.323 | 111.392 |
+| Per kategori + margin — v2b | 85.111 / 86.035 / 86.583 / 105.491 / 85.101 | 86.035 |
+| Per kasir + margin — v2b | 92.852 / 93.047 / 94.598 / 109.810 / 96.117 | 94.598 |
+| Per kasir tanpa margin — v2b | 127.347 / 94.121 / 97.490 / 94.644 / 102.745 | 97.490 |
+| Top produk + margin — v2b | 100.703 / 93.176 / 89.472 / 105.357 / 92.717 | 93.176 |
+| Top produk tanpa margin — v2b | 90.159 / 111.269 / 111.124 / 87.768 / 90.958 | 90.958 |
+| Detail 30 hari OFFSET 250 LIMIT 25 — v2b | 17.644 / 14.907 / 15.351 / 15.835 / 15.402 | 15.402 |
+| Satu nota 13 item SELECT * — v2b | 7.719 / 2.409 / 2.325 / 2.419 / 2.589 | 2.419 |
+| Per kategori batch awal — v2b | 290.028 / 87.456 / 88.786 / 85.783 / 104.133 | 88.786 |
+
+Ringkasan seluruh riwayat: rasio median v2b/lama **8.465x**; v2b/v2 **0.378x**. Bentuk lain tidak punya pembanding lima sampel lengkap; rasionya **belum terverifikasi**, bukan nol atau lulus.
+
+Sampel count exact 30 hari yang tersedia: lama **5,249 ms**; v2 **186,249 ms**; v2b **9,670 ms** (masing-masing satu sampel, tidak cukup untuk median lima sampel). Percobaan dua EXPLAIN dalam satu panggilan hanya mengembalikan hasil terakhir, lama **1,880 ms**; tidak dihitung sebagai dua sampel.
+Pengukuran awal ringkasan v2b 108,909 / 85,658 / 96,106 / 97,120 / 109,322 ms dan grouping day awal tersimpan hanya dalam rangkuman sesi, tidak ada raw plan lengkap yang dapat dicocokkan di sandbox ini; tidak dicampur dengan tabel Execution Time yang terverifikasi. Nilai awal kemungkinan waktu node teratas, sehingga tidak dipakai untuk keputusan.
+
+## Bukti plan dan temuan
+- Ringkasan v2b seluruh riwayat: 2.863 nota yang diagregasi itemnya, 4.282 baris item keluaran; `Index Scan sales_pkey`, menyaring 622 sales; allocation Memoize hit=2.380/miss=483, jadi fungsi dievaluasi 483 kali, bukan 2.863 kali; shared hit=25.266.
+- Ringkasan lama: merge join; sales_pkey dan idx_sale_items_sale_id, shared hit=6.976. Outlier 266,263 ms dipertahankan.
+- Ringkasan v2: CTE sale_totals/allocations menghitung **3.452 nota lintas toko / 5.056 item eligible** sebelum filter toko; shared hit=7.534; tidak ada Memoize alokasi.
+- Per hari `date_trunc` langsung: shared hit=12.654, 148 bucket, 2.863 nota / 4.282 item.
+- Per hari helper RPC: shared hit=12.533, 148 bucket, 2.863 nota / 4.282 item, sales_pkey menyaring 622 baris, allocation Memoize 2.380/483. Helper SQL memiliki SET TimeZone=UTC dan search_path=public; plan mempertahankan pemanggilan fungsi, bukan inline date_trunc. Perbedaan waktu menunjukkan overhead helper dapat relevan, tetapi tidak membuktikan penyebab tunggal dan **helper tidak diubah**.
+- Kategori dengan margin: idx_sales_store, 2.863 nota, 4.282 item, 17 grup, Memoize 2.380/483, shared hit=9.206.
+- Kasir dengan margin: idx_sales_user_id menyaring toko/status (622 dibuang), 2.863 nota, 4.282 item, 3 grup, incremental sort; shared hit=22.129, allocation Memoize 2.380/483.
+- Top produk dengan margin: seq scan sales dengan filter toko/status, 2.863 nota, 4.282 item, 509 grup sebelum top-N heapsort LIMIT 10; shared hit=9.210; allocation Memoize 2.380/483. Top-N memang memerlukan seluruh baris eligible untuk agregasi, bukan pagination detail.
+- Detail OFFSET 250: **tidak menghitung seluruh 906 item sebelum LIMIT**. idx_sales_store_created_at membaca 194 nota, membentuk 275 item, membuang 250 untuk mengembalikan 25; Memoize alokasi 118/76, shared hit=2.623. Count exact terpisah tetap membaca seluruh 640 nota / 906 item; v2b count dapat menghilangkan evaluasi allocation karena nilai profit tidak digunakan (plan Result nol biaya), jadi count cepat bukan bukti detail/agregasi cepat.
+- Satu nota banyak item: RCP-1779104377654, sale_id 3e9c49ab-778e-4373-8b57-996977bc8a01; sales_pkey lookup 1 nota, 13 item, allocation Result loops=1, shared hit=607. Dua nota calon lain ditemukan (10 dan 9 item), belum dibenchmark.
+
+Bentuk query gagal yang diuji:
+```sql
+SELECT public.profit_period_bucket('day', sale_created_at),
+       SUM(total), SUM(cost_price * quantity), SUM(profit),
+       COUNT(DISTINCT sale_id),
+       CASE WHEN SUM(total)>0 THEN SUM(profit)/SUM(total)*100 ELSE 0 END
+FROM public.v_sale_item_profit_v2b
+WHERE store_id='2a57e905-edba-4182-bb06-21c6d71c3ff7'
+GROUP BY 1 ORDER BY 1;
+```
+Grouping `date_trunc` langsung lulus batas absolut pada sampelnya, tetapi **tidak cukup** mewakili RPC v2 yang memakai helper. Tidak mengedit 5 RPC v2 untuk menghindari biaya helper.
+
+## Checksum akhir
+Sama dengan baseline awal pada seluruh 14 objek yang dicatat; view memakai md5(pg_get_viewdef(oid,true)), fungsi memakai md5(pg_get_functiondef(oid)).
+| Objek | MD5 |
+|---|---|
+| v_sale_item_profit | 835430e5863e97d584812e8a49a5d1cb |
+| get_profit_summary | 213f7e0e0586dea2e2a5022c4a3cbd79 |
+| get_profit_by_period | edc7eba9d317433f625def7ce7a0c5ee |
+| get_profit_by_category | 86dc254c75f850539f63c13da6074bac |
+| get_profit_by_cashier | 59c8fba05cc38497b073abcf8323def7 |
+| get_top_products_profit | c76fbb196187ab308d43224ab2c35488 |
+| profit_allocate_sale | 29c0be76bc75fcd1dfa3bd74c8a038c0 |
+| v_sale_item_profit_v2 | 3774a73bbe091248c017d9564158aac9 |
+| v_sale_item_profit_v2b | 3af9c4adf6a6531f63e4868b1968d0c7 |
+| get_profit_summary_v2 | 2971b94bbdb424f8f8c3db6a964252f3 |
+| get_profit_by_period_v2 | 5d0a5265596486aab318ed36a9bf444b |
+| get_profit_by_category_v2 | e30536f74fc9c84491f0d7a2d487f1f9 |
+| get_profit_by_cashier_v2 | 0f13447ddaac608c7a6251b0ffd415c2 |
+| get_top_products_profit_v2 | 57b631000f0d29417ab7bb73570f420f |
+
+## Yang belum diverifikasi / tidak dilakukan
+MAINAN/SALSA seluruh bentuk, SEMPOLAN ringkasan 30 hari lima sampel lengkap tiga view, detail halaman 1, kategori/kasir filter pada detail dan count, tiga nota lengkap, semua pembanding lama/v2 untuk grouping, plan/count lengkap matriks, dan kriteria relatif tiap bentuk belum selesai. Dihentikan saat median helper harian terbukti gagal.
+Tahap 2 **tidak dijalankan**: tidak ada migration promosi/rollback baru, tidak cek dependency untuk drop/rename, tidak ada verifikasi pascapenggantian/19 kasus/security/konsistensi ulang. Hasil tes lama tidak diklaim sebagai tes ulang saat ini.
+Log otomatis build 2026-10-11T00:30:12Z: build OK; tidak ada build/TypeScript manual atau perubahan kode aplikasi, sehingga ini bukan verifikasi build setelah implementasi baru.
+Dokumentasi audit/rencana/checklist saja diperbarui. Risiko: pertumbuhan transaksi, variasi beban produksi, overhead helper bucket UTC, dan hasil benchmark privileged tidak menjamin performa RLS pengguna nyata. Dashboard staff tetap sumber lama; WIB tetap belum dikerjakan.
