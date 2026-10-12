@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Lanjutan 12 Oktober: pulihkan sampel SEMPOLAN tanpa EXPLAIN baru; tabel sampel/median/rasio dan kelengkapan; hanya ringkasan 30 hari/seluruh riwayat MAINAN/SALSA (maksimum 40 EXPLAIN, berhenti jika gagal); cek 16 hash akhir; tanpa swap/migration.
 - [x] Audit keputusan 11 Oktober 01:12 UTC dihentikan sesuai gate: top produk SEMPOLAN seluruh riwayat memakai helper bounds median v2b 274,131 ms vs v2 248,821 ms (1,101720x, gagal relatif). Empat bentuk memiliki pembanding lima sampel lengkap; matriks lain belum lengkap, tidak diklaim lulus. Laporan seluruh sampel disimpan di rencana.
 - [x] Kandidat LATERAL v2b diterapkan additive; EXCEPT ALL dua arah 0, kolom/ACL/owner sama, 19/19 tes alokasi lulus. Tidak mengubah frontend, UTC, kebijakan alokasi, objek lama atau data.
 - [ ] Keputusan 11 Oktober 01:24 UTC: selesaikan sisa matriks lima sampel; gate kandidat <100 ms sampai satu bulan, <300 ms seluruh riwayat, rasio v2b/v2 <=1,15. Top produk sebelumnya 274,131/248,821 ms (1,101720x) kini lulus tanpa diukur ulang. Swap hanya setelah semua baris lulus; tahap B menunggu gate.
