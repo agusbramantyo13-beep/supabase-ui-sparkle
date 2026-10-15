@@ -1680,6 +1680,13 @@ export type Database = {
             referencedColumns: ["product_id"]
           },
           {
+            foreignKeyName: "variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_sale_item_profit_v2c"
+            referencedColumns: ["product_id"]
+          },
+          {
             foreignKeyName: "variants_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
@@ -1874,6 +1881,98 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "categories"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "v_current_inventory"
+            referencedColumns: ["variant_id"]
+          },
+          {
+            foreignKeyName: "sale_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "variants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_user_id_fkey"
+            columns: ["cashier_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_sale_item_profit_v2c: {
+        Row: {
+          allocated_discount: number | null
+          anomaly: boolean | null
+          cashier_id: string | null
+          cashier_name: string | null
+          category_id: number | null
+          category_name: string | null
+          cost_price: number | null
+          discount: number | null
+          gross_total: number | null
+          margin_pct: number | null
+          product_id: number | null
+          product_name: string | null
+          product_snapshot: Json | null
+          profit: number | null
+          quantity: number | null
+          receipt_number: string | null
+          sale_created_at: string | null
+          sale_id: string | null
+          store_id: string | null
+          total: number | null
+          unit_price: number | null
+          variant_id: number | null
+          variant_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_items_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_items_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "v_sale_item_profit"
+            referencedColumns: ["sale_id"]
+          },
+          {
+            foreignKeyName: "sale_items_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "v_sale_item_profit_v2"
+            referencedColumns: ["sale_id"]
+          },
+          {
+            foreignKeyName: "sale_items_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "v_sale_item_profit_v2b"
+            referencedColumns: ["sale_id"]
           },
           {
             foreignKeyName: "sale_items_variant_id_fkey"
@@ -2120,7 +2219,18 @@ export type Database = {
           start_ts: string
         }[]
       }
+      profit_period_bounds_u: {
+        Args: { p_end: string; p_start: string }
+        Returns: {
+          end_ts_exclusive: string
+          start_ts: string
+        }[]
+      }
       profit_period_bucket: {
+        Args: { p_created_at: string; p_group_by: string }
+        Returns: string
+      }
+      profit_period_bucket_u: {
         Args: { p_created_at: string; p_group_by: string }
         Returns: string
       }
