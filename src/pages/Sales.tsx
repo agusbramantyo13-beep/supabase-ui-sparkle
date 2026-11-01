@@ -900,7 +900,7 @@ export default function Sales() {
           // Snapshot member points after this transaction onto the sale record
           const { error: snapshotError } = await supabase
             .from('sales')
-            .update({ member_points_after: newPoints })
+            .update({ member_points_after: newPoints, member_points_earned: earnedPoints })
             .eq('id', saleData.id);
 
           if (snapshotError) {

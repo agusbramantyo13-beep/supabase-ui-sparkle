@@ -30,6 +30,7 @@ interface Transaction {
   member_name: string | null;
   member_code: string | null;
   member_points_after?: number | null;
+  member_points_earned?: number | null;
   is_offline_sync?: boolean;
 
   subtotal?: number;
@@ -81,7 +82,7 @@ export default function TransactionHistory() {
         .from('sales')
         .select(`
           id, receipt_number, total, subtotal, discount_total, tax_total,
-          created_at, payment_method, payment_details, user_id, status, member_id, member_points_after, is_offline_sync,
+          created_at, payment_method, payment_details, user_id, status, member_id, member_points_after, member_points_earned, is_offline_sync,
           profiles:user_id(name, email),
           members:member_id(name, member_code)
         `)
@@ -144,6 +145,7 @@ export default function TransactionHistory() {
         member_name: (sale.members as any)?.name || null,
         member_code: (sale.members as any)?.member_code || null,
         member_points_after: sale.member_points_after ?? null,
+        member_points_earned: sale.member_points_earned ?? null,
         is_offline_sync: Boolean(sale.is_offline_sync),
 
         type: 'sale',
@@ -268,6 +270,10 @@ export default function TransactionHistory() {
         memberPoints:
           detailTx.member_name && detailTx.member_points_after != null
             ? Number(detailTx.member_points_after)
+            : undefined,
+        memberPointsEarned:
+          detailTx.member_name && detailTx.member_points_earned != null
+            ? Number(detailTx.member_points_earned)
             : undefined,
 
         paymentMethod: detailTx.payment_method || undefined,
@@ -609,6 +615,18 @@ export default function TransactionHistory() {
                       ? `${detailTx.member_name}${detailTx.member_code ? ` (${detailTx.member_code})` : ''}`
                       : '---'}
                   </p>
+                  {detailTx.member_name && detailTx.member_points_earned != null && (
+                    <div className="mt-2 flex justify-between gap-3">
+                      <span className="text-muted-foreground">Poin didapat</span>
+                      <span className="font-medium text-foreground">+{detailTx.member_points_earned.toLocaleString('id-ID')}</span>
+                    </div>
+                  )}
+                  {detailTx.member_name && detailTx.member_points_after != null && (
+                    <div className="mt-2 flex justify-between gap-3">
+                      <span className="text-muted-foreground">Total poin</span>
+                      <span className="font-medium text-foreground">{detailTx.member_points_after.toLocaleString('id-ID')}</span>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <p className="text-muted-foreground">Metode Pembayaran</p>
