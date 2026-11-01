@@ -240,6 +240,7 @@ export type ReceiptData = {
   cashier?: string;
   member?: string;
   memberPoints?: number;
+  memberPointsEarned?: number;
 
   paymentMethod?: string;
   items: ReceiptItem[];
@@ -418,13 +419,6 @@ function buildReceiptBytes(data: ReceiptData, logoBytes?: Uint8Array | null): Ui
   if (data.receiptNumber) parts.push(enc("No   : " + data.receiptNumber + "\n"));
   parts.push(enc("Tgl  : " + data.dateTime + "\n"));
   if (data.cashier) parts.push(enc("Kasir: " + data.cashier + "\n"));
-  if (data.member) parts.push(enc("Member: " + data.member + "\n"));
-  if (data.member && data.memberPoints != null)
-    parts.push(enc("Poin  : " + Math.round(data.memberPoints).toLocaleString("id-ID") + "\n"));
-  if (data.offlinePointsPending)
-    wrap("Poin member dihitung setelah sinkronisasi").forEach((line) => parts.push(enc(line + "\n")));
-  if (data.offlinePointsPending)
-    wrap("Poin member dihitung setelah sinkronisasi").forEach((l) => parts.push(enc(l + "\n")));
 
   parts.push(enc(SEP + "\n"));
 
@@ -462,6 +456,21 @@ function buildReceiptBytes(data: ReceiptData, logoBytes?: Uint8Array | null): Ui
     parts.push(enc(padLine("Kembalian", formatRp(data.change)) + "\n"));
 
   parts.push(enc(SEP + "\n"));
+
+  // --- member snapshot (after totals, before the store footer) ---
+  if (data.member) {
+    parts.push(cmd.alignLeft());
+    wrap("Member : " + data.member).forEach((line) => parts.push(enc(line + "\n")));
+    if (data.offlinePointsPending) {
+      wrap("Poin member dihitung setelah sinkronisasi").forEach((line) => parts.push(enc(line + "\n")));
+    } else {
+      if (data.memberPointsEarned != null)
+        parts.push(enc(padLine("Poin didapat", "+" + data.memberPointsEarned.toLocaleString("id-ID")) + "\n"));
+      if (data.memberPoints != null)
+        parts.push(enc(padLine("Total poin", data.memberPoints.toLocaleString("id-ID")) + "\n"));
+    }
+    parts.push(enc(SEP + "\n"));
+  }
 
   // --- footer ---
   parts.push(cmd.alignCenter());

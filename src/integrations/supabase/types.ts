@@ -959,6 +959,7 @@ export type Database = {
           is_offline_sync: boolean
           member_id: string | null
           member_points_after: number | null
+          member_points_earned: number | null
           payment_details: Json | null
           payment_method: string | null
           receipt_number: string | null
@@ -983,6 +984,7 @@ export type Database = {
           is_offline_sync?: boolean
           member_id?: string | null
           member_points_after?: number | null
+          member_points_earned?: number | null
           payment_details?: Json | null
           payment_method?: string | null
           receipt_number?: string | null
@@ -1007,6 +1009,7 @@ export type Database = {
           is_offline_sync?: boolean
           member_id?: string | null
           member_points_after?: number | null
+          member_points_earned?: number | null
           payment_details?: Json | null
           payment_method?: string | null
           receipt_number?: string | null
