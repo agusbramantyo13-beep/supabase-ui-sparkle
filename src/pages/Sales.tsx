@@ -21,6 +21,7 @@ import { imageUrlToDataUrl, readPosCache, writePosCache } from "@/lib/offline/ca
 import { isNetworkError } from "@/lib/offline/network";
 import type { OfflineQueueEntry, OfflineSalePayload } from "@/lib/offline/types";
 import { getProductImageUrl } from "@/lib/productImage";
+import { memberPointSnapshot } from "@/lib/memberPointSnapshot";
 
 interface ProductVariant {
   id: string;
@@ -738,7 +739,8 @@ export default function Sales() {
 
     let onlineSaleCreated = false;
     try {
-      const selectedMember = members.find(m => m.id === selectedMemberId);
+      const memberId = selectedMemberId && selectedMemberId !== "none" ? selectedMemberId : null;
+      const selectedMember = members.find(m => m.id === memberId);
       const subtotal = getSubtotal();
       const discountAmount = getDiscountAmount();
       const total = getTotalAmount();
@@ -786,6 +788,19 @@ export default function Sales() {
 
       const receiptNumber = `RCP-${Date.now()}`;
 
+      // Use the existing points arithmetic for both the insert snapshot and member update.
+      let pointsChange = 0;
+      let redeemedPointsAmount = 0;
+      if (selectedRedemptionId && selectedRedemptionId !== "none") {
+        const redemptionRule = redemptionRules.find(r => r.id === selectedRedemptionId);
+        if (redemptionRule) {
+          redeemedPointsAmount = redemptionRule.points_required;
+          pointsChange -= redeemedPointsAmount;
+        }
+      }
+      if (earnedPoints > 0) pointsChange += earnedPoints;
+      const pointSnapshot = memberPointSnapshot(memberId, selectedMember, pointsChange, earnedPoints);
+
       // Create sale record
       const { data: saleData, error: saleError } = await supabase
         .from('sales')
@@ -801,12 +816,13 @@ export default function Sales() {
             change: change,
             cash_amount: paymentMethod === 'split' ? splitCashNum : (paymentMethod === 'cash' ? total : 0),
             card_amount: paymentMethod === 'split' ? splitCardNum : (paymentMethod === 'card' ? total : 0),
-            member_id: selectedMemberId || null,
+            member_id: memberId,
             member_name: selectedMember?.name || null
           },
           user_id: user?.id || null,
           store_id: currentStoreId,
-          member_id: selectedMemberId || null,
+          member_id: memberId,
+          ...pointSnapshot,
           status: 'completed'
         })
         .select()
@@ -859,24 +875,6 @@ export default function Sales() {
         }
       }
 
-      // Calculate points change for member
-      let pointsChange = 0;
-      let redeemedPointsAmount = 0;
-      
-      // Deduct points if redemption is used
-      if (selectedRedemptionId && selectedRedemptionId !== "none") {
-        const redemptionRule = redemptionRules.find(r => r.id === selectedRedemptionId);
-        if (redemptionRule) {
-          redeemedPointsAmount = redemptionRule.points_required;
-          pointsChange -= redeemedPointsAmount;
-        }
-      }
-      
-      // Add earned points
-      if (earnedPoints > 0) {
-        pointsChange += earnedPoints;
-      }
-
       // Update member points if member is selected
       if (selectedMemberId && selectedMemberId !== "none") {
         const selectedMember = members.find(m => m.id === selectedMemberId);
@@ -894,18 +892,15 @@ export default function Sales() {
 
             if (memberError) {
               console.error("Error updating member points:", memberError);
+              toast({
+                title: "Poin member belum diperbarui",
+                description: "Penjualan sudah tersimpan, tetapi saldo poin member gagal diperbarui. Hubungi owner; jangan ulangi penjualan.",
+                variant: "destructive",
+              });
             }
           }
 
-          // Snapshot member points after this transaction onto the sale record
-          const { error: snapshotError } = await supabase
-            .from('sales')
-            .update({ member_points_after: newPoints, member_points_earned: earnedPoints })
-            .eq('id', saleData.id);
-
-          if (snapshotError) {
-            console.error("Error saving member points snapshot:", snapshotError);
-          }
+          // Receipt snapshots were saved with INSERT; cashier UPDATE on sales is forbidden.
         }
       }
 
