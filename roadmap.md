@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Diagnosis dan perbaikan snapshot poin nota: query baca-saja, simpan saat INSERT tanpa mengubah RLS/perhitungan, uji regresi; cetak perangkat kasir perlu verifikasi pengguna.
 - [x] Putaran terarah 13 Oktober: kapasitas dan 16 hash selesai; EXPLAIN STOP pada sampel kategori SEMPOLAN 576.548 ms (1/50), tanpa swap/migration.
 - [ ] Sisa 49 EXPLAIN putaran terarah dan matriks awal: menunggu keputusan pengguna atas sampel tunggal melampaui batas versus gate median; jangan reset/membuang sampel.
 - [ ] Lanjutan 12 Oktober: pulihkan sampel SEMPOLAN tanpa EXPLAIN baru; tabel sampel/median/rasio dan kelengkapan; hanya ringkasan 30 hari/seluruh riwayat MAINAN/SALSA (maksimum 40 EXPLAIN, berhenti jika gagal); cek 16 hash akhir; tanpa swap/migration.
